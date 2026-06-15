@@ -5,14 +5,13 @@
 > *「格一物，致真知 —— 能讲清楚，才算真懂。」*
 > *"Investigate one thing to its core — you don't understand it until you can explain it."*
 
-<!-- 徽章里的 YuhangZho/gewu-skill 请替换为你的实际仓库路径 -->
 [![License](https://img.shields.io/github/license/YuhangZho/gewu-skill?style=flat-square&color=green)](./LICENSE)
 [![Stars](https://img.shields.io/github/stars/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/stargazers)
 [![Forks](https://img.shields.io/github/forks/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/network/members)
 [![Issues](https://img.shields.io/github/issues/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/issues)
 [![Last commit](https://img.shields.io/github/last-commit/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/commits)
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue?style=flat-square&logo=python&logoColor=white)
-![Dependencies](https://img.shields.io/badge/deps-none%20(stdlib)-success?style=flat-square)
+![Dependencies](https://img.shields.io/badge/deps-none%20%28stdlib%29-success?style=flat-square)
 ![Offline](https://img.shields.io/badge/offline-ready-success?style=flat-square)
 
 **格物（Gewu）是一套目标驱动的费曼学习系统**：一步步把你输入的概念真正学透，自动落盘成带双链/分类/出处的 Markdown 笔记，并长出一个会「呼吸」的知识站（学习路线图 + 知识图谱 + 概念文档 + 目标规划）。纯本地、离线、无外部依赖。
