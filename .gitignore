@@ -1,0 +1,25 @@
+third_party/
+.claude/
+.opencode/
+.cursor/
+.codex/
+.openclaw/
+.hermes/
+.context/
+.understand-anything/
+# xterm assets are vendored from npm at build time; not source-of-truth.
+/tmp/
+*.log
+*.pyc
+*.jsonl
+*.bun-build
+.env
+.env.local
+.env.*
+!.env.example
+plan/
+.specstory/
+.vscode/
+.compile_workdir/
+output/
+
