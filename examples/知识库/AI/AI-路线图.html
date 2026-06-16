@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="light"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI · 知识站</title>
+<style>
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--panel:rgba(22,27,34,.72);--solid:#161b22;--line:rgba(48,54,61,.7);--text:#f0f2f5;--muted:#8b949e;--green:#30d158;--yellow:#ffd60a;--gray:#6e7681;--accent:#0a84ff;--track:rgba(84,84,88,.28);--starempty:#3a4150;--code:rgba(110,118,129,.25)}
+:root[data-theme="light"]{color-scheme:light;--bg:#f5f5f7;--panel:rgba(255,255,255,.86);--solid:#ffffff;--line:rgba(0,0,0,.08);--text:#1d1d1f;--muted:#6e6e73;--green:#34c759;--yellow:#ff9f0a;--gray:#aeaeb2;--accent:#007aff;--track:rgba(0,0,0,.06);--starempty:#d1d1d6;--code:rgba(0,0,0,.06)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);
+font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:11px 22px;
+background:var(--panel);border-bottom:1px solid var(--line);backdrop-filter:blur(18px) saturate(180%)}
+.topbar .brand{font-weight:700;font-size:15px;letter-spacing:-.01em}
+.topbar .crumb{color:var(--muted);font-size:13px}
+.topbar .crumb b{color:var(--text)}
+.topbar .crumb .cl{color:var(--accent);cursor:pointer}
+.topbar .sp{flex:1}
+.themebtn{background:var(--solid);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:13px;cursor:pointer}
+.shell{display:grid;grid-template-columns:252px minmax(0,1fr)}
+#sidenav{position:sticky;top:49px;align-self:start;height:calc(100vh - 49px);overflow-y:auto;padding:16px 12px;border-right:1px solid var(--line)}
+#sidenav .navlink{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;color:var(--text);text-decoration:none;font-size:13.5px;cursor:pointer;transition:background .2s,color .2s}
+#sidenav .navlink:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+#sidenav .navlink.active{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent);font-weight:600}
+#sidenav .navlink.todo{color:var(--muted)}
+#sidenav .navlink.home{font-weight:600;margin-bottom:6px}
+#sidenav .nd{width:8px;height:8px;border-radius:50%;flex:none}
+#sidenav .navgroup{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:12px 8px 4px}
+#sidenav .navgrp{margin-bottom:2px}
+#sidenav .navhd2{display:flex;align-items:center;gap:7px;padding:8px 8px;font-size:13.5px;font-weight:600;color:var(--text);cursor:pointer;border-radius:8px;user-select:none}
+#sidenav .navhd2:hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+#sidenav .navhd2 .chev{font-size:10px;color:var(--muted);transition:transform .2s;flex:none}
+#sidenav .navgrp:not(.collapsed) .navhd2 .chev{transform:rotate(90deg)}
+#sidenav .navhd2 .gc{margin-left:auto;font-size:11px;font-weight:500;color:var(--muted);background:color-mix(in srgb,var(--muted) 14%,transparent);border-radius:10px;padding:1px 7px}
+#sidenav .navgbody{overflow:hidden;padding-left:6px}
+#sidenav .navgrp.collapsed .navgbody{display:none}
+main{min-width:0}
+#overview{padding:26px 32px 80px;max-width:1060px}
+h1.ttl{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0 0 6px}
+.sub{color:var(--muted);font-size:14px;margin-bottom:18px;line-height:1.5}
+.bar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:18px;padding:14px 18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(18px) saturate(180%)}
+.goal{font-size:12px;color:var(--accent);border:1px solid var(--accent);border-radius:20px;padding:3px 10px}
+.prog{flex:1;min-width:200px;height:10px;background:var(--track);border-radius:6px;overflow:hidden}
+.prog>i{display:block;height:100%;background:linear-gradient(90deg,#34c759,#30d1c1)}
+.progtxt{font-size:13px;color:var(--muted)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:14px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:22px}
+@media(max-width:1000px){.cols{grid-template-columns:1fr}}
+.stage{margin:0 0 6px;font-size:12px;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;padding-top:14px;border-top:1px dashed var(--line)}
+.stage:first-child{border-top:none;padding-top:0}
+.card{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);
+border-radius:14px;padding:14px 16px;margin:9px 0;position:relative;backdrop-filter:blur(18px) saturate(180%);
+transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s;animation:fadeInUp .4s ease-out backwards}
+.card:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.10)}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.card.cur{border-color:var(--accent);animation:fadeInUp .4s ease-out backwards,breathe 2.6s ease-in-out infinite .4s}
+@keyframes breathe{0%,100%{box-shadow:0 0 0 1px var(--accent),0 0 14px color-mix(in srgb,var(--accent) 22%,transparent)}50%{box-shadow:0 0 0 1px var(--accent),0 0 26px color-mix(in srgb,var(--accent) 45%,transparent)}}
+.card.done{opacity:.9}.card.linkcard{cursor:pointer}.card.linkcard:hover{opacity:1}
+.dot{width:12px;height:12px;border-radius:50%;margin-top:5px;flex:none;box-shadow:0 0 0 5px color-mix(in srgb,var(--muted) 16%,transparent);transition:transform .3s,box-shadow .3s}
+.card:hover .dot{transform:scale(1.18);box-shadow:0 0 0 6px color-mix(in srgb,var(--muted) 24%,transparent)}
+.t{font-weight:600}.t .stars{color:var(--yellow);font-size:12px;margin-left:6px}
+.d{color:var(--muted);font-size:13px;margin-top:3px;line-height:1.5}
+.pre{color:var(--muted);font-size:12px;margin-top:5px}.pre b{font-weight:500}
+.tag{position:absolute;top:13px;right:15px;font-size:11px;font-weight:600;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 34%,var(--line));border-radius:12px;padding:4px 11px}
+.tag.ok{color:var(--green);background:color-mix(in srgb,var(--green) 14%,transparent);border-color:color-mix(in srgb,var(--green) 40%,var(--line))}
+.side h3{font-size:12px;color:var(--muted);margin:0 0 8px;letter-spacing:.05em;text-transform:uppercase}
+.next,.exp{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:18px;backdrop-filter:blur(18px) saturate(180%)}
+.next .item{padding:8px 0;border-bottom:1px solid var(--line)}.next .item:last-child{border:none}
+.next .item b{color:var(--accent);font-size:15px;font-weight:600}.next .why{font-size:12px;color:var(--muted);margin-top:2px}
+.exp .e{padding:7px 0;border-bottom:1px solid var(--line)}.exp .e:last-child{border:none}
+.exp .e .nm{color:var(--text);font-size:15px;font-weight:600}.exp .e .why{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.5}
+.stars .se{color:var(--starempty)}
+/* 概念文档视图 */
+#docwrap{display:grid;grid-template-columns:minmax(0,1fr) 212px;gap:30px;padding:28px 34px 90px;max-width:1140px}
+@media(max-width:920px){#docwrap{grid-template-columns:1fr}#toc{display:none}}
+.dochead{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.dochead h1{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0}
+.dochead .stars{color:var(--yellow);font-size:15px}
+.badge.ok{font-size:12px;font-weight:600;border-radius:12px;padding:3px 10px;color:var(--green);background:color-mix(in srgb,var(--green) 14%,transparent);border:1px solid color-mix(in srgb,var(--green) 40%,var(--line))}
+.md{font-size:15px;line-height:1.78;margin-top:14px}
+.md h2{font-size:18px;margin:1.5em 0 .4em;scroll-margin-top:64px}.md h3{font-size:15px;margin:1.2em 0 .3em;color:var(--muted);scroll-margin-top:64px}
+.md p{margin:.6em 0}.md ul,.md ol{margin:.5em 0;padding-left:1.4em}.md li{margin:.25em 0}
+.md blockquote{margin:.7em 0;padding:.5em .9em;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:0 8px 8px 0}
+.md code{background:var(--code);padding:1px 6px;border-radius:5px;font-size:.92em;font-family:ui-monospace,Menlo,Consolas,monospace}
+.md a{color:var(--accent);text-decoration:none}.md a:hover{text-decoration:underline}.md a.xref{cursor:pointer}
+.md strong{font-weight:600}.md hr{border:none;border-top:1px solid var(--line);margin:1.1em 0}
+.vizwrap{margin:20px 0 4px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.vizbar{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--line)}
+.vizbar a{color:var(--accent);text-decoration:none;font-size:12px}
+.vizwrap iframe{width:100%;height:560px;border:0;display:block;background:var(--bg)}
+#toc{position:sticky;top:69px;align-self:start;height:fit-content}
+#toc .tochd{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+#toc .tl{display:block;color:var(--muted);text-decoration:none;font-size:13px;padding:5px 0 5px 12px;border-left:2px solid var(--line);cursor:pointer;line-height:1.4}
+#toc .tl:hover{color:var(--text)}
+#toc .tl.active{color:var(--accent);border-left-color:var(--accent)}
+#toc .tl.lv3{padding-left:24px;font-size:12.5px}
+#toc .tnote{color:var(--muted);font-size:12px}
+@media(max-width:860px){.shell{grid-template-columns:1fr}#sidenav{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line)}}
+#graphwrap{height:calc(100vh - 49px)}
+.navlink.disabled{opacity:.4;pointer-events:none}
+#goalwrap{padding:28px 34px 90px;max-width:880px}
+.ghead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.ghead h1{font-size:25px;font-weight:700;letter-spacing:-.02em;margin:0}
+.gtag{font-size:12px;color:var(--accent);border:1px solid var(--accent);border-radius:20px;padding:2px 10px}.gtag.sample{color:var(--muted);border-color:var(--line)}
+.gsub{color:var(--muted);font-size:13px;margin:4px 0 16px}
+.gmeter{margin:6px 0 14px}.gpct{font-size:34px;font-weight:700;letter-spacing:-.02em}
+.gbar{height:10px;background:var(--track);border-radius:6px;overflow:hidden;margin:6px 0 4px}.gbar>i{display:block;height:100%;border-radius:6px;transition:width .6s}
+.gtier{font-size:13px;color:var(--muted)}
+.gsum{font-size:14.5px;line-height:1.7;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.gh3{font-size:13px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin:22px 0 8px}
+.greqs{display:flex;flex-direction:column;gap:6px}.greq{display:flex;gap:10px;align-items:flex-start;font-size:14px}.greq em{color:var(--muted);font-style:normal;font-size:12.5px}
+.gck{width:20px;height:20px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.gck.ok{color:var(--green);background:color-mix(in srgb,var(--green) 16%,transparent)}.gck.no{color:var(--muted);background:color-mix(in srgb,var(--muted) 14%,transparent)}
+.grecs{display:flex;flex-direction:column;gap:8px}.grec{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.gp{flex:none;font-size:12px;font-weight:700;color:#fff;background:var(--accent);border-radius:8px;padding:3px 8px}.grn{font-weight:600;font-size:15px}.grw{color:var(--muted);font-size:13px;margin-top:3px;line-height:1.5}
+.celebrate{background:color-mix(in srgb,var(--green) 12%,transparent);border:1px solid color-mix(in srgb,var(--green) 40%,var(--line));border-radius:14px;padding:18px;margin-bottom:16px;animation:fadeInUp .5s ease-out}.celebrate .cbig{font-size:22px;font-weight:700;margin-bottom:4px}
+.gacts{font-size:14px;line-height:1.8;padding-left:1.2em}
+.gsrc{font-size:12px;color:var(--muted);margin-top:14px}.gsrc a{color:var(--accent);text-decoration:none}
+.gfb{margin-top:24px;border-top:1px dashed var(--line);padding-top:16px}.gfb textarea{width:100%;min-height:70px;background:var(--panel);border:1px solid var(--line);border-radius:10px;color:var(--text);padding:10px 12px;font:inherit;font-size:14px;resize:vertical}
+.gbtn{margin-top:10px;background:var(--green);color:#fff;border:none;border-radius:10px;padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer}.gnote{font-size:12.5px;color:var(--muted);margin-left:10px}
+.gempty{color:var(--muted);font-size:15px;line-height:1.8;max-width:620px}.gempty h1{color:var(--text);font-size:22px}.gref{font-size:13px;color:var(--accent);margin-top:10px}
+#graphframe{width:100%;height:100%;border:0;display:block;background:var(--bg)}
+</style></head><body>
+<div class="topbar">
+  <span class="brand">AI 学习站</span>
+  <span class="crumb" id="crumb"></span>
+  <span class="sp"></span>
+  <button class="themebtn" id="themebtn">◐ 深 / 浅</button>
+</div>
+<div class="shell">
+  <nav id="sidenav"><a class="navlink home" id="homelink">📋 学习路线图</a><a class="navlink home" id="graphlink">🕸 知识图谱</a><a class="navlink home" id="goallink">🎯 目标规划</a><div id="navbody"></div></nav>
+  <main>
+    <section id="overview">
+      <h1 class="ttl">学习路线图 <span style="color:var(--muted);font-weight:400;font-size:15px">Learning Roadmap</span></h1>
+      <div class="sub" id="sub"></div>
+      <div class="bar">
+        <span class="goal" id="goal" style="display:none"></span>
+        <div class="prog"><i id="progbar"></i></div>
+        <span class="progtxt" id="progtxt"></span>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--green)"></i>已学透</span>
+        <span><i style="background:var(--yellow)"></i>巩固中</span>
+        <span><i style="background:var(--gray)"></i>待学</span>
+        <span>★ = 重要度　|　按依赖顺序自上而下</span>
+      </div>
+      <div class="cols"><div id="timeline"></div>
+        <div class="side"><h3>下一步推荐 · NEXT 3</h3><div class="next" id="next"></div>
+          <h3>学完本领域后的扩展方向</h3><div class="exp" id="exp"></div></div></div>
+    </section>
+    <section id="docwrap" style="display:none"><div id="docview"></div><aside id="toc"></aside></section>
+    <section id="graphwrap" style="display:none"><iframe id="graphframe" data-src="AI-知识图谱.html"></iframe></section>
+    <section id="goalwrap" style="display:none"><div id="goalbody"></div></section>
+  </main>
+</div>
+<script>
+const DATA={"generated": "2026-06-16 02:47", "goal": "面试", "categories": {"AI": {"order": [{"title": "Token", "status": "已学透", "stage": 0, "importance": 5, "base_importance": 5, "prereqs": [], "desc": "它属于 AI 大模型，是模型处理文本的**最小单位**：一段\"词的碎片\"，也是衡量长度与计费的单位。", "groups": ["模型基础"], "related": ["Agent", "Context"]}, {"title": "Context", "status": "已学透", "stage": 1, "importance": 5, "base_importance": 5, "prereqs": ["Token"], "desc": "它属于 AI 大模型，是模型生成回答时**能参考的全部文本**（含它要生成的回答），即模型的**\"工作记忆\"**——容量固定，按 [[Token]] 计。", "groups": ["模型基础"], "related": ["Agent", "Harness", "Token"]}, {"title": "Agent", "status": "待学", "stage": 2, "importance": 5, "base_importance": 5, "prereqs": ["Context", "Token"], "desc": "能自主调用工具、分步完成任务的 AI 系统。", "groups": ["智能体与框架"], "related": ["Context", "Harness", "MCP", "Skill", "Token"]}, {"title": "Skill", "status": "已学透", "stage": 3, "importance": 4, "base_importance": 4, "prereqs": ["Agent"], "desc": "它属于 AI 工程，是一套**按需读取的说明书 / SOP**：把人的专家经验固化成规范，指导 Agent 用统一、可预期的方式处理某类任务。", "groups": ["工具与扩展"], "related": ["Agent", "Context", "MCP", "Plugin"]}, {"title": "MCP", "status": "待学", "stage": 3, "importance": 4, "base_importance": 4, "prereqs": ["Agent"], "desc": "一套让模型标准化连接外部工具/数据源的协议。", "groups": ["工具与扩展"], "related": ["Agent", "Plugin"]}, {"title": "Harness", "status": "待学", "stage": 3, "importance": 3, "base_importance": 3, "prereqs": ["Agent", "Context"], "desc": "包裹模型、负责编排工具调用与上下文的外层运行框架。", "groups": ["智能体与框架"], "related": ["Agent", "Context"]}, {"title": "Plugin", "status": "待学", "stage": 4, "importance": 3, "base_importance": 3, "prereqs": ["MCP", "Skill"], "desc": "把 MCP、技能、工具打包分发的可安装单元。", "groups": ["工具与扩展"], "related": ["MCP", "Skill"]}], "current": "Agent", "next3": ["Harness", "MCP", "Plugin"], "learned": 3, "total": 7, "max_stage": 4}}, "expansions": {"AI": [{"name": "机器学习基础", "importance": 5, "why": "理解模型为何这样行为的底层原理"}, {"name": "提示工程", "importance": 4, "why": "直接提升用好 Agent/Skill 的能力"}, {"name": "向量与检索(RAG)", "importance": 4, "why": "Context 之外给模型补充外部知识的主流方案"}]}}, DOCS={"Token": {"doc": "<div class=\"dochead\"><h1>Token <span class=\"stars\">★★★★★<span class=\"se\"></span></span></h1><span class=\"badge ok\">✓ 已学透</span></div><div class=\"md\"><h2 id=\"sec-1\">一句话定位</h2>\n<blockquote>它属于 AI 大模型，是模型处理文本的<strong>最小单位</strong>：一段&quot;词的碎片&quot;，也是衡量长度与计费的单位。</blockquote>\n<h2 id=\"sec-2\">动态图像（视觉建模）</h2>\n<p>一条翻译流水线，进来是人话、出去也是人话，中间一段模型只认数字：<br>人话 → 分词器<strong>切成碎片</strong>（token）→ <strong>查词表换成编号</strong>（id）→ 模型在 id 上计算 → 吐出新 id → <strong>拼回人话</strong>。<br>关键两道工序：① 切碎片 ② 碎片↔id 查表。<strong>token = 碎片本身，id = 它在词表里的门牌号</strong>（id 数值大小没有含义，只是编号）。</p>\n<h2 id=\"sec-3\">类比</h2>\n<p>像拼高达：设计师把成品拆成一个个<strong>最小零部件</strong>（token），每个零件有<strong>编号</strong>（id）；拿到一袋带编号的零件，再按说明书拼回成品（解码）。</p>\n<h2 id=\"sec-4\">大白话讲解（讲给外行）</h2>\n<p>token 是&quot;词的碎片&quot;，不等于字 / 词 / 字符——分词器<strong>不按词边界切，按语料里的高频片段切</strong>。<br>例：<code>ChatGPT is great!</code> 实际是 <strong>6 个 token</strong>：<code>Chat | G | PT | ␣is | ␣great | !</code>（&quot;ChatGPT&quot;不是常见词被剪成三块，&quot; great&quot;带空格算一个）。<br>为什么要这层：模型只能吃<strong>固定词表里的整数 id</strong>。按整词建表 → 生僻词/新词爆表且认不出（OOV）；按单字符 → 序列太长。<strong>子词分词（BPE）是折中</strong>：常见词留成 1 个 token，罕见词拆成已知子词。<br>经验值：英文 <strong>1 token ≈ 4 字符 ≈ ¾ 个词</strong>。</p>\n<h2 id=\"sec-5\">三个应用例子</h2>\n<ol><li>数 token / 估长度：用 OpenAI Tokenizer 之类工具先数 token，再决定能不能塞进上下文。</li><li>估成本：API 按 token 计费（输入/输出/缓存分开计价），不是按字数。</li><li>压缩上下文：把啰嗦 prompt 改短、把中文换成等价英文，都能省 token。</li></ol>\n<h2 id=\"sec-6\">失效边界（不懂 token 会踩的坑）</h2>\n<ul><li><strong>算钱</strong>：以为按&quot;文字数量&quot;收费，实际按拆出的 <strong>token 数</strong> → 账单/预算算错（非英文尤甚）。</li><li><strong>上下文上限</strong>：塞了很多内容，拆成 token 后<strong>超限被截断</strong>，模型其实没看到后半段。</li><li><strong>非英文</strong>：同一个上下文窗口/同样预算，中文能装的实际内容比英文少一截；拿英文 demo 估的长度与成本，搬到中文会<strong>双双爆掉</strong>。</li><li>根因澄清：中文更费 token <strong>不是因为中文啰嗦</strong>（中文信息密度其实更高），而是<strong>分词器主要在英文上训练、没给中文学到高效合并片段</strong>——是工具偏科。</li></ul>\n<h2 id=\"sec-7\">卡壳点复盘</h2>\n<ul><li>起初把 token 和 id 混为一谈 → 其实是两样：碎片（token）↔ 编号（id），中间隔一次查表。</li><li>&quot;ChatGPT is great!&quot; 直觉数成 5，实际 6 → 碎片按<strong>高频片段</strong>切，不按词/字边界。</li><li>误以为&quot;中文费 token = 中文啰嗦&quot; → 反了，是分词器对中文压缩效率低。</li></ul>\n<h2 id=\"sec-8\">成长对比</h2>\n<ul><li>起点认知：token 是 AI 计量的基本单位，可能是一个字或多字组合。</li><li>现在的理解：token = 高频&quot;词碎片&quot;（≠字/词），经查表变成 id 喂给模型；是长度与计费单位；中文更费源于分词器偏科；不懂它会在算钱/超限/非英文上踩坑。</li></ul>\n<h2 id=\"sec-9\">出处 / Sources</h2>\n<ul><li>〔OpenAI 官方帮助中心，一手，抓取 2026-06-15〕<a href=\"https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them\" target=\"_blank\" rel=\"noopener\">https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them</a></li><li>原话引述：「Tokens can be thought of as pieces of words... tokens can include trailing spaces and even sub-words.」「1 token ~= 4 chars in English」「1 token ~= ¾ words」「The higher token-to-char ratio can make it more expensive to implement the API for languages other than English.」</li><li>AI 转述（可信度：高）：token 是词的碎片、按高频片段切、英文约 4 字符/词元、非英文 token-字符比更高更贵。</li><li>〔Hugging Face Transformers 分词文档，技术资料，抓取 2026-06-15〕<a href=\"https://huggingface.co/docs/transformers/main/en/tokenizer_summary\" target=\"_blank\" rel=\"noopener\">https://huggingface.co/docs/transformers/main/en/tokenizer_summary</a></li><li>AI 转述（可信度：高）：子词分词（BPE）保留固定词表、常见词成单 token、罕见词拆子词以解决 OOV。</li><li>〔arXiv 2305.17179 多语言分词，论文，抓取 2026-06-15〕<a href=\"https://arxiv.org/pdf/2305.17179\" target=\"_blank\" rel=\"noopener\">https://arxiv.org/pdf/2305.17179</a></li><li>AI 转述（可信度：中）：分词器在不同语言间的词表分配不均，影响非英文的 token 效率。</li></ul>\n<h2 id=\"sec-10\">相关</h2>\n<p><a class=\"xref\" data-go=\"Context\">Context</a> · Agent</p></div>", "toc": "<div class=\"tochd\">本文导读</div><a class=\"tl lv2\" data-id=\"sec-1\">一句话定位</a><a class=\"tl lv2\" data-id=\"sec-2\">动态图像（视觉建模）</a><a class=\"tl lv2\" data-id=\"sec-3\">类比</a><a class=\"tl lv2\" data-id=\"sec-4\">大白话讲解（讲给外行）</a><a class=\"tl lv2\" data-id=\"sec-5\">三个应用例子</a><a class=\"tl lv2\" data-id=\"sec-6\">失效边界（不懂 token 会踩的坑）</a><a class=\"tl lv2\" data-id=\"sec-7\">卡壳点复盘</a><a class=\"tl lv2\" data-id=\"sec-8\">成长对比</a><a class=\"tl lv2\" data-id=\"sec-9\">出处 / Sources</a><a class=\"tl lv2\" data-id=\"sec-10\">相关</a>"}, "Context": {"doc": "<div class=\"dochead\"><h1>Context <span class=\"stars\">★★★★★<span class=\"se\"></span></span></h1><span class=\"badge ok\">✓ 已学透</span></div><div class=\"md\"><h2 id=\"sec-1\">一句话定位</h2>\n<blockquote>它属于 AI 大模型，是模型生成回答时<strong>能参考的全部文本</strong>（含它要生成的回答），即模型的<strong>&quot;工作记忆&quot;</strong>——容量固定，按 <a class=\"xref\" data-go=\"Token\">Token</a> 计。</blockquote>\n<h2 id=\"sec-2\">动态图像（视觉建模）</h2>\n<p>一个固定容量的窗口，自上而下喂给模型：System prompt(含 memory) / Skill（只放一次，在最前）→ 历史对话 → 本轮输入 →（模型生成的回答，也占容量，输入+输出共享）。<br><strong>递归累积</strong>：每过一轮，<code>下一轮历史 = 旧历史 + {本轮输入 + 本轮回答}</code>，窗口线性填高。装满 → 压缩(compaction) 或 丢最早(FIFO)。</p>\n<blockquote>动态画面见 #动态画面（可交互：逐轮播放 + token 计数 + 注意力热区）。</blockquote>\n<h2 id=\"sec-3\">类比</h2>\n<p>像 AI 的<strong>便利贴</strong>：它本身不记得你，你每次得把所有相关的话写在便利贴上递给它，它只看便利贴回答；便利贴大小固定，写满了就得擦掉最早的。<br>（心法版：context 是模型对外呈现的那层&quot;界面/假我&quot;，是它与世界沟通的介质。）</p>\n<h2 id=\"sec-4\">大白话讲解（讲给外行）</h2>\n<p>模型<strong>本身无状态、没有记忆</strong>。你聊十句它&quot;记得&quot;前九句，是因为应用<strong>每一轮都把全部历史重新塞进 context 当输入</strong>。<br>所谓&quot;长期记忆 / Memory&quot;是<strong>应用层</strong>的把戏——存在 context 之外，需要时再挑相关的喂回，不是模型自己记住。<br>为什么有限：① 硬上限——自注意力要算每对 token 的关系，计算量随长度约<strong>平方增长</strong>；② 软衰减——就算没满，token 越多准确率/召回越降（context rot）。</p>\n<h2 id=\"sec-5\">三个应用例子</h2>\n<ol><li>不相干的新问题 → 开新窗口，避免旧内容污染、稀释重点。</li><li>检索代码 → 先用 codegraph 这类<strong>预索引知识图谱</strong>，按需查精准事实，而不是把整个代码库读进窗口。</li><li>需要外部资料 → 用 MCP/外部索引让数据<strong>按需、精准</strong>进 context（注意：省的是&quot;只取相关那一小段&quot;，不是 MCP 本身）。</li></ol>\n<h2 id=\"sec-6\">失效边界</h2>\n<ul><li><strong>最易混</strong>：Context（这次对话的工作记忆，可装全新内容）≠ 训练知识（固化在<strong>模型参数/权重</strong>里，长期已学、有知识截止期、改不动）。</li><li>把什么都塞进一个窗口 → context rot，答不准。</li><li>关键信息别埋在中间（lost in the middle，放开头/结尾最稳）。</li><li>超出上限 → 报错(model_context_window_exceeded) 或 FIFO 丢最早；不触发压缩/截断时，容量内历史<strong>逐字完整保留</strong>（例外：扩展思考的旧 thinking 块会被自动剥掉）。</li></ul>\n<h2 id=\"sec-7\">卡壳点复盘</h2>\n<ul><li>误以为模型&quot;自己记得&quot;对话 → 其实无状态，靠应用每轮重发全部历史。</li><li>漏了&quot;输出也占容量&quot; → 输入+输出共享同一窗口。</li><li>把&quot;省 context&quot;归功于 MCP 本身 → 真正省的是&quot;按需取精准外部数据&quot;。</li></ul>\n<h2 id=\"sec-8\">成长对比</h2>\n<ul><li>起点认知：context 就是喂给 AI 的一段话，拆开是一堆 token。</li><li>现在的理解：context = 模型的固定容量工作记忆；模型无记忆、靠应用每轮重拼历史(递归累积)；有硬/软两重限制；区别于训练知识；满了压缩或丢弃；关键信息别埋中间。</li></ul>\n<h2 id=\"sec-9\">动态画面</h2>\n<ul><li>打开成稿动效：[_viz/Context.html](_viz/Context.html)（逐轮播放递归累积、token 计数、注意力热区、压缩/丢弃切换、深浅配色）</li></ul>\n<h2 id=\"sec-10\">出处 / Sources</h2>\n<ul><li>〔Anthropic 官方文档，一手，抓取 2026-06-15〕<a href=\"https://platform.claude.com/docs/en/build-with-claude/context-windows\" target=\"_blank\" rel=\"noopener\">https://platform.claude.com/docs/en/build-with-claude/context-windows</a></li><li>原话引述：「The &quot;context window&quot; refers to all the text a language model can reference when generating a response, including the response itself... a &quot;working memory&quot; for the model.」「As token count grows, accuracy and recall degrade, a phenomenon known as context rot.」「Previous turns are preserved completely.」「Input phase: Contains all previous conversation history plus the current user message.」</li><li>AI 转述（可信度：高）：context=工作记忆、按 token 计、输入输出共享、历史逐轮累积重发、满了压缩/FIFO。</li><li>〔Liu et al. 2023, arXiv，论文，抓取 2026-06-15〕<a href=\"https://arxiv.org/abs/2307.03172\" target=\"_blank\" rel=\"noopener\">https://arxiv.org/abs/2307.03172</a></li><li>AI 转述（可信度：高）：信息在上下文开头/结尾时模型用得最好，埋在中间显著变差（lost in the middle）。</li></ul>\n<h2 id=\"sec-11\">相关</h2>\n<p><a class=\"xref\" data-go=\"Token\">Token</a> · Agent · Harness</p></div><div class=\"vizwrap\"><div class=\"vizbar\"><span>动态画面 / Dynamic View</span><a href=\"_viz/Context.html\" target=\"_blank\" rel=\"noopener\">新标签打开 ↗</a></div><iframe class=\"vizframe\" data-src=\"_viz/Context.html\" loading=\"lazy\"></iframe></div>", "toc": "<div class=\"tochd\">本文导读</div><a class=\"tl lv2\" data-id=\"sec-1\">一句话定位</a><a class=\"tl lv2\" data-id=\"sec-2\">动态图像（视觉建模）</a><a class=\"tl lv2\" data-id=\"sec-3\">类比</a><a class=\"tl lv2\" data-id=\"sec-4\">大白话讲解（讲给外行）</a><a class=\"tl lv2\" data-id=\"sec-5\">三个应用例子</a><a class=\"tl lv2\" data-id=\"sec-6\">失效边界</a><a class=\"tl lv2\" data-id=\"sec-7\">卡壳点复盘</a><a class=\"tl lv2\" data-id=\"sec-8\">成长对比</a><a class=\"tl lv2\" data-id=\"sec-9\">动态画面</a><a class=\"tl lv2\" data-id=\"sec-10\">出处 / Sources</a><a class=\"tl lv2\" data-id=\"sec-11\">相关</a>"}, "Skill": {"doc": "<div class=\"dochead\"><h1>Skill <span class=\"stars\">★★★★<span class=\"se\">★</span></span></h1><span class=\"badge ok\">✓ 已学透</span></div><div class=\"md\"><h2 id=\"sec-1\">一句话定位</h2>\n<blockquote>它属于 AI 工程，是一套<strong>按需读取的说明书 / SOP</strong>：把人的专家经验固化成规范，指导 Agent 用统一、可预期的方式处理某类任务。</blockquote>\n<h2 id=\"sec-2\">动态图像（视觉建模）</h2>\n<p>用户提问 → AI 拿这个任务，跟库里每个 skill 的 description「读一遍」做<strong>语义匹配</strong>（不是字符串关键词引擎，是模型自己判断&quot;这件事像不像该用它&quot;）→ 命中则把该 skill 的说明书<strong>读进当前上下文</strong> → 按说明书的流程与标准执行、产出 → 用完放回，并<strong>不会永久改变模型能力</strong>。<br>关键画面：skill 平时躺在库里，<strong>用到那一刻才被拿出来当指令照着做</strong>。</p>\n<h2 id=\"sec-3\">类比</h2>\n<p>像「专业手册 / SOP」。AI 是干活的人，skill 是他临时翻开的那本手册——手册不会自己干活，是人拿着手册干。<br>反例（澄清常见误解）：它<strong>不</strong>像游戏 DLC（装上就永久长在身上），那是<strong>微调模型</strong>才有的&quot;天生变强&quot;。</p>\n<h2 id=\"sec-4\">大白话讲解</h2>\n<p>skill 不是给 AI&quot;永久升级能力&quot;，而是给它一份&quot;这类活该怎么干&quot;的说明书，用到时现读现用。<br>靠每个 skill 自带的一段 description 触发——description 把&quot;我是干嘛的、什么时候该用我&quot;写清楚，模型据此语义判断要不要调它。所以 description 写得好不好，直接决定 skill 会不会在该出场时被想起来。</p>\n<h2 id=\"sec-5\">三个应用例子</h2>\n<ol><li>嵌入式工程师：把&quot;嵌入式代码 + 汇报&quot;的固定规范做成 skill，AI 每次按同一套结构输出。</li><li>亚马逊运营：把 listing 优化的最佳实践固化成 skill，产出稳定贴合平台与预期。</li><li>文档处理：skill 里写&quot;这一步去跑这段转码/抽表脚本&quot;，把机械步骤交给脚本，judgment 留给 AI。</li></ol>\n<h2 id=\"sec-6\">失效边界（什么时候不该用 skill）</h2>\n<ul><li>需要<strong>真正执行外部动作</strong>（发邮件、查数据库、接云端服务）→ 用 MCP / 工具，不是 skill。</li><li>某步是<strong>死协议、固定输入输出、无需动脑</strong> → 那是<strong>脚本</strong>；skill 可以&quot;雇佣&quot;脚本，但 skill ≠ 脚本。</li><li>想让 AI <strong>天生就擅长</strong>某领域、不靠现读说明书 → 用<strong>微调模型</strong>。</li><li>skill 的甜区：用户已有经验，用一层&quot;约束 + 指导&quot;规范 Agent 的处理方式，避免发散、固化输出范围与表达，从而得到更符合预期的结果。</li></ul>\n<h2 id=\"sec-7\">卡壳点复盘</h2>\n<ul><li>一开始以为触发是&quot;关键词字符串匹配&quot; → 其实是模型拿任务跟 description 做<strong>语义匹配</strong>。</li><li>以为 skill 像 DLC&quot;永久变强&quot; → 其实是<strong>按需读取的指令</strong>，用完不改变模型本身。</li><li>&quot;skill 里也能放脚本，那俩差在哪？&quot; → 差在<strong>谁做判断</strong>：脚本是固定协议、精确产出；skill 是可商量的建议约束，中间过程靠 AI judgment。skill 可调用脚本完成机械子步骤。</li></ul>\n<h2 id=\"sec-8\">相关</h2>\n<p>Agent · Plugin · MCP · <a class=\"xref\" data-go=\"Context\">Context</a></p></div>", "toc": "<div class=\"tochd\">本文导读</div><a class=\"tl lv2\" data-id=\"sec-1\">一句话定位</a><a class=\"tl lv2\" data-id=\"sec-2\">动态图像（视觉建模）</a><a class=\"tl lv2\" data-id=\"sec-3\">类比</a><a class=\"tl lv2\" data-id=\"sec-4\">大白话讲解</a><a class=\"tl lv2\" data-id=\"sec-5\">三个应用例子</a><a class=\"tl lv2\" data-id=\"sec-6\">失效边界（什么时候不该用 skill）</a><a class=\"tl lv2\" data-id=\"sec-7\">卡壳点复盘</a><a class=\"tl lv2\" data-id=\"sec-8\">相关</a>"}}, GOAL={"goal": "应聘 AI 应用开发工程师", "goal_category": "求职", "sample": true, "updated": "2026-06-15", "status": "进行中", "match": 35, "tier": "低", "summary": "你已打牢大模型概念地基(Token / Context / Skill)，但 AI 应用开发岗更看重工程落地：从0到1搭建业务 Agent 系统、RAG 检索问答、Python + 主流框架、模型部署服务化。目前概念面够、工程面缺，匹配度偏低。", "requirements": [{"name": "大模型基础概念(Token / Context / 上下文管理)", "have": true, "via": ["Token", "Context"]}, {"name": "Skill / 工具化与流程固化", "have": true, "via": ["Skill"]}, {"name": "Agent / 工具调用 · 业务 Agent 系统(从0到1)", "have": false, "via": []}, {"name": "RAG / 向量检索问答", "have": false, "via": []}, {"name": "Python + PyTorch/TensorFlow 等主流框架", "have": false, "via": []}, {"name": "模型部署、服务化与性能优化", "have": false, "via": []}, {"name": "机器学习 / 深度学习基础", "have": false, "via": []}], "recommend": [{"concept": "Agent", "priority": 1, "why": "JD 核心:深度参与业务 Agent 系统从0到1;也是你图谱里 Skill / MCP / Harness 的共同前置，学它能立刻盘活一大片"}, {"concept": "向量与检索(RAG)", "priority": 2, "why": "JD 高频:基于大模型的智能问答/检索落地"}, {"concept": "Python 与 AI 框架(PyTorch)", "priority": 3, "why": "JD 硬性门槛:精通 Python + 框架的工程实现"}, {"concept": "模型部署与服务化", "priority": 4, "why": "JD 强调把算法稳定工程化、服务化落地"}, {"concept": "机器学习基础", "priority": 5, "why": "理解模型行为与调优的底层原理"}], "high_actions": [], "related_domains": [], "sources": ["https://www.zhipin.com/zhaopin/39608183209b29790HR-0tm5/", "https://www.ncss.cn/student/jobs/EtMoJgBpBGZXHvZyinAdwc/detail.html"], "feedback": []};
+const CAT=Object.keys(DATA.categories)[0], R=DATA.categories[CAT];
+const DOTC={"已学透":"var(--green)","巩固中":"var(--yellow)","待学":"var(--gray)"};
+const cardEls={};
+function stars(n){return '★'.repeat(n)+'<span class="se">'+'★'.repeat(Math.max(0,5-n))+'</span>';}
+function theme(){return document.documentElement.dataset.theme;}
+function renderOverview(){
+  document.getElementById('sub').textContent=CAT+' · 共 '+R.total+' 个核心概念 · 依赖深度 '+(R.max_stage+1)+' 层 · 更新于 '+DATA.generated;
+  if(DATA.goal){const g=document.getElementById('goal');g.style.display='';g.textContent='目标：'+DATA.goal;}
+  const pct=R.total?Math.round(R.learned/R.total*100):0;
+  document.getElementById('progbar').style.width=pct+'%';
+  document.getElementById('progtxt').textContent=R.learned+'/'+R.total+' 已学透 · '+pct+'%';
+  const tl=document.getElementById('timeline');tl.innerHTML='';let ls=-1;
+  R.order.forEach(it=>{
+    if(it.stage!==ls){const s=document.createElement('div');s.className='stage';
+      s.textContent='阶段 '+(it.stage+1)+(it.stage===0?'（地基 · 无前置）':'（需先掌握前置）');tl.appendChild(s);ls=it.stage;}
+    const done=it.status==='已学透';
+    const card=document.createElement('div');
+    card.className='card'+(it.title===R.current?' cur':'')+(done?' done linkcard':'');
+    card.id='card-'+it.title;card.dataset.k=it.title;cardEls[it.title]=card;
+    if(done)card.onclick=()=>go(it.title);
+    card.innerHTML='<span class="dot" style="background:'+(DOTC[it.status]||'var(--gray)')+'"></span>'
+      +'<div style="flex:1"><div class="t">'+it.title+'<span class="stars">'+stars(it.importance)+'</span></div>'
+      +(it.desc?'<div class="d">'+it.desc+'</div>':'')
+      +(it.prereqs.length?'<div class="pre"><b>前置：</b>'+it.prereqs.join(' · ')+'</div>':'')+'</div>'
+      +(it.title===R.current?'<span class="tag">▶ 你在这里 / 下一个</span>':(done?'<span class="tag ok">✓ 已学透 ›</span>':''));
+    tl.appendChild(card);
+  });
+  const nx=document.getElementById('next');
+  if(!R.next3.length)nx.innerHTML='<div class="why">本领域已全部学透 →</div>';
+  else nx.innerHTML=R.next3.map(t=>{const it=R.order.find(o=>o.title===t);
+    const sh=it.prereqs.length?('衔接 '+it.prereqs.join('、')):'关联当前知识';
+    return '<div class="item"><b>'+t+'</b> <span style="color:var(--yellow);font-size:12px">'+stars(it.importance)+'</span>'
+      +'<div class="why">'+(it.desc||'')+'</div><div class="why">'+sh+'</div></div>';}).join('');
+  const ex=document.getElementById('exp');const list=(DATA.expansions||{})[CAT]||[];
+  ex.innerHTML=list.length?list.slice().sort((a,b)=>b.importance-a.importance).map(e=>
+    '<div class="e"><div class="nm">'+e.name+' <span style="color:var(--yellow);font-size:12px">'+stars(e.importance)+'</span></div>'
+    +'<div class="why">'+(e.why||'')+'</div></div>').join(''):'<div class="why">（暂未配置扩展方向）</div>';
+}
+function buildNav(){
+  const nb=document.getElementById('navbody');nb.innerHTML='';
+  const groups=[],gmap={};
+  R.order.forEach(it=>{(it.groups&&it.groups.length?it.groups:['未分类']).forEach(g=>{
+    if(!gmap[g]){gmap[g]=[];groups.push(g);} gmap[g].push(it);});});
+  groups.forEach(g=>{
+    const wrap=document.createElement('div');wrap.className='navgrp';
+    const hd=document.createElement('div');hd.className='navhd2';
+    hd.innerHTML='<span class="chev">▸</span><span>'+g+'</span><span class="gc">'+gmap[g].length+'</span>';
+    const body=document.createElement('div');body.className='navgbody';
+    gmap[g].forEach(it=>{
+      const done=it.status==='已学透';
+      const a=document.createElement('a');a.className='navlink'+(done?'':' todo');a.dataset.k=it.title;
+      a.innerHTML='<span class="nd" style="background:'+(DOTC[it.status]||'var(--gray)')+'"></span>'+it.title;
+      a.onclick=function(e){e.stopPropagation(); if(done){go(it.title);} else {go('__overview__');setTimeout(()=>{const el=cardEls[it.title];if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},60);} };
+      body.appendChild(a);
+    });
+    hd.onclick=function(){wrap.classList.toggle('collapsed');};
+    wrap.appendChild(hd);wrap.appendChild(body);nb.appendChild(wrap);
+  });
+}
+function setActive(v){document.querySelectorAll('#sidenav .navlink').forEach(x=>x.classList.toggle('active',x.dataset.k===v));
+  document.getElementById('homelink').classList.toggle('active',v==='__overview__');document.getElementById('graphlink').classList.toggle('active',v==='__graph__');document.getElementById('goallink').classList.toggle('active',v==='__goal__');}
+function applyVizTheme(){document.querySelectorAll('#docview .vizframe').forEach(f=>{if(!f.src||f.src==='about:blank'){f.src=f.dataset.src+'?theme='+theme();}});}
+function bindXref(){document.querySelectorAll('#docview a.xref').forEach(a=>a.onclick=()=>go(a.dataset.go));}
+function bindToc(){
+  const links=[...document.querySelectorAll('#toc .tl')];
+  links.forEach(a=>a.onclick=()=>{const el=document.getElementById(a.dataset.id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});});
+  if(window.__tio)window.__tio.disconnect();
+  window.__tio=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('active',a.dataset.id===e.target.id));}});},{rootMargin:'-8% 0px -82% 0px'});
+  document.querySelectorAll('#docview h2[id],#docview h3[id]').forEach(h=>window.__tio.observe(h));
+}
+function gIsDone(){var ls=false;try{ls=localStorage.getItem('goal_done_'+CAT)==='1';}catch(e){}return ls||(GOAL&&GOAL.status==='已完成');}
+function gTierColor(t){return t==='高'?'var(--green)':(t==='中'?'#ff9f0a':'#ff6b6b');}
+function updateGoalNav(){var gl=document.getElementById('goallink');if(!gl)return;gl.classList.toggle('disabled',R.learned===0);gl.textContent=gIsDone()?'🎯 目标完成 ✅':'🎯 目标规划';}
+function renderGoal(){
+  var b=document.getElementById('goalbody');
+  if(R.learned===0){b.innerHTML='<div class="gempty">完成第一个知识点后，这里才会解锁「目标规划」。</div>';return;}
+  if(!GOAL||!GOAL.goal){b.innerHTML='<div class="gempty"><h1>🎯 目标规划</h1><p>你还没设定本领域的学习目标。告诉我你的<b>具体目标</b>（越细分越好：「CET-4 英语考试」优于「考试」，「企业内训分享」优于「分享」），我会联网对照真实要求、分析你与目标的差距并按优先级规划下一步。</p><p class="gref">参考分类：应试 · 求职 · 分享 · 知识变现 · 自主学习 · 无目标(AI自主发散)</p></div>';return;}
+  var g=GOAL,done=gIsDone(),h='';
+  h+='<div class="ghead"><h1>🎯 '+g.goal+'</h1>'+(g.goal_category?'<span class="gtag">'+g.goal_category+'</span>':'')+(g.sample?'<span class="gtag sample">示例</span>':'')+'</div><div class="gsub">更新于 '+(g.updated||'')+'</div>';
+  if(done)h+='<div class="celebrate"><div class="cbig">🎉 目标完成！</div><div>恭喜拿下「'+g.goal+'」。</div></div>';
+  var pct=done?100:(g.match||0),tc=gTierColor(done?'高':g.tier);
+  h+='<div class="gmeter"><div class="gpct" style="color:'+tc+'">'+pct+'%</div><div class="gbar"><i style="width:'+pct+'%;background:'+tc+'"></i></div><div class="gtier">与目标匹配度 · '+(done?'已达成':(g.tier||'')+' 档')+'</div></div>';
+  if(g.summary)h+='<p class="gsum">'+g.summary+'</p>';
+  if(g.requirements&&g.requirements.length)h+='<div class="gh3">目标要求对照</div><div class="greqs">'+g.requirements.map(function(r){return '<div class="greq"><span class="gck '+(r.have?'ok':'no')+'">'+(r.have?'✓':'○')+'</span><span>'+r.name+(r.via&&r.via.length?' <em>('+r.via.join('、')+')</em>':'')+'</span></div>';}).join('')+'</div>';
+  if(!done&&g.tier!=='高'&&g.recommend&&g.recommend.length)h+='<div class="gh3">下一步学习规划 · 按优先级</div><div class="grecs">'+g.recommend.map(function(r){return '<div class="grec"><span class="gp">P'+r.priority+'</span><div><div class="grn">'+r.concept+'</div><div class="grw">'+r.why+'</div></div></div>';}).join('')+'</div>';
+  if((done||g.tier==='高')&&g.high_actions&&g.high_actions.length)h+='<div class="gh3">去实践 · 把知识用起来</div><ul class="gacts">'+g.high_actions.map(function(a){return '<li>'+a+'</li>';}).join('')+'</ul>';
+  if(g.sources&&g.sources.length)h+='<div class="gsrc">目标要求来源：'+g.sources.map(function(s,i){return '<a href="'+s+'" target="_blank" rel="noopener">来源'+(i+1)+'</a>';}).join(' · ')+'</div>';
+  h+='<div class="gfb"><div class="gh3">完成反馈</div><textarea id="gfbtext" placeholder="例如：参加 CET-4 考试通过！/ 已做完 3 套模拟题，阅读还需加强…"></textarea>';
+  if(!done)h+='<div><button id="gdone" class="gbtn">🎉 标记目标完成</button><span class="gnote">点完成后请告诉我一声，我会更新数据、让知识图谱里这部分知识“活”起来。</span></div>';
+  else h+='<div class="gnote">已完成。若有新目标，告诉我即可重新规划。</div>';
+  h+='</div>';
+  b.innerHTML=h;
+  var db=document.getElementById('gdone');
+  if(db)db.onclick=function(){try{localStorage.setItem('goal_done_'+CAT,'1');var fb=document.getElementById('gfbtext');if(fb&&fb.value)localStorage.setItem('goal_fb_'+CAT,fb.value);}catch(e){}updateGoalNav();renderGoal();try{var gf=document.getElementById('graphframe');if(gf&&gf.src&&gf.src!=='about:blank')gf.contentWindow.postMessage({goalDone:true},'*');}catch(e){}window.scrollTo(0,0);};
+}
+function go(v){
+  const ov=document.getElementById('overview'),dw=document.getElementById('docwrap'),gw=document.getElementById('graphwrap'),goalw=document.getElementById('goalwrap');
+  gw.style.display='none';goalw.style.display='none';
+  if(v==='__goal__'){if(R.learned===0){go('__overview__');return;}ov.style.display='none';dw.style.display='none';goalw.style.display='block';renderGoal();setActive('__goal__');document.getElementById('crumb').innerHTML='/ <b>'+(gIsDone()?'目标完成 ✅':'目标规划')+'</b>';location.hash=encodeURIComponent('__goal__');window.scrollTo(0,0);return;}
+  if(v==='__graph__'){ov.style.display='none';dw.style.display='none';gw.style.display='block';
+    const gf=document.getElementById('graphframe');if(!gf.src||gf.src==='about:blank'){gf.src=gf.dataset.src+'?theme='+theme()+'&goaldone='+(gIsDone()?1:0);}else{try{gf.contentWindow.postMessage({theme:theme()},'*');gf.contentWindow.postMessage({goalDone:gIsDone()},'*');}catch(e){}}
+    setActive('__graph__');document.getElementById('crumb').innerHTML='/ <b>知识图谱</b>';location.hash=encodeURIComponent('__graph__');window.scrollTo(0,0);return;}
+  if(v==='__overview__'||!DOCS[v]){ov.style.display='';dw.style.display='none';setActive('__overview__');
+    document.getElementById('crumb').innerHTML='/ <b>学习路线图</b>';location.hash='';window.scrollTo(0,0);return;}
+  ov.style.display='none';dw.style.display='grid';
+  document.getElementById('docview').innerHTML=DOCS[v].doc;
+  document.getElementById('toc').innerHTML=DOCS[v].toc;
+  applyVizTheme();bindXref();bindToc();setActive(v);
+  document.getElementById('crumb').innerHTML='/ <span class="cl" id="crmhome">学习路线图</span> / <b>'+v+'</b>';
+  const ch=document.getElementById('crmhome');if(ch)ch.onclick=()=>go('__overview__');
+  location.hash=encodeURIComponent(v);window.scrollTo(0,0);
+}
+document.getElementById('themebtn').onclick=function(){var r=document.documentElement;var t=r.dataset.theme==='light'?'dark':'light';r.dataset.theme=t;
+  document.querySelectorAll('#docview .vizframe').forEach(f=>{try{f.contentWindow.postMessage({theme:t},'*');}catch(e){}});
+  var gf=document.getElementById('graphframe');if(gf&&gf.src&&gf.src!=='about:blank'){try{gf.contentWindow.postMessage({theme:t},'*');}catch(e){}}};
+document.getElementById('homelink').onclick=()=>go('__overview__');
+document.getElementById('graphlink').onclick=()=>go('__graph__');
+document.getElementById('goallink').onclick=()=>{if(R.learned>0)go('__goal__');};
+window.addEventListener('message',function(e){if(e&&e.data&&e.data.goto){var g=e.data.goto;if(DOCS[g])go(g);else{go('__overview__');setTimeout(function(){var el=cardEls[g];if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},80);}}});
+renderOverview();buildNav();updateGoalNav();
+go(location.hash?decodeURIComponent(location.hash.slice(1)):'__overview__');
+window.addEventListener('hashchange',()=>{go(location.hash?decodeURIComponent(location.hash.slice(1)):'__overview__');});
+</script></body></html>

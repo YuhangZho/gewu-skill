@@ -1,0 +1,188 @@
+{
+  "generated": "2026-06-16 02:47",
+  "goal": "面试",
+  "categories": {
+    "AI": {
+      "order": [
+        {
+          "title": "Token",
+          "status": "已学透",
+          "stage": 0,
+          "importance": 5,
+          "base_importance": 5,
+          "prereqs": [],
+          "desc": "它属于 AI 大模型，是模型处理文本的**最小单位**：一段\"词的碎片\"，也是衡量长度与计费的单位。",
+          "groups": [
+            "模型基础"
+          ],
+          "related": [
+            "Agent",
+            "Context"
+          ]
+        },
+        {
+          "title": "Context",
+          "status": "已学透",
+          "stage": 1,
+          "importance": 5,
+          "base_importance": 5,
+          "prereqs": [
+            "Token"
+          ],
+          "desc": "它属于 AI 大模型，是模型生成回答时**能参考的全部文本**（含它要生成的回答），即模型的**\"工作记忆\"**——容量固定，按 [[Token]] 计。",
+          "groups": [
+            "模型基础"
+          ],
+          "related": [
+            "Agent",
+            "Harness",
+            "Token"
+          ]
+        },
+        {
+          "title": "Agent",
+          "status": "待学",
+          "stage": 2,
+          "importance": 5,
+          "base_importance": 5,
+          "prereqs": [
+            "Context",
+            "Token"
+          ],
+          "desc": "能自主调用工具、分步完成任务的 AI 系统。",
+          "groups": [
+            "智能体与框架"
+          ],
+          "related": [
+            "Context",
+            "Harness",
+            "MCP",
+            "Skill",
+            "Token"
+          ]
+        },
+        {
+          "title": "Skill",
+          "status": "已学透",
+          "stage": 3,
+          "importance": 4,
+          "base_importance": 4,
+          "prereqs": [
+            "Agent"
+          ],
+          "desc": "它属于 AI 工程，是一套**按需读取的说明书 / SOP**：把人的专家经验固化成规范，指导 Agent 用统一、可预期的方式处理某类任务。",
+          "groups": [
+            "工具与扩展"
+          ],
+          "related": [
+            "Agent",
+            "Context",
+            "MCP",
+            "Plugin"
+          ]
+        },
+        {
+          "title": "MCP",
+          "status": "待学",
+          "stage": 3,
+          "importance": 4,
+          "base_importance": 4,
+          "prereqs": [
+            "Agent"
+          ],
+          "desc": "一套让模型标准化连接外部工具/数据源的协议。",
+          "groups": [
+            "工具与扩展"
+          ],
+          "related": [
+            "Agent",
+            "Plugin"
+          ]
+        },
+        {
+          "title": "Harness",
+          "status": "待学",
+          "stage": 3,
+          "importance": 3,
+          "base_importance": 3,
+          "prereqs": [
+            "Agent",
+            "Context"
+          ],
+          "desc": "包裹模型、负责编排工具调用与上下文的外层运行框架。",
+          "groups": [
+            "智能体与框架"
+          ],
+          "related": [
+            "Agent",
+            "Context"
+          ]
+        },
+        {
+          "title": "Plugin",
+          "status": "待学",
+          "stage": 4,
+          "importance": 3,
+          "base_importance": 3,
+          "prereqs": [
+            "MCP",
+            "Skill"
+          ],
+          "desc": "把 MCP、技能、工具打包分发的可安装单元。",
+          "groups": [
+            "工具与扩展"
+          ],
+          "related": [
+            "MCP",
+            "Skill"
+          ]
+        }
+      ],
+      "current": "Agent",
+      "next3": [
+        "Harness",
+        "MCP",
+        "Plugin"
+      ],
+      "learned": 3,
+      "total": 7,
+      "max_stage": 4
+    }
+  },
+  "expansions": {
+    "AI": [
+      {
+        "name": "机器学习基础",
+        "importance": 5,
+        "why": "理解模型为何这样行为的底层原理"
+      },
+      {
+        "name": "提示工程",
+        "importance": 4,
+        "why": "直接提升用好 Agent/Skill 的能力"
+      },
+      {
+        "name": "向量与检索(RAG)",
+        "importance": 4,
+        "why": "Context 之外给模型补充外部知识的主流方案"
+      }
+    ],
+    "C语言": [
+      {
+        "name": "数据结构",
+        "importance": 5,
+        "why": "指针/结构体之后最自然的进阶，工程与面试都核心"
+      },
+      {
+        "name": "C++",
+        "importance": 4,
+        "why": "在 C 基础上扩展面向对象与泛型"
+      },
+      {
+        "name": "操作系统基础",
+        "importance": 4,
+        "why": "内存/指针知识直接衔接进程、内存管理"
+      }
+    ]
+  }
+}

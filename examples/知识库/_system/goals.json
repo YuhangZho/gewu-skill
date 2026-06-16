@@ -1,0 +1,88 @@
+{
+  "AI": {
+    "goal": "应聘 AI 应用开发工程师",
+    "goal_category": "求职",
+    "sample": true,
+    "updated": "2026-06-15",
+    "status": "进行中",
+    "match": 35,
+    "tier": "低",
+    "summary": "你已打牢大模型概念地基(Token / Context / Skill)，但 AI 应用开发岗更看重工程落地：从0到1搭建业务 Agent 系统、RAG 检索问答、Python + 主流框架、模型部署服务化。目前概念面够、工程面缺，匹配度偏低。",
+    "requirements": [
+      {
+        "name": "大模型基础概念(Token / Context / 上下文管理)",
+        "have": true,
+        "via": [
+          "Token",
+          "Context"
+        ]
+      },
+      {
+        "name": "Skill / 工具化与流程固化",
+        "have": true,
+        "via": [
+          "Skill"
+        ]
+      },
+      {
+        "name": "Agent / 工具调用 · 业务 Agent 系统(从0到1)",
+        "have": false,
+        "via": []
+      },
+      {
+        "name": "RAG / 向量检索问答",
+        "have": false,
+        "via": []
+      },
+      {
+        "name": "Python + PyTorch/TensorFlow 等主流框架",
+        "have": false,
+        "via": []
+      },
+      {
+        "name": "模型部署、服务化与性能优化",
+        "have": false,
+        "via": []
+      },
+      {
+        "name": "机器学习 / 深度学习基础",
+        "have": false,
+        "via": []
+      }
+    ],
+    "recommend": [
+      {
+        "concept": "Agent",
+        "priority": 1,
+        "why": "JD 核心:深度参与业务 Agent 系统从0到1;也是你图谱里 Skill / MCP / Harness 的共同前置，学它能立刻盘活一大片"
+      },
+      {
+        "concept": "向量与检索(RAG)",
+        "priority": 2,
+        "why": "JD 高频:基于大模型的智能问答/检索落地"
+      },
+      {
+        "concept": "Python 与 AI 框架(PyTorch)",
+        "priority": 3,
+        "why": "JD 硬性门槛:精通 Python + 框架的工程实现"
+      },
+      {
+        "concept": "模型部署与服务化",
+        "priority": 4,
+        "why": "JD 强调把算法稳定工程化、服务化落地"
+      },
+      {
+        "concept": "机器学习基础",
+        "priority": 5,
+        "why": "理解模型行为与调优的底层原理"
+      }
+    ],
+    "high_actions": [],
+    "related_domains": [],
+    "sources": [
+      "https://www.zhipin.com/zhaopin/39608183209b29790HR-0tm5/",
+      "https://www.ncss.cn/student/jobs/EtMoJgBpBGZXHvZyinAdwc/detail.html"
+    ],
+    "feedback": []
+  }
+}
