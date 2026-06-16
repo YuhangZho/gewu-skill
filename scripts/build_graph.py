@@ -451,7 +451,7 @@ def write_graph_html(graph, out):
 
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
-    default_vault = os.path.normpath(os.path.join(here, '..', '..', '知识库'))
+    default_vault = os.environ.get('GEWU_VAULT') or os.path.join(os.getcwd(), '知识库')
     ap = argparse.ArgumentParser()
     ap.add_argument('--vault', default=default_vault)
     args = ap.parse_args()
