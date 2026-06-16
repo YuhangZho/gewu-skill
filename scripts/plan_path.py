@@ -171,6 +171,32 @@ def build_docs(cat, items, plan, vault):
         docs[t] = {'doc': doc, 'toc': toc_html}
     return docs
 
+def _load_config(vault):
+    """读取 知识库/_system/config.json（用户自定义开关 + 参数）；缺省返回空。"""
+    p = os.path.join(vault, '_system', 'config.json')
+    if os.path.isfile(p):
+        try:
+            return json.load(open(p, encoding='utf-8'))
+        except Exception:
+            return {}
+    return {}
+
+def _apply_config(html, cfg):
+    """enabled=true 时，按 config 覆盖知识站默认主题与强调色；否则原样返回。"""
+    if not cfg or not cfg.get('enabled'):
+        return html
+    th = cfg.get('theme_default')
+    if th in ('light', 'dark'):
+        html = html.replace('<html lang="zh" data-theme="light">',
+                            '<html lang="zh" data-theme="%s">' % th, 1)
+    ac = cfg.get('accent') or {}
+    if ac.get('light'):
+        html = html.replace('--accent:#007aff', '--accent:' + str(ac['light']))
+    if ac.get('dark'):
+        html = html.replace('--accent:#0a84ff', '--accent:' + str(ac['dark']))
+    return html
+
+
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     default_vault = os.path.normpath(os.path.join(here, '..', '..', '知识库'))
@@ -180,6 +206,7 @@ def main():
     args = ap.parse_args()
     vault = args.vault
     notes = collect(vault)
+    cfg = _load_config(vault)
     sysdir = os.path.join(vault, '_system'); os.makedirs(sysdir, exist_ok=True)
     cats = {}
     for t, n in notes.items():
@@ -211,6 +238,7 @@ def main():
                     .replace('__DATA__', json.dumps(data, ensure_ascii=False))
                     .replace('__DOCS__', json.dumps(docs, ensure_ascii=False))
                     .replace('__GOAL__', json.dumps(goals_all.get(c, {}), ensure_ascii=False)))
+        html = _apply_config(html, cfg)
         open(os.path.join(cdir, c + '-路线图.html'), 'w', encoding='utf-8').write(html)
         # 清理旧的独立子页与连续手册
         for old in [os.path.join(cdir, c + '-学习手册.html')]:

@@ -1,0 +1,11 @@
+{
+  "_README": "把本文件复制到 知识库/_system/config.json，按需修改后重跑 plan_path.py 即可生效。enabled=false 时下面的参数全部忽略、用内置默认。",
+  "enabled": false,
+  "_theme_default": "知识站默认主题：light 或 dark",
+  "theme_default": "light",
+  "_accent": "知识站强调色（按钮/链接/当前卡片高亮）。light=浅色模式用色，dark=深色模式用色。",
+  "accent": {
+    "light": "#007aff",
+    "dark": "#0a84ff"
+  }
+}
