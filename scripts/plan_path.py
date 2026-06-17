@@ -186,7 +186,7 @@ def _apply_config(html, cfg):
     if not cfg or not cfg.get('enabled'):
         return html
     th = cfg.get('theme_default')
-    if th in ('light', 'dark'):
+    if th in ('light', 'dark', 'ink', 'inkdark'):
         html = html.replace('<html lang="zh" data-theme="light">',
                             '<html lang="zh" data-theme="%s">' % th, 1)
     ac = cfg.get('accent') or {}
@@ -260,8 +260,12 @@ HTML = r"""<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>__CAT__ · 知识站</title>
 <style>
-:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--panel:rgba(22,27,34,.72);--solid:#161b22;--line:rgba(48,54,61,.7);--text:#f0f2f5;--muted:#8b949e;--green:#30d158;--yellow:#ffd60a;--gray:#6e7681;--accent:#0a84ff;--track:rgba(84,84,88,.28);--starempty:#3a4150;--code:rgba(110,118,129,.25)}
-:root[data-theme="light"]{color-scheme:light;--bg:#f5f5f7;--panel:rgba(255,255,255,.86);--solid:#ffffff;--line:rgba(0,0,0,.08);--text:#1d1d1f;--muted:#6e6e73;--green:#34c759;--yellow:#ff9f0a;--gray:#aeaeb2;--accent:#007aff;--track:rgba(0,0,0,.06);--starempty:#d1d1d6;--code:rgba(0,0,0,.06)}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--panel:rgba(22,27,34,.72);--solid:#161b22;--line:rgba(48,54,61,.7);--text:#f0f2f5;--muted:#8b949e;--green:#30d158;--yellow:#ffd60a;--gray:#6e7681;--accent:#0a84ff;--track:rgba(84,84,88,.28);--starempty:#3a4150;--code:rgba(110,118,129,.25);--grad:#30d1c1;--red:#ff6b6b}
+:root[data-theme="light"]{color-scheme:light;--bg:#f5f5f7;--panel:rgba(255,255,255,.86);--solid:#ffffff;--line:rgba(0,0,0,.08);--text:#1d1d1f;--muted:#6e6e73;--green:#34c759;--yellow:#ff9f0a;--gray:#aeaeb2;--accent:#007aff;--track:rgba(0,0,0,.06);--starempty:#d1d1d6;--code:rgba(0,0,0,.06);--grad:#30d1c1;--red:#ff3b30}
+/* 中国水墨 · 宣纸（浅）*/
+:root[data-theme="ink"]{color-scheme:light;--bg:#efe5cf;--panel:rgba(246,240,225,.86);--solid:#f6f0e1;--line:rgba(60,48,20,.14);--text:#2b2620;--muted:#8a7c64;--green:#5a8f6d;--yellow:#c89a3c;--gray:#b1a486;--accent:#9c3b2e;--track:rgba(60,48,20,.10);--starempty:#cdc1a3;--code:rgba(60,48,20,.08);--grad:#5a8f6d;--red:#b83a2e}
+/* 中国水墨 · 夜墨（深）*/
+:root[data-theme="inkdark"]{color-scheme:dark;--bg:#181813;--panel:rgba(34,34,24,.74);--solid:#222218;--line:rgba(120,110,80,.28);--text:#ece3d0;--muted:#9a9079;--green:#79c79a;--yellow:#d8b15a;--gray:#5a5a4b;--accent:#d6604d;--track:rgba(120,110,80,.20);--starempty:#4a4a3b;--code:rgba(120,110,80,.20);--grad:#79c79a;--red:#d6604d}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);
 font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
 -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
@@ -297,7 +301,7 @@ h1.ttl{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0 0 6px}
 .bar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:18px;padding:14px 18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;backdrop-filter:blur(18px) saturate(180%)}
 .goal{font-size:12px;color:var(--accent);border:1px solid var(--accent);border-radius:20px;padding:3px 10px}
 .prog{flex:1;min-width:200px;height:10px;background:var(--track);border-radius:6px;overflow:hidden}
-.prog>i{display:block;height:100%;background:linear-gradient(90deg,#34c759,#30d1c1)}
+.prog>i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--grad))}
 .progtxt{font-size:13px;color:var(--muted)}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:14px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:middle}
@@ -376,12 +380,27 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 .gbtn{margin-top:10px;background:var(--green);color:#fff;border:none;border-radius:10px;padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer}.gnote{font-size:12.5px;color:var(--muted);margin-left:10px}
 .gempty{color:var(--muted);font-size:15px;line-height:1.8;max-width:620px}.gempty h1{color:var(--text);font-size:22px}.gref{font-size:13px;color:var(--accent);margin-top:10px}
 #graphframe{width:100%;height:100%;border:0;display:block;background:var(--bg)}
+.themebtn{transition:background .2s,border-color .2s,color .2s}
+.themebtn:hover{border-color:var(--accent);color:var(--accent)}
+/* —— 水墨主题质感（宣纸纹理 / 楷书标题 / 朱砂落款感）—— */
+:root[data-theme="ink"] body,:root[data-theme="inkdark"] body{
+background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+background-attachment:fixed;background-size:160px 160px}
+:root[data-theme="ink"] .topbar .brand,:root[data-theme="inkdark"] .topbar .brand,
+:root[data-theme="ink"] h1.ttl,:root[data-theme="inkdark"] h1.ttl,
+:root[data-theme="ink"] .dochead h1,:root[data-theme="inkdark"] .dochead h1,
+:root[data-theme="ink"] .ghead h1,:root[data-theme="inkdark"] .ghead h1{
+font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spacing:.5px}
+:root[data-theme="ink"] .themebtn,:root[data-theme="inkdark"] .themebtn,
+:root[data-theme="ink"] .card,:root[data-theme="inkdark"] .card,
+:root[data-theme="ink"] .bar,:root[data-theme="inkdark"] .bar{border-radius:6px}
+:root[data-theme="ink"] .md blockquote,:root[data-theme="inkdark"] .md blockquote{border-left-width:4px;font-style:italic}
 </style></head><body>
 <div class="topbar">
   <span class="brand">__CAT__ 学习站</span>
   <span class="crumb" id="crumb"></span>
   <span class="sp"></span>
-  <button class="themebtn" id="themebtn">◐ 深 / 浅</button>
+  <button class="themebtn" id="themebtn">◑ 深</button>
 </div>
 <div class="shell">
   <nav id="sidenav"><a class="navlink home" id="homelink">📋 学习路线图</a><a class="navlink home" id="graphlink">🕸 知识图谱</a><a class="navlink home" id="goallink">🎯 目标规划</a><div id="navbody"></div></nav>
@@ -482,7 +501,7 @@ function bindToc(){
   document.querySelectorAll('#docview h2[id],#docview h3[id]').forEach(h=>window.__tio.observe(h));
 }
 function gIsDone(){var ls=false;try{ls=localStorage.getItem('goal_done_'+CAT)==='1';}catch(e){}return ls||(GOAL&&GOAL.status==='已完成');}
-function gTierColor(t){return t==='高'?'var(--green)':(t==='中'?'#ff9f0a':'#ff6b6b');}
+function gTierColor(t){return t==='高'?'var(--green)':(t==='中'?'var(--yellow)':'var(--red)');}
 function updateGoalNav(){var gl=document.getElementById('goallink');if(!gl)return;gl.classList.toggle('disabled',R.learned===0);gl.textContent=gIsDone()?'🎯 目标完成 ✅':'🎯 目标规划';}
 function renderGoal(){
   var b=document.getElementById('goalbody');
@@ -523,9 +542,15 @@ function go(v){
   const ch=document.getElementById('crmhome');if(ch)ch.onclick=()=>go('__overview__');
   location.hash=encodeURIComponent(v);window.scrollTo(0,0);
 }
-document.getElementById('themebtn').onclick=function(){var r=document.documentElement;var t=r.dataset.theme==='light'?'dark':'light';r.dataset.theme=t;
+const THEMES=[["light","◐ 浅"],["dark","◑ 深"],["ink","❖ 宣纸"],["inkdark","❖ 夜墨"]];
+function themeIdx(name){for(var i=0;i<THEMES.length;i++)if(THEMES[i][0]===name)return i;return 1;}
+function setTheme(t){var r=document.documentElement;r.dataset.theme=t;
+  document.getElementById('themebtn').textContent=THEMES[themeIdx(t)][1];
   document.querySelectorAll('#docview .vizframe').forEach(f=>{try{f.contentWindow.postMessage({theme:t},'*');}catch(e){}});
-  var gf=document.getElementById('graphframe');if(gf&&gf.src&&gf.src!=='about:blank'){try{gf.contentWindow.postMessage({theme:t},'*');}catch(e){}}};
+  var gf=document.getElementById('graphframe');if(gf&&gf.src&&gf.src!=='about:blank'){try{gf.contentWindow.postMessage({theme:t},'*');}catch(e){}}}
+document.getElementById('themebtn').onclick=function(){var cur=document.documentElement.dataset.theme||'dark';
+  setTheme(THEMES[(themeIdx(cur)+1)%THEMES.length][0]);};
+setTheme(document.documentElement.dataset.theme||'light');
 document.getElementById('homelink').onclick=()=>go('__overview__');
 document.getElementById('graphlink').onclick=()=>go('__graph__');
 document.getElementById('goallink').onclick=()=>{if(R.learned>0)go('__goal__');};

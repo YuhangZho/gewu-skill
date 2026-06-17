@@ -200,8 +200,12 @@ HTML = r"""<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>知识图谱 · Knowledge Graph</title>
 <style>
-:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1115;--panel:#171a21;--line:#2a2f3a;--text:#e7e9ee;--muted:#8b93a3;--accent:#7aa2f7;--linkw:#39404f;--linkm:#56607a;--node:#202637;--ring:#565f73;--bq:#1c2230;--bqt:#cdd6f4;--mdtext:#cfd4df;--hudbg:rgba(23,26,33,.7)}
-:root[data-theme="light"]{color-scheme:light;--bg:#f7f8fa;--panel:#ffffff;--line:#e2e5ea;--text:#1f2430;--muted:#6b7280;--accent:#3b5bdb;--linkw:#c5cad4;--linkm:#9aa3b2;--node:#eef1f6;--ring:#9aa3b2;--bq:#eef1fb;--bqt:#26324d;--mdtext:#3a4150;--hudbg:rgba(255,255,255,.82)}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1115;--panel:#171a21;--line:#2a2f3a;--text:#e7e9ee;--muted:var(--muted);--accent:#7aa2f7;--linkw:#39404f;--linkm:#56607a;--node:#202637;--ring:#565f73;--bq:#1c2230;--bqt:#cdd6f4;--mdtext:#cfd4df;--hudbg:rgba(23,26,33,.7);--alive:#34c759}
+:root[data-theme="light"]{color-scheme:light;--bg:#f7f8fa;--panel:#ffffff;--line:#e2e5ea;--text:#1f2430;--muted:#6b7280;--accent:#3b5bdb;--linkw:#c5cad4;--linkm:#9aa3b2;--node:#eef1f6;--ring:#9aa3b2;--bq:#eef1fb;--bqt:#26324d;--mdtext:#3a4150;--hudbg:rgba(255,255,255,.82);--alive:#2bb24c}
+/* 中国水墨 · 宣纸（浅）*/
+:root[data-theme="ink"]{color-scheme:light;--bg:#efe5cf;--panel:#f6f0e1;--line:#d8ccae;--text:#2b2620;--muted:#8a7c64;--accent:#9c3b2e;--linkw:#cdc1a3;--linkm:#b1a181;--node:#e6dbbf;--ring:#b1a486;--bq:#ece1c8;--bqt:#4a4030;--mdtext:#403a2d;--hudbg:rgba(246,240,225,.82);--alive:#5a8f6d}
+/* 中国水墨 · 夜墨（深）*/
+:root[data-theme="inkdark"]{color-scheme:dark;--bg:#181813;--panel:#222218;--line:#36362b;--text:#ece3d0;--muted:#9a9079;--accent:#d6604d;--linkw:#3a3a2e;--linkm:#575747;--node:#2a2a1f;--ring:#5a5a4b;--bq:#23231b;--bqt:#d8cfb6;--mdtext:#cbc2a9;--hudbg:rgba(34,34,24,.74);--alive:#79c79a}
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
 font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden}
 #wrap{display:flex;height:100%}
@@ -242,10 +246,23 @@ background:var(--bq);color:var(--bqt);border-radius:0 6px 6px 0}
 #close{float:right;cursor:pointer;color:var(--muted);font-size:20px;line-height:1;border:none;
 background:none}
 #hint{position:absolute;bottom:12px;left:14px;font-size:11px;color:var(--muted);opacity:.7}
-#themebtn{pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:var(--text);padding:8px 11px;border-radius:8px;cursor:pointer;font-size:13px}
-@keyframes nodeBreath{0%,100%{filter:drop-shadow(0 0 1px #34c759)}50%{filter:drop-shadow(0 0 8px #34c759)}}
+#themebtn{pointer-events:auto;background:var(--panel);border:1px solid var(--line);color:var(--text);padding:8px 11px;border-radius:8px;cursor:pointer;font-size:13px;transition:background .2s,border-color .2s,color .2s}
+#themebtn:hover{border-color:var(--accent);color:var(--accent)}
+#arrow path{fill:var(--accent)}
+@keyframes nodeBreath{0%,100%{filter:drop-shadow(0 0 1px var(--alive))}50%{filter:drop-shadow(0 0 8px var(--alive))}}
 .node.alive-full circle{animation:nodeBreath 3s ease-in-out infinite}
 .node.alive-weak circle{animation:nodeBreath 4.8s ease-in-out infinite;opacity:.92}
+/* —— 水墨主题质感（宣纸纹理 / 墨晕 / 楷书标题）—— */
+:root[data-theme="ink"] body,:root[data-theme="inkdark"] body{
+background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
+background-size:160px 160px}
+:root[data-theme="ink"] .node.cat circle,:root[data-theme="inkdark"] .node.cat circle{filter:drop-shadow(0 1px 3px rgba(0,0,0,.22))}
+:root[data-theme="ink"] #panel h1,:root[data-theme="inkdark"] #panel h1,
+:root[data-theme="ink"] .node.cat text,:root[data-theme="inkdark"] .node.cat text{
+font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spacing:.5px}
+:root[data-theme="ink"] #search,:root[data-theme="inkdark"] #search,
+:root[data-theme="ink"] #themebtn,:root[data-theme="inkdark"] #themebtn{border-radius:4px}
+:root[data-theme="ink"] #panel .md blockquote,:root[data-theme="inkdark"] #panel .md blockquote{border-left-width:4px;font-style:italic}
 </style></head><body>
 <div id="wrap">
   <div id="graph">
@@ -263,11 +280,19 @@ background:none}
   <div id="panel"><button id="close">×</button><div id="panelbody"></div></div>
 </div>
 <script>
-(function(){var p=new URLSearchParams(location.search).get('theme');if(p)document.documentElement.dataset.theme=p;window.addEventListener('message',function(e){if(e&&e.data&&e.data.theme)document.documentElement.dataset.theme=e.data.theme;});})();
+(function(){var p=new URLSearchParams(location.search).get('theme');if(p)document.documentElement.dataset.theme=p;window.addEventListener('message',function(e){if(e&&e.data&&e.data.theme){if(typeof applyTheme==='function')applyTheme(e.data.theme);else document.documentElement.dataset.theme=e.data.theme;}});})();
 const DATA = __DATA__;
-const CATCOLORS = ["#7aa2f7","#9ece6a","#e0af68","#bb9af7","#f7768e","#2ac3de","#ff9e64","#73daca","#c0caf5"];
-const STATUSRING = {"已学透":"#9ece6a","巩固中":"#e0af68","待学":"#565f73"};
-const catColor = {}; DATA.categories.forEach((c,i)=>catColor[c]=CATCOLORS[i%CATCOLORS.length]);
+// 两套色板：modern（科技黑白）与 ink（传统国画颜料：花青·朱砂·石绿·赭石·黛紫·藤黄·石青·胭脂·墨青）
+const PALETTES = {
+  modern:{cat:["#7aa2f7","#9ece6a","#e0af68","#bb9af7","#f7768e","#2ac3de","#ff9e64","#73daca","#c0caf5"],
+          status:{"已学透":"#9ece6a","巩固中":"#e0af68","待学":"#565f73"}},
+  ink:{cat:["#2e5b7c","#b83a2e","#5a8f6d","#9c6b3f","#6a5a7d","#c89a3c","#3f6f8f","#a23b53","#4a5a66"],
+       status:{"已学透":"#5a8f6d","巩固中":"#c89a3c","待学":"#9a8f78"}}};
+function themeFamily(){var t=document.documentElement.dataset.theme;return (t==='ink'||t==='inkdark')?'ink':'modern';}
+let CATCOLORS, STATUSRING; const catColor = {};
+function buildPalette(){var p=PALETTES[themeFamily()];CATCOLORS=p.cat;STATUSRING=p.status;
+  DATA.categories.forEach((c,i)=>catColor[c]=CATCOLORS[i%CATCOLORS.length]);}
+buildPalette();
 
 const svg=document.getElementById('svg'), scene=document.getElementById('scene');
 const gLinks=document.getElementById('links'), gNodes=document.getElementById('nodes');
@@ -381,7 +406,7 @@ function focus(id){
 const panel=document.getElementById('panel'), pbody=document.getElementById('panelbody');
 document.getElementById('close').onclick=()=>{panel.classList.remove('open');focus(null);};
 function mdToHtml(md){
-  if(!md) return '<p style="color:#8b93a3">（这个概念还没学透——用费曼引导器学一遍吧）</p>';
+  if(!md) return '<p style="color:var(--muted)">（这个概念还没学透——用费曼引导器学一遍吧）</p>';
   const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   let out=[], inList=false;
   md.split('\n').forEach(line=>{
@@ -401,12 +426,12 @@ function openNode(n){
   if(n.type==='category'){ focus(n.id);
     const members=nodes.filter(x=>x.type==='concept'&&x.category===n.category)
       .map(x=>`<a data-jump="${x.label}">${x.label}</a>`).join(' · ');
-    pbody.innerHTML=`<button id="close2" style="float:right;border:none;background:none;color:#8b93a3;font-size:20px;cursor:pointer">×</button>
+    pbody.innerHTML=`<button id="close2" style="float:right;border:none;background:none;color:var(--muted);font-size:20px;cursor:pointer">×</button>
       <h1>${n.label}</h1><div class="badge">大类</div><div class="badge">${n.count} 个概念</div>
       <div class="md"><p>${members||'（暂无概念）'}</p></div>`;
   }else{
     focus(n.id);
-    pbody.innerHTML=`<button id="close2" style="float:right;border:none;background:none;color:#8b93a3;font-size:20px;cursor:pointer">×</button>
+    pbody.innerHTML=`<button id="close2" style="float:right;border:none;background:none;color:var(--muted);font-size:20px;cursor:pointer">×</button>
       <h1>${n.label}</h1>
       <div class="badge" style="border-color:${catColor[n.category]};color:${catColor[n.category]}">${n.category}</div>
       <div class="badge">${n.status||''}</div>
@@ -436,7 +461,21 @@ document.getElementById('legend').innerHTML=DATA.categories.map(c=>`<span><i sty
   +'　|　<span>⇢ 依赖</span><span>— 关联</span><span>· 大小=重要度</span>';
 document.getElementById('meta').textContent=`${nodes.filter(n=>n.type==='concept').length} 概念 · ${DATA.categories.length} 大类 · 更新于 ${DATA.generated}`;
 window.addEventListener('resize',()=>{W=svg.clientWidth;H=svg.clientHeight;alpha=Math.max(alpha,80);});
-document.getElementById('themebtn').onclick=function(){var r=document.documentElement;r.dataset.theme=r.dataset.theme==='light'?'dark':'light';};
+const THEMES=[["light","◐ 浅"],["dark","◑ 深"],["ink","❖ 宣纸"],["inkdark","❖ 夜墨"]];
+function themeIdx(name){for(var i=0;i<THEMES.length;i++)if(THEMES[i][0]===name)return i;return 1;}
+function applyPalette(){buildPalette();
+  nodeEls.forEach(function(g){var n=g._node;
+    if(n.type==='category')n._c.style.fill=catColor[n.category];
+    else n._c.style.stroke=(STATUSRING[n.status]||'var(--ring)');});
+  var li=document.querySelectorAll('#legend i'),k=0;
+  DATA.categories.forEach(function(c){if(li[k])li[k].style.background=catColor[c];k++;});
+  Object.keys(STATUSRING).forEach(function(s){if(li[k])li[k].style.borderColor=STATUSRING[s];k++;});}
+function applyTheme(name){document.documentElement.dataset.theme=name;applyPalette();
+  document.getElementById('themebtn').textContent=THEMES[themeIdx(name)][1];}
+document.getElementById('themebtn').onclick=function(){
+  var cur=document.documentElement.dataset.theme||'dark';
+  applyTheme(THEMES[(themeIdx(cur)+1)%THEMES.length][0]);};
+applyTheme(document.documentElement.dataset.theme||'dark');
 function setGoalDone(on){nodeEls.forEach(function(g){var n=g._node;if(!n||n.type!=='concept')return;g.classList.remove('alive-full','alive-weak');var lv=on?(n.alivep||''):(n.alive||'');if(lv)g.classList.add('alive-'+lv);});}
 (function(){var gd=new URLSearchParams(location.search).get('goaldone');if(gd==='1')setGoalDone(true);})();
 window.addEventListener('message',function(e){if(e&&e.data&&('goalDone' in e.data))setGoalDone(!!e.data.goalDone);});
