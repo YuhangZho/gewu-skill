@@ -41,6 +41,25 @@ def split_list(s):
         out.append(buf)
     return out
 
+def strip_inline_comment(val):
+    """剥离行内注释：识别引号与方括号嵌套，仅在最外层、且 # 前是空白(或行首)时截断。
+    这样 `["前期准备"]   # 分类名…`、`[a,b] # x` 都能正确去掉注释，
+    而引号/括号内的 # 不会被误删。"""
+    q, depth = None, 0
+    for i, ch in enumerate(val):
+        if q:
+            if ch == q:
+                q = None
+        elif ch in '"\'':
+            q = ch
+        elif ch == '[':
+            depth += 1
+        elif ch == ']':
+            depth = max(0, depth - 1)
+        elif ch == '#' and depth == 0 and (i == 0 or val[i-1] in ' \t'):
+            return val[:i].rstrip()
+    return val.rstrip()
+
 def parse_frontmatter(text):
     fm, body = {}, text
     if text.startswith('---'):
@@ -53,10 +72,7 @@ def parse_frontmatter(text):
                     continue
                 m = re.match(r'^([A-Za-z_][\w-]*)\s*:\s*(.*)$', line)
                 if m:
-                    key, val = m.group(1), m.group(2)
-                    # 去掉行内注释（仅当 # 前有空格且不在引号/括号里时简单处理）
-                    if '#' in val and not ('[' in val):
-                        val = re.split(r'\s+#', val)[0]
+                    key, val = m.group(1), strip_inline_comment(m.group(2))
                     fm[key] = parse_scalar(val)
     return fm, body
 
@@ -490,7 +506,8 @@ def write_graph_html(graph, out):
 
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
-    default_vault = os.environ.get('GEWU_VAULT') or os.path.join(os.getcwd(), '知识库')
+    # 知识库根目录 = 主题名文件夹本身（不再套一层「知识库/」）
+    default_vault = os.environ.get('GEWU_VAULT') or os.getcwd()
     ap = argparse.ArgumentParser()
     ap.add_argument('--vault', default=default_vault)
     args = ap.parse_args()
@@ -502,11 +519,16 @@ def main():
     notes = collect(vault)
     _potential, _baked = _goal_alive(notes, sysdir)
     cats = sorted({n['category'] for n in notes.values()})
-    # 全局总览（根目录）
+    # 全局数据仍写入 _system/graph_data.json（供路线图/呼吸态等读取），
+    # 但不再在根目录输出 知识图谱.html（累赘；各大类页用各自的分类图谱即可）。
     g = build_graph(notes); g['prefix'] = ''; _apply_alive(g, _potential, _baked)
-    write_graph_html(g, os.path.join(vault, '知识图谱.html'))
     with open(os.path.join(sysdir, 'graph_data.json'), 'w', encoding='utf-8') as f:
         json.dump(g, f, ensure_ascii=False, indent=2)
+    # 清理历史遗留的根目录全局图谱
+    _legacy = os.path.join(vault, '知识图谱.html')
+    if os.path.isfile(_legacy):
+        try: os.remove(_legacy)
+        except OSError: pass
     # 各大类单独图谱（放进各自文件夹，prefix=../ 以正确链接 _viz）
     for c in cats:
         sub = {t: n for t, n in notes.items() if n['category'] == c}
@@ -515,7 +537,7 @@ def main():
         if os.path.isdir(cdir):
             write_graph_html(gc, os.path.join(cdir, c + '-知识图谱.html'))
     concepts = [n for n in g['nodes'] if n['type'] == 'concept']
-    print('OK 全局概念=%d 大类=%d；全局图谱+各类图谱已生成' % (len(concepts), len(cats)))
+    print('OK 全局概念=%d 大类=%d；各大类图谱已生成（根目录不再输出全局图谱）' % (len(concepts), len(cats)))
 
 
 if __name__ == '__main__':

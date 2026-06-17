@@ -147,11 +147,11 @@ Re-run `python scripts/plan_path.py` — the knowledge site now defaults to dark
 
 ---
 
-## Mentor (optional · off by default)
+## Mentor (asks you once per new domain)
 
-Find the AI's voice too "AI-flavored"? Give Q&A and notes a **mentor's voice** — always within the Feynman 7 steps, never breaking them. **Off by default; plain AI otherwise.**
+Find the AI's voice too "AI-flavored"? Give Q&A and notes a **mentor's voice** — always within the Feynman 7 steps, never breaking them. **By default it asks you once when you start a new domain: just start (plain), or pick a mentor.** It only takes effect if you pick one, and you can say "back to plain" anytime. Set `intro` to `off` in `mentors.json` to never be asked.
 
-The switch and bindings live in `知识库/_system/mentors.json` (template `templates/mentors.example.json`); mentor profiles ship with the skill at `mentors/<id>/profile.md` and are reusable across vaults. Three built-in examples:
+The switch and bindings live in `知识库/_system/mentors.json` (template `templates/mentors.example.json`); mentor profiles ship with the skill at `mentors/<id>/profile.md` and are reusable across vaults. Ten built-in examples:
 
 | Mentor | Default category | Mode |
 |---|---|---|
@@ -169,7 +169,8 @@ The switch and bindings live in `知识库/_system/mentors.json` (template `temp
 ```jsonc
 // 知识库/_system/mentors.json
 {
-  "enabled": true,                          // ← master switch, default false
+  "intro": "ask",                           // ask once per new domain: start / pick mentor (default)
+  "enabled": true,                          // ← whether bindings take effect, default false
   "default": "原味",
   "bindings": {
     "AI":   { "mentor": "andrej-karpathy", "traits": ["逻辑清晰"] },

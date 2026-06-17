@@ -257,7 +257,8 @@ def _mentor_tags(vault, here):
 
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
-    default_vault = os.environ.get('GEWU_VAULT') or os.path.join(os.getcwd(), '知识库')
+    # 知识库根目录 = 主题名文件夹本身（不再套一层「知识库/」）
+    default_vault = os.environ.get('GEWU_VAULT') or os.getcwd()
     ap = argparse.ArgumentParser()
     ap.add_argument('--vault', default=default_vault)
     ap.add_argument('--goal', default=None)
@@ -564,20 +565,24 @@ function bindToc(){
   document.querySelectorAll('#docview h2[id],#docview h3[id]').forEach(h=>window.__tio.observe(h));
 }
 function gIsDone(){var ls=false;try{ls=localStorage.getItem('goal_done_'+CAT)==='1';}catch(e){}return ls||(GOAL&&GOAL.status==='已完成');}
+function gHasGoal(){return !!(GOAL&&GOAL.goal);}
+// 解锁：本大类已设目标(goals.json 有该大类)即点亮；或已有概念学透。两者皆无才灰显。
+function gUnlocked(){return gHasGoal()||R.learned>0;}
+function gReqOk(r){return r&&(r.have===true||r.status==='✓'||r.status==='ok'||r.status===true);}
+function gReqVia(r){return (r&&(r.via||r.refs||r.by))||[];}
 function gTierColor(t){return t==='高'?'var(--green)':(t==='中'?'var(--yellow)':'var(--red)');}
-function updateGoalNav(){var gl=document.getElementById('goallink');if(!gl)return;gl.classList.toggle('disabled',R.learned===0);gl.textContent=gIsDone()?'🎯 目标完成 ✅':'🎯 目标规划';}
+function updateGoalNav(){var gl=document.getElementById('goallink');if(!gl)return;gl.classList.toggle('disabled',!gUnlocked());gl.textContent=gIsDone()?'🎯 目标完成 ✅':'🎯 目标规划';}
 function renderGoal(){
   var b=document.getElementById('goalbody');
-  if(R.learned===0){b.innerHTML='<div class="gempty">完成第一个知识点后，这里才会解锁「目标规划」。</div>';return;}
-  if(!GOAL||!GOAL.goal){b.innerHTML='<div class="gempty"><h1>🎯 目标规划</h1><p>你还没设定本领域的学习目标。告诉我你的<b>具体目标</b>（越细分越好：「CET-4 英语考试」优于「考试」，「企业内训分享」优于「分享」），我会联网对照真实要求、分析你与目标的差距并按优先级规划下一步。</p><p class="gref">参考分类：应试 · 求职 · 分享 · 知识变现 · 自主学习 · 无目标(AI自主发散)</p></div>';return;}
+  if(!gHasGoal()){b.innerHTML='<div class="gempty"><h1>🎯 目标规划</h1><p>你还没设定本领域的学习目标。告诉我你的<b>具体目标</b>（越细分越好：「CET-4 英语考试」优于「考试」，「企业内训分享」优于「分享」），我会联网对照真实要求、分析你与目标的差距并按优先级规划下一步。</p><p class="gref">参考分类：应试 · 求职 · 分享 · 知识变现 · 自主学习 · 无目标(AI自主发散)</p></div>';return;}
   var g=GOAL,done=gIsDone(),h='';
   h+='<div class="ghead"><h1>🎯 '+g.goal+'</h1>'+(g.goal_category?'<span class="gtag">'+g.goal_category+'</span>':'')+(g.sample?'<span class="gtag sample">示例</span>':'')+'</div><div class="gsub">更新于 '+(g.updated||'')+'</div>';
   if(done)h+='<div class="celebrate"><div class="cbig">🎉 目标完成！</div><div>恭喜拿下「'+g.goal+'」。</div></div>';
   var pct=done?100:(g.match||0),tc=gTierColor(done?'高':g.tier);
   h+='<div class="gmeter"><div class="gpct" style="color:'+tc+'">'+pct+'%</div><div class="gbar"><i style="width:'+pct+'%;background:'+tc+'"></i></div><div class="gtier">与目标匹配度 · '+(done?'已达成':(g.tier||'')+' 档')+'</div></div>';
   if(g.summary)h+='<p class="gsum">'+g.summary+'</p>';
-  if(g.requirements&&g.requirements.length)h+='<div class="gh3">目标要求对照</div><div class="greqs">'+g.requirements.map(function(r){return '<div class="greq"><span class="gck '+(r.have?'ok':'no')+'">'+(r.have?'✓':'○')+'</span><span>'+r.name+(r.via&&r.via.length?' <em>('+r.via.join('、')+')</em>':'')+'</span></div>';}).join('')+'</div>';
-  if(!done&&g.tier!=='高'&&g.recommend&&g.recommend.length)h+='<div class="gh3">下一步学习规划 · 按优先级</div><div class="grecs">'+g.recommend.map(function(r){return '<div class="grec"><span class="gp">P'+r.priority+'</span><div><div class="grn">'+r.concept+'</div><div class="grw">'+r.why+'</div></div></div>';}).join('')+'</div>';
+  if(g.requirements&&g.requirements.length)h+='<div class="gh3">目标要求对照</div><div class="greqs">'+g.requirements.map(function(r){var ok=gReqOk(r),via=gReqVia(r),nm=(typeof r==='string'?r:(r.name||r.req||''));return '<div class="greq"><span class="gck '+(ok?'ok':'no')+'">'+(ok?'✓':'○')+'</span><span>'+nm+(via&&via.length?' <em>('+via.join('、')+')</em>':'')+'</span></div>';}).join('')+'</div>';
+  if(!done&&g.tier!=='高'&&g.recommend&&g.recommend.length)h+='<div class="gh3">下一步学习规划 · 按优先级</div><div class="grecs">'+g.recommend.map(function(r,i){if(typeof r==='string'){return '<div class="grec"><span class="gp">P'+(i+1)+'</span><div><div class="grn">'+r+'</div></div></div>';}var nm=r.concept||r.name||'',why=r.why||r.reason||'';return '<div class="grec"><span class="gp">P'+(r.priority||i+1)+'</span><div><div class="grn">'+nm+'</div>'+(why?'<div class="grw">'+why+'</div>':'')+'</div></div>';}).join('')+'</div>';
   if((done||g.tier==='高')&&g.high_actions&&g.high_actions.length)h+='<div class="gh3">去实践 · 把知识用起来</div><ul class="gacts">'+g.high_actions.map(function(a){return '<li>'+a+'</li>';}).join('')+'</ul>';
   if(g.sources&&g.sources.length)h+='<div class="gsrc">目标要求来源：'+g.sources.map(function(s,i){return '<a href="'+s+'" target="_blank" rel="noopener">来源'+(i+1)+'</a>';}).join(' · ')+'</div>';
   h+='<div class="gfb"><div class="gh3">完成反馈</div><textarea id="gfbtext" placeholder="例如：参加 CET-4 考试通过！/ 已做完 3 套模拟题，阅读还需加强…"></textarea>';
@@ -591,7 +596,7 @@ function renderGoal(){
 function go(v){
   const ov=document.getElementById('overview'),dw=document.getElementById('docwrap'),gw=document.getElementById('graphwrap'),goalw=document.getElementById('goalwrap');
   gw.style.display='none';goalw.style.display='none';
-  if(v==='__goal__'){if(R.learned===0){go('__overview__');return;}ov.style.display='none';dw.style.display='none';goalw.style.display='block';renderGoal();setActive('__goal__');document.getElementById('crumb').innerHTML='/ <b>'+(gIsDone()?'目标完成 ✅':'目标规划')+'</b>';location.hash=encodeURIComponent('__goal__');window.scrollTo(0,0);return;}
+  if(v==='__goal__'){if(!gUnlocked()){go('__overview__');return;}ov.style.display='none';dw.style.display='none';goalw.style.display='block';renderGoal();setActive('__goal__');document.getElementById('crumb').innerHTML='/ <b>'+(gIsDone()?'目标完成 ✅':'目标规划')+'</b>';location.hash=encodeURIComponent('__goal__');window.scrollTo(0,0);return;}
   if(v==='__graph__'){ov.style.display='none';dw.style.display='none';gw.style.display='block';
     const gf=document.getElementById('graphframe');if(!gf.src||gf.src==='about:blank'){gf.src=gf.dataset.src+'?theme='+theme()+'&goaldone='+(gIsDone()?1:0);}else{try{gf.contentWindow.postMessage({theme:theme()},'*');gf.contentWindow.postMessage({goalDone:gIsDone()},'*');}catch(e){}}
     setActive('__graph__');document.getElementById('crumb').innerHTML='/ <b>知识图谱</b>';location.hash=encodeURIComponent('__graph__');window.scrollTo(0,0);return;}
@@ -616,7 +621,7 @@ document.getElementById('themebtn').onclick=function(){var cur=document.document
 setTheme(document.documentElement.dataset.theme||'light');
 document.getElementById('homelink').onclick=()=>go('__overview__');
 document.getElementById('graphlink').onclick=()=>go('__graph__');
-document.getElementById('goallink').onclick=()=>{if(R.learned>0)go('__goal__');};
+document.getElementById('goallink').onclick=()=>{if(gUnlocked())go('__goal__');};
 window.addEventListener('message',function(e){if(e&&e.data&&e.data.goto){var g=e.data.goto;if(DOCS[g])go(g);else{go('__overview__');setTimeout(function(){var el=cardEls[g];if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},80);}}});
 renderOverview();buildNav();updateGoalNav();
 go(location.hash?decodeURIComponent(location.hash.slice(1)):'__overview__');
@@ -625,3 +630,4 @@ window.addEventListener('hashchange',()=>{go(location.hash?decodeURIComponent(lo
 
 if __name__ == '__main__':
     main()
+# end of plan_path.py

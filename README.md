@@ -149,11 +149,11 @@ npx skills add YuhangZho/gewu-skill
 
 ---
 
-## 导师 · Mentor（可选 · 默认关）
+## 导师 · Mentor（开始新领域时问你一次）
 
-觉得 AI 说话太"AI 味"？给问答和笔记换一种**导师口吻**——但始终在费曼七步框架内，绝不打乱步骤。**默认关闭、全程原味**。
+觉得 AI 说话太"AI 味"？给问答和笔记换一种**导师口吻**——但始终在费曼七步框架内，绝不打乱步骤。**默认在你开始一个新领域时问一句：直接开始（原味），还是选一位导师**；选了才生效，且可随时「回到原味」。不想被问就把 `mentors.json` 的 `intro` 设为 `off`。
 
-开关与绑定在 `知识库/_system/mentors.json`（模板 `templates/mentors.example.json`）；导师档案随 skill 放 `mentors/<id>/profile.md`，可跨库复用。自带 3 位范例：
+开关与绑定在 `知识库/_system/mentors.json`（模板 `templates/mentors.example.json`）；导师档案随 skill 放 `mentors/<id>/profile.md`，可跨库复用。自带 10 位范例（可继续蒸馏）：
 
 | 导师 | 默认分类 | 模式 |
 |---|---|---|
@@ -171,7 +171,8 @@ npx skills add YuhangZho/gewu-skill
 ```jsonc
 // 知识库/_system/mentors.json
 {
-  "enabled": true,                          // ← 总开关，默认 false
+  "intro": "ask",                           // 开新领域时问一次：直接开始 / 选导师（默认）
+  "enabled": true,                          // ← 绑定是否生效，默认 false
   "default": "原味",
   "bindings": {
     "AI":   { "mentor": "andrej-karpathy", "traits": ["逻辑清晰"] },

@@ -147,11 +147,11 @@ Vuelve a ejecutar `python scripts/plan_path.py` — el sitio de conocimiento aho
 
 ---
 
-## Mentor (opcional · desactivado por defecto)
+## Mentor (te pregunta una vez por cada dominio nuevo)
 
-¿La voz de la IA suena demasiado "a IA"? Dale a las preguntas y notas una **voz de mentor** — siempre dentro de los 7 pasos Feynman, sin romperlos nunca. **Desactivado por defecto; IA en estado puro si no.**
+¿La voz de la IA suena demasiado "a IA"? Dale a las preguntas y notas una **voz de mentor** — siempre dentro de los 7 pasos Feynman, sin romperlos nunca. **Por defecto te pregunta una vez al empezar un dominio nuevo: empezar directo (puro) o elegir un mentor.** Solo se aplica si eliges uno, y puedes decir "volver a la voz pura" cuando quieras. Pon `intro` en `off` en `mentors.json` para no recibir la pregunta.
 
-El interruptor y los enlaces están en `知识库/_system/mentors.json` (plantilla `templates/mentors.example.json`); los perfiles de mentor vienen con el skill en `mentors/<id>/profile.md` y son reutilizables entre bóvedas. Tres ejemplos incluidos:
+El interruptor y los enlaces están en `知识库/_system/mentors.json` (plantilla `templates/mentors.example.json`); los perfiles de mentor vienen con el skill en `mentors/<id>/profile.md` y son reutilizables entre bóvedas. Diez ejemplos incluidos:
 
 | Mentor | Categoría por defecto | Modo |
 |---|---|---|
@@ -169,7 +169,8 @@ El interruptor y los enlaces están en `知识库/_system/mentors.json` (plantil
 ```jsonc
 // 知识库/_system/mentors.json
 {
-  "enabled": true,                          // ← master switch, default false
+  "intro": "ask",                           // preguntar una vez por dominio: empezar / elegir (def.)
+  "enabled": true,                          // ← si los enlaces se aplican, por defecto false
   "default": "原味",
   "bindings": {
     "AI":   { "mentor": "andrej-karpathy", "traits": ["逻辑清晰"] },
