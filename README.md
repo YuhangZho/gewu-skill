@@ -149,6 +149,45 @@ npx skills add YuhangZho/gewu-skill
 
 ---
 
+## 导师 · Mentor（可选 · 默认关）
+
+觉得 AI 说话太"AI 味"？给问答和笔记换一种**导师口吻**——但始终在费曼七步框架内，绝不打乱步骤。**默认关闭、全程原味**。
+
+开关与绑定在 `知识库/_system/mentors.json`（模板 `templates/mentors.example.json`）；导师档案随 skill 放 `mentors/<id>/profile.md`，可跨库复用。自带 3 位范例：
+
+| 导师 | 默认分类 | 模式 |
+|---|---|---|
+| 费曼 Feynman | 通用 | 第一人称 |
+| 爱因斯坦 Einstein | 物理 | 第一人称 |
+| Karpathy | AI | 风格参照（在世真人不冒名） |
+| 孙武 Sun Tzu | 战略 | 第一人称 |
+| 华罗庚 Hua Luogeng | 数学 | 第一人称 |
+| 苏格拉底 Socrates | 哲学 | 第一人称 |
+| 老子 Laozi | 哲学 | 第一人称 |
+| 王阳明 Wang Yangming | 哲学 | 第一人称 |
+| 亚里士多德 Aristotle | 逻辑 | 第一人称 |
+| Ashish Vaswani | AI | 风格参照（在世真人不冒名） |
+
+```jsonc
+// 知识库/_system/mentors.json
+{
+  "enabled": true,                          // ← 总开关，默认 false
+  "default": "原味",
+  "bindings": {
+    "AI":   { "mentor": "andrej-karpathy", "traits": ["逻辑清晰"] },
+    "物理": { "mentor": "einstein", "traits": [] }
+  }
+}
+```
+
+对话里也能直接说：「给 AI 设导师 Karpathy（逻辑清晰）」长期绑定、「换费曼来教」临时切换、「回到原味」关闭。
+
+- 性格可叠加但**不可冲突**（温柔↔严厉不能同选，也不能用"既/又"绕过）；无性格就用本色。
+- 历史人物可第一人称，在世真人只做风格参照；导师只换口吻，**不牺牲准确性与七步结构，严厉≠贬损**。
+- 开启后知识站大类页顶会显示一枚导师标签（性格在左·彩色，名字在右·浅灰）。
+
+---
+
 ## 目录结构 · Structure
 
 ```
@@ -156,6 +195,9 @@ gewu-skill/
   SKILL.md                      技能主文件(流程 + 触发词 + 视觉规范)
   README.md                     本文件
   templates/concept-template.md 概念笔记模板
+  templates/mentors.example.json 导师绑定模板
+  mentors/<id>/profile.md       导师教学人设(随skill,可复用)
+  mentors/conflict-table.json   性格冲突表
   scripts/build_graph.py        扫描笔记 → 知识图谱 HTML(力导向、依赖箭头、目标呼吸)
   scripts/plan_path.py          → 知识站单页(路线图/概念文档/目标规划/嵌入图谱)
   assets/hero.svg               宣传动画

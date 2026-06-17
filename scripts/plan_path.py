@@ -197,6 +197,64 @@ def _apply_config(html, cfg):
     return html
 
 
+def _read_profile(here, mid):
+    """读 mentors/<id>/profile.md 的 frontmatter（name_en/color/voice_mode 等）。"""
+    p = os.path.join(here, '..', 'mentors', mid, 'profile.md')
+    if not os.path.isfile(p):
+        return None
+    m = re.match(r'^---\s*\n(.*?)\n---', open(p, encoding='utf-8').read(), re.S)
+    fm = {}
+    if m:
+        for line in m.group(1).splitlines():
+            mm = re.match(r'^(\w+):\s*(.*)$', line)
+            if mm:
+                v = mm.group(2).strip()
+                if v[:1] in ('"', "'"):
+                    q = v[0]; e = v.find(q, 1)
+                    v = v[1:e] if e > 0 else v[1:]
+                else:
+                    h = v.find(' #')
+                    if h >= 0:
+                        v = v[:h]
+                    v = v.strip()
+                fm[mm.group(1)] = v
+    return fm
+
+def _mentor_tags(vault, here):
+    """返回 {大类: 标签HTML}。_system/mentors.json enabled=false 或无绑定 → 空 dict。"""
+    p = os.path.join(vault, '_system', 'mentors.json')
+    if not os.path.isfile(p):
+        return {}
+    try:
+        m = json.load(open(p, encoding='utf-8'))
+    except Exception:
+        return {}
+    if not m.get('enabled'):
+        return {}
+    out = {}
+    for cat, b in (m.get('bindings') or {}).items():
+        if not b or not b.get('mentor'):
+            continue
+        prof = _read_profile(here, b['mentor'])
+        if not prof:
+            continue
+        name = prof.get('name_en') or prof.get('name') or b['mentor']
+        color = prof.get('color') or 'var(--accent)'
+        traits = [t for t in (b.get('traits') or []) if t]
+        if prof.get('voice_mode') == 'style_reference':
+            disc = '导师风格 · 风格参照（非第一人称扮演）· 基于公开信息演绎'
+        else:
+            disc = '导师风格 · 基于公开信息的教学风格演绎，非本人'
+        nameseg = '<span class="mt-name">%s</span>' % H.escape(name)
+        if traits:
+            tag = ('<span class="mentortag" title="%s"><span class="mt-trait" style="background:%s">%s</span>%s</span>'
+                   % (H.escape(disc), color, H.escape('·'.join(traits)), nameseg))
+        else:
+            tag = '<span class="mentortag" title="%s">%s</span>' % (H.escape(disc), nameseg)
+        out[cat] = tag
+    return out
+
+
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     default_vault = os.environ.get('GEWU_VAULT') or os.path.join(os.getcwd(), '知识库')
@@ -207,6 +265,7 @@ def main():
     vault = args.vault
     notes = collect(vault)
     cfg = _load_config(vault)
+    mtags = _mentor_tags(vault, here)
     sysdir = os.path.join(vault, '_system'); os.makedirs(sysdir, exist_ok=True)
     cats = {}
     for t, n in notes.items():
@@ -237,7 +296,8 @@ def main():
         html = (HTML.replace('__CAT__', H.escape(c))
                     .replace('__DATA__', json.dumps(data, ensure_ascii=False))
                     .replace('__DOCS__', json.dumps(docs, ensure_ascii=False))
-                    .replace('__GOAL__', json.dumps(goals_all.get(c, {}), ensure_ascii=False)))
+                    .replace('__GOAL__', json.dumps(goals_all.get(c, {}), ensure_ascii=False))
+                    .replace('__MENTORTAG__', mtags.get(c, '')))
         html = _apply_config(html, cfg)
         open(os.path.join(cdir, c + '-路线图.html'), 'w', encoding='utf-8').write(html)
         # 清理旧的独立子页与连续手册
@@ -276,6 +336,9 @@ background:var(--panel);border-bottom:1px solid var(--line);backdrop-filter:blur
 .topbar .crumb b{color:var(--text)}
 .topbar .crumb .cl{color:var(--accent);cursor:pointer}
 .topbar .sp{flex:1}
+.mentortag{display:inline-flex;align-items:center;font-size:11px;line-height:1;border-radius:3px;overflow:hidden;margin-left:4px;font-weight:600;vertical-align:middle;box-shadow:0 1px 2px rgba(0,0,0,.14);cursor:default}
+.mentortag .mt-trait{padding:4px 7px;color:#fff;white-space:nowrap}
+.mentortag .mt-name{padding:4px 7px;background:#e7e7ea;color:#333;white-space:nowrap}
 .themebtn{background:var(--solid);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:13px;cursor:pointer}
 .shell{display:grid;grid-template-columns:252px minmax(0,1fr)}
 #sidenav{position:sticky;top:49px;align-self:start;height:calc(100vh - 49px);overflow-y:auto;padding:16px 12px;border-right:1px solid var(--line)}
@@ -397,7 +460,7 @@ font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spaci
 :root[data-theme="ink"] .md blockquote,:root[data-theme="inkdark"] .md blockquote{border-left-width:4px;font-style:italic}
 </style></head><body>
 <div class="topbar">
-  <span class="brand">__CAT__ 学习站</span>
+  <span class="brand">__CAT__ 学习站</span>__MENTORTAG__
   <span class="crumb" id="crumb"></span>
   <span class="sp"></span>
   <button class="themebtn" id="themebtn">◑ 深</button>

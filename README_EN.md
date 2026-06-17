@@ -147,6 +147,45 @@ Re-run `python scripts/plan_path.py` — the knowledge site now defaults to dark
 
 ---
 
+## Mentor (optional · off by default)
+
+Find the AI's voice too "AI-flavored"? Give Q&A and notes a **mentor's voice** — always within the Feynman 7 steps, never breaking them. **Off by default; plain AI otherwise.**
+
+The switch and bindings live in `知识库/_system/mentors.json` (template `templates/mentors.example.json`); mentor profiles ship with the skill at `mentors/<id>/profile.md` and are reusable across vaults. Three built-in examples:
+
+| Mentor | Default category | Mode |
+|---|---|---|
+| Feynman | general | first-person |
+| Einstein | physics | first-person |
+| Karpathy | AI | style reference (no impersonation of living people) |
+| Sun Tzu (Sunzi) | strategy | first-person |
+| Hua Luogeng | math | first-person |
+| Socrates | philosophy | first-person |
+| Laozi | philosophy | first-person |
+| Wang Yangming | philosophy | first-person |
+| Aristotle | logic | first-person |
+| Ashish Vaswani | AI | style reference (no impersonation of living people) |
+
+```jsonc
+// 知识库/_system/mentors.json
+{
+  "enabled": true,                          // ← master switch, default false
+  "default": "原味",
+  "bindings": {
+    "AI":   { "mentor": "andrej-karpathy", "traits": ["逻辑清晰"] },
+    "物理": { "mentor": "einstein", "traits": [] }
+  }
+}
+```
+
+You can also just say: "set Karpathy (logical) as the mentor for AI" (persistent), "let Feynman teach this" (temporary), "back to plain" (off).
+
+- Traits stack but **must not conflict** (gentle ↔ strict can't coexist, and you can't smuggle both via "and/but"); no trait → the mentor's own default voice.
+- Historical figures may speak first-person; living people are style references only. A mentor only changes the voice — it **never sacrifices accuracy or the 7-step structure, and strict ≠ demeaning**.
+- When on, the category page shows a mentor badge (trait left/colored, name right/light-gray).
+
+---
+
 ## Structure
 
 ```
@@ -154,6 +193,9 @@ gewu-skill/
   SKILL.md                      main skill file (flow + triggers + visual spec)
   README.md                     this file
   templates/concept-template.md concept note template
+  templates/mentors.example.json mentor binding template
+  mentors/<id>/profile.md       mentor teaching profile (ships with skill, reusable)
+  mentors/conflict-table.json   trait conflict table
   scripts/build_graph.py        scan notes → knowledge graph HTML (force-directed, dependency arrows, goal breathing)
   scripts/plan_path.py          → knowledge-site single page (roadmap / concept docs / goal planning / embedded graph)
   assets/hero.svg               promo animation
