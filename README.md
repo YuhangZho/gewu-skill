@@ -44,12 +44,12 @@
 
 ## 格物做了什么 · What it does
 
-**格物引导你把一个概念“讲出来”——不是帮你记笔记收藏吃灰，是让你真懂，并把学透的知识集成一座会「呼吸」的知识站。**
+**格物引导你把一个概念“描绘出来”——不是记录收藏，是让你真懂，把知识学「活」。**
 
-- **领域层**：开始一个新领域时，先总览、建知识地图、问你的**具体学习目标**、按"依赖优先 + 重要度"规划学习路线。
-- **概念层（费曼七步）**：`立靶 → 启动·点火(设问→联网取权威源→初稿) → 视觉建模(草稿图) → 讲给外行 → 卡壳回溯 → 简化迭代 → 三重验证 → 落盘`。
+- **领域层**：开始一个新领域时，先总览、建知识地图、问你**学习目标**、按"依赖优先 + 重要度"规划学习路线。
+- **概念层（费曼七步）**：立靶 → 启动·点火(设问→联网取权威源→初稿) → 视觉建模(草稿图) → 讲给外行 → 卡壳回溯 → 简化迭代 → 三重验证 → 落盘。
 - **落盘产物**：每个学透的概念 = 一篇 Markdown 笔记 + 一张成稿动态画面(HTML) + 进入知识图谱/路线图/文档站。
-- **目标闭环**：设定具体目标（如「应聘 AI 应用开发工程师」「CET-4」），AI Agent对照真实要求算出匹配度与缺口、规划下一步；目标完成后激活对应知识「呼吸」起来。
+- **目标闭环**：设定具体目标（如「应聘 AI 应用开发工程师」「CET-4」），AI Agent对照真实要求算出匹配度与缺口、规划下一步；目标完成 自主激活知识变成「呼吸」态。
 
 核心信条：**输出倒逼输入 —— 能讲清楚才算懂**。
 
@@ -57,7 +57,7 @@
 
 ## 使用 · Quick start
 
-对你的 AI 助手说(任一即可触发)：
+对你的 AI 助手说：
 
 - 「用格物学 **AI**」
 - 「用费曼法学 **Token**」 / "Teach me **X** with the Feynman method"
@@ -72,13 +72,13 @@ python scripts/build_graph.py            # 刷新知识图谱
 python scripts/plan_path.py --goal 面试  # 刷新知识站(--goal 可选)
 ```
 
-用浏览器打开 `知识库/<大类>/<大类>-路线图.html` 即可浏览(默认浅色，右上角可切深色)。
+用浏览器打开 `知识库/<大类>/<大类>-路线图.html` 即可浏览(默认浅色；右上角可在 **浅 / 深 / 宣纸 / 夜墨** 四套主题间循环切换，后两套为中国水墨风)。
 
 ---
 
 ## 安装 · Install
 
-格物遵循开放的 Agent Skills 标准（根目录一个 `SKILL.md`），可在任意 skills 兼容的 agent 里运行。
+格物遵循开放的 Agent Skills 标准，可在任意 skills 兼容的 agent 里运行。
 
 ### 环境检查 · Requirements
 
@@ -89,7 +89,7 @@ python --version
 - 显示 `Python 3.x` → 跳到下面「安装」。
 - 提示找不到命令 → 装一下：
   - **Windows** → [python.org/downloads](https://www.python.org/downloads/)，安装时勾选 *Add Python to PATH*
-  - **macOS** → `brew install python` 或上 python.org
+  - **macOS** → `brew install python` 
   - **Linux** → `sudo apt install python3`
 
 ### 方式一：一键安装（推荐，跨 agent）
@@ -138,7 +138,7 @@ npx skills add YuhangZho/gewu-skill
 // 知识库/_system/config.json   （模板：templates/config.example.json）
 {
   "enabled": true,                  // ← 总开关，默认 false
-  "theme_default": "dark",          // 知识站默认主题：light / dark
+  "theme_default": "dark",          // light(浅) / dark(深) / ink(宣纸) / inkdark(夜墨)
   "accent": { "light": "#34c759", "dark": "#30d158" }  // 强调色：按钮/链接/当前卡片
 }
 ```

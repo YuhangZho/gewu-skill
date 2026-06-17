@@ -72,7 +72,7 @@ python scripts/build_graph.py                   # actualiza el grafo de conocimi
 python scripts/plan_path.py --goal entrevista   # actualiza el sitio de conocimiento (--goal opcional)
 ```
 
-Abre `知识库/<categoría>/<categoría>-路线图.html` en tu navegador para explorar (claro por defecto; cambia a oscuro arriba a la derecha).
+Abre `知识库/<categoría>/<categoría>-路线图.html` en tu navegador para explorar (claro por defecto; alterna entre los temas **claro / oscuro / papel Xuan / tinta nocturna** arriba a la derecha — los dos últimos son un estilo de tinta china).
 
 ---
 
@@ -136,7 +136,7 @@ npx skills add YuhangZho/gewu-skill
 // 知识库/_system/config.json   (plantilla: templates/config.example.json)
 {
   "enabled": true,                  // ← interruptor maestro, por defecto false
-  "theme_default": "dark",          // tema por defecto del sitio: light / dark
+  "theme_default": "dark",          // light / dark / ink (papel Xuan) / inkdark (tinta nocturna)
   "accent": { "light": "#34c759", "dark": "#30d158" }  // acento: botones / enlaces / tarjeta activa
 }
 ```

@@ -3,9 +3,9 @@
   "_vault_path": "知识库根目录的绝对路径（记录用）。首次使用时由 AI 问你后写入；脚本实际定位优先用 --vault 参数，其次环境变量 GEWU_VAULT，最后当前工作目录下的 知识库/。本字段供人与跨会话的 AI 查阅。",
   "vault_path": "",
   "enabled": false,
-  "_theme_default": "知识站默认主题：light 或 dark",
+  "_theme_default": "知识站默认主题：light(浅) / dark(深) / ink(宣纸·水墨浅) / inkdark(夜墨·水墨深)",
   "theme_default": "light",
-  "_accent": "知识站强调色（按钮/链接/当前卡片高亮）。light=浅色模式用色，dark=深色模式用色。",
+  "_accent": "知识站强调色（按钮/链接/当前卡片高亮）。light=浅色模式用色，dark=深色模式用色；宣纸/夜墨用各自内置水墨色，不受此项影响。",
   "accent": {
     "light": "#007aff",
     "dark": "#0a84ff"

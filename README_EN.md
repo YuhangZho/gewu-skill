@@ -72,7 +72,7 @@ python scripts/build_graph.py                  # refresh the knowledge graph
 python scripts/plan_path.py --goal interview   # refresh the knowledge site (--goal optional)
 ```
 
-Open `知识库/<category>/<category>-路线图.html` in your browser to explore (light by default; toggle dark at top right).
+Open `知识库/<category>/<category>-路线图.html` in your browser to explore (light by default; cycle through **light / dark / Xuan-paper / Night-ink** themes at top right — the last two are a Chinese ink-wash style).
 
 ---
 
@@ -136,7 +136,7 @@ Just want to change the accent color or default light/dark, without touching cod
 // 知识库/_system/config.json   (template: templates/config.example.json)
 {
   "enabled": true,                  // ← master switch, default false
-  "theme_default": "dark",          // knowledge-site default theme: light / dark
+  "theme_default": "dark",          // light / dark / ink (Xuan paper) / inkdark (Night ink)
   "accent": { "light": "#34c759", "dark": "#30d158" }  // accent: buttons / links / active card
 }
 ```
