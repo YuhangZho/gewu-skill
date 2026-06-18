@@ -97,6 +97,20 @@ def _inline(s, linkset):
     s = _CODE.sub(r'<code>\1</code>', s)
     return s
 
+def _nested_list(items):
+    """items: [(缩进空格数, 已转义内联HTML)] → 嵌套 <ul> 树（脑图/大纲效果）。"""
+    html, stack = [], []
+    for indent, txt in items:
+        while stack and indent < stack[-1]:
+            html.append('</li></ul>'); stack.pop()
+        if not stack or indent > stack[-1]:
+            html.append('<ul>'); stack.append(indent); html.append('<li>' + txt)
+        else:
+            html.append('</li><li>' + txt)
+    while stack:
+        html.append('</li></ul>'); stack.pop()
+    return ''.join(html)
+
 def md_render(body, linkset):
     # 去掉首个 # 标题（与 dochead 重复）
     lines = body.split('\n')
@@ -104,7 +118,7 @@ def md_render(body, linkset):
         lines.pop(0)
     if lines and re.match(r'^#\s+', lines[0].strip()):
         lines = lines[1:]
-    out, toc, i, n, para, hid = [], [], 0, len(lines), [], [0]
+    out, toc, i, n, para, hid, fold = [], [], 0, len(lines), [], [0], [0]
     def flush():
         if para:
             out.append('<p>' + '<br>'.join(_inline(x, linkset) for x in para) + '</p>'); para.clear()
@@ -112,6 +126,14 @@ def md_render(body, linkset):
         st = lines[i].strip()
         if not st:
             flush(); i += 1; continue
+        # 折叠块：<details> / <summary> 透传（不转义），并记录折叠深度
+        if st.startswith('<details'):
+            flush(); out.append('<details class="lp-fold">'); fold[0] += 1; i += 1; continue
+        if st == '</details>':
+            flush(); out.append('</details>'); fold[0] = max(0, fold[0] - 1); i += 1; continue
+        ms = re.match(r'^<summary>(.*)</summary>\s*$', st)
+        if ms:
+            flush(); out.append('<summary>' + _inline(ms.group(1), linkset) + '</summary>'); i += 1; continue
         if re.match(r'^-{3,}$', st):
             flush(); out.append('<hr>'); i += 1; continue
         m = re.match(r'^(#{1,6})\s+(.*)$', st)
@@ -120,7 +142,8 @@ def md_render(body, linkset):
             if lv in (2, 3):
                 hid[0] += 1; sid = 'sec-%d' % hid[0]
                 out.append('<h%d id="%s">%s</h%d>' % (lv, sid, _inline(txt, linkset), lv))
-                toc.append({'lvl': lv, 'text': re.sub(r'<[^>]+>', '', _inline(txt, linkset)), 'id': sid})
+                if not fold[0]:  # 折叠区内的标题不进"本文导读"
+                    toc.append({'lvl': lv, 'text': re.sub(r'<[^>]+>', '', _inline(txt, linkset)), 'id': sid})
             else:
                 out.append('<h%d>%s</h%d>' % (lv, _inline(txt, linkset), lv))
             i += 1; continue
@@ -130,10 +153,12 @@ def md_render(body, linkset):
                 buf.append(re.sub(r'^\s*>\s?', '', lines[i])); i += 1
             out.append('<blockquote>' + '<br>'.join(_inline(x, linkset) for x in buf) + '</blockquote>'); continue
         if re.match(r'^[-*]\s+', st):
-            flush(); buf = []
+            flush(); items = []
             while i < n and re.match(r'^\s*[-*]\s+', lines[i]):
-                buf.append(re.sub(r'^\s*[-*]\s+', '', lines[i])); i += 1
-            out.append('<ul>' + ''.join('<li>%s</li>' % _inline(x, linkset) for x in buf) + '</ul>'); continue
+                raw = lines[i]; indent = len(raw) - len(raw.lstrip(' '))
+                txt = re.sub(r'^\s*[-*]\s+', '', raw)
+                items.append((indent, _inline(txt, linkset))); i += 1
+            out.append(_nested_list(items)); continue
         if re.match(r'^\d+\.\s+', st):
             flush(); buf = []
             while i < n and re.match(r'^\s*\d+\.\s+', lines[i]):
@@ -405,6 +430,19 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 .md{font-size:15px;line-height:1.78;margin-top:14px}
 .md h2{font-size:18px;margin:1.5em 0 .4em;scroll-margin-top:64px}.md h3{font-size:15px;margin:1.2em 0 .3em;color:var(--muted);scroll-margin-top:64px}
 .md p{margin:.6em 0}.md ul,.md ol{margin:.5em 0;padding-left:1.4em}.md li{margin:.25em 0}
+/* 嵌套大纲 = 树状脑图效果 */
+.md ul ul{margin:.2em 0;padding-left:1.1em;border-left:1px dashed var(--line)}
+.md ul ul li{position:relative}
+/* 折叠块：学习过程记录默认收起 */
+.md details.lp-fold{margin:16px 0;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+.md details.lp-fold>summary{cursor:pointer;list-style:none;user-select:none;padding:11px 16px;font-weight:600;font-size:14px;color:var(--text);background:color-mix(in srgb,var(--muted) 8%,transparent)}
+.md details.lp-fold>summary::-webkit-details-marker{display:none}
+.md details.lp-fold>summary::before{content:"▸ ";color:var(--muted)}
+.md details.lp-fold[open]>summary{border-bottom:1px solid var(--line)}
+.md details.lp-fold[open]>summary::before{content:"▾ "}
+.md details.lp-fold>:not(summary){margin-left:16px;margin-right:16px}
+.md details.lp-fold>:first-of-type:not(summary){margin-top:10px}
+.md details.lp-fold>:last-child{margin-bottom:12px}
 .md blockquote{margin:.7em 0;padding:.5em .9em;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:0 8px 8px 0}
 .md code{background:var(--code);padding:1px 6px;border-radius:5px;font-size:.92em;font-family:ui-monospace,Menlo,Consolas,monospace}
 .md a{color:var(--accent);text-decoration:none}.md a:hover{text-decoration:underline}.md a.xref{cursor:pointer}
