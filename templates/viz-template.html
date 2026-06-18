@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!--
+  格物 · 动态画面脚手架 viz-template.html
+  用法：复制本文件到 〔大类〕/_viz/〔概念名〕.html（草稿可放 _viz/_draft/）。
+  你只需做 3 件事：
+   1) 改 <title> 和 .vt-title 里的「概念名」；
+   2) 把画面主体填进下面标着「★ 画面主体」的 <div id="stage"> / <svg>（用 SVG / CSS / 原生 JS，纯自包含离线）；
+   3) 需要动效就在底部脚本区的「★ 你的脚本」处写，用 var(--accent) 等 CSS 变量取色，别写死 hex。
+  四套配色 + 右上角循环切换已内置；嵌入知识站时会自动跟随父页主题（?theme= 与 postMessage）。
+-->
+<html lang="zh" data-theme="light"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>概念名 · 动态画面</title>
+<style>
+:root[data-theme="light"]{color-scheme:light;--bg:#f5f5f7;--panel:rgba(255,255,255,.86);--text:#1d1d1f;--muted:#6e6e73;--line:rgba(0,0,0,.08);--accent:#007aff;--track:rgba(0,0,0,.06)}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0d1117;--panel:rgba(22,27,34,.72);--text:#f0f2f5;--muted:#8b949e;--line:rgba(48,54,61,.7);--accent:#0a84ff;--track:rgba(84,84,88,.28)}
+/* 中国水墨 · 宣纸（浅）*/
+:root[data-theme="ink"]{color-scheme:light;--bg:#efe5cf;--panel:rgba(246,240,225,.86);--text:#2b2620;--muted:#8a7c64;--line:rgba(60,48,20,.14);--accent:#9c3b2e;--track:rgba(60,48,20,.10)}
+/* 中国水墨 · 夜墨（深）*/
+:root[data-theme="inkdark"]{color-scheme:dark;--bg:#181813;--panel:rgba(34,34,24,.74);--text:#ece3d0;--muted:#9a9079;--line:rgba(120,110,80,.28);--accent:#d6604d;--track:rgba(120,110,80,.20)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;transition:background .25s,color .25s}
+.vt-bar{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line);background:var(--panel);backdrop-filter:blur(18px) saturate(180%);position:sticky;top:0;z-index:5}
+.vt-title{font-weight:700;font-size:15px;letter-spacing:-.01em}
+.vt-sub{color:var(--muted);font-size:12px}
+.vt-sp{flex:1}
+.themebtn{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:13px;cursor:pointer;transition:border-color .2s,color .2s}
+.themebtn:hover{border-color:var(--accent);color:var(--accent)}
+.vt-wrap{max-width:900px;margin:0 auto;padding:26px 22px 60px}
+#stage{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;backdrop-filter:blur(18px) saturate(180%)}
+#stage svg{width:100%;height:auto;display:block}
+.vt-cap{color:var(--muted);font-size:13px;line-height:1.6;margin-top:14px}
+/* 水墨主题：楷书标题质感 */
+:root[data-theme="ink"] .vt-title,:root[data-theme="inkdark"] .vt-title{font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spacing:.5px}
+</style></head><body>
+<div class="vt-bar">
+  <span class="vt-title">概念名</span>
+  <span class="vt-sub">动态画面 / Dynamic View</span>
+  <span class="vt-sp"></span>
+  <button class="themebtn" id="themebtn">◐ 浅</button>
+</div>
+<div class="vt-wrap">
+  <!-- ★ 画面主体：把概念的时空关系结构 / 动态图像画在这里（SVG 优先；结构性可静态，过程性可加轻动效） -->
+  <div id="stage">
+    <svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg" aria-label="概念名 动态画面">
+      <!-- 示例占位：替换成你的画面。颜色一律用 currentColor / CSS 变量经由 fill="var(--accent)" 等，勿写死 hex。 -->
+      <text x="380" y="180" text-anchor="middle" fill="var(--muted)" font-size="16">把画面填到这里（替换本占位 SVG）</text>
+    </svg>
+  </div>
+  <!-- 可选：一句话说明这张图在表达什么 -->
+  <p class="vt-cap">（可选）一句话点出这张图的关键结构 / 动态关系。</p>
+</div>
+<script>
+// —— 主题跟随父页（知识站 iframe 嵌入时）：读 ?theme= + 监听 postMessage —— 勿改
+(function(){var p=new URLSearchParams(location.search).get('theme');if(p)document.documentElement.dataset.theme=p;
+  window.addEventListener('message',function(e){if(e&&e.data&&e.data.theme){document.documentElement.dataset.theme=e.data.theme;syncBtn();}});})();
+// —— 四套主题循环按钮 —— 勿改
+var THEMES=[["light","◐ 浅"],["dark","◑ 深"],["ink","❖ 宣纸"],["inkdark","❖ 夜墨"]];
+function tIdx(n){for(var i=0;i<THEMES.length;i++)if(THEMES[i][0]===n)return i;return 0;}
+function syncBtn(){document.getElementById('themebtn').textContent=THEMES[tIdx(document.documentElement.dataset.theme||'light')][1];}
+document.getElementById('themebtn').onclick=function(){var cur=document.documentElement.dataset.theme||'light';document.documentElement.dataset.theme=THEMES[(tIdx(cur)+1)%THEMES.length][0];syncBtn();};
+syncBtn();
+
+// ★ 你的脚本：动效 / 交互写在这里（可选）。用 getComputedStyle 取 CSS 变量色，保证跟随主题。
+// 例：var accent=getComputedStyle(document.documentElement).getPropertyValue('--accent');
+</script>
+</body></html>
