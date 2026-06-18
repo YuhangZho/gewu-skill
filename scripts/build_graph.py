@@ -216,7 +216,7 @@ HTML = r"""<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>知识图谱 · Knowledge Graph</title>
 <style>
-:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1115;--panel:#171a21;--line:#2a2f3a;--text:#e7e9ee;--muted:var(--muted);--accent:#7aa2f7;--linkw:#39404f;--linkm:#56607a;--node:#202637;--ring:#565f73;--bq:#1c2230;--bqt:#cdd6f4;--mdtext:#cfd4df;--hudbg:rgba(23,26,33,.7);--alive:#34c759}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1115;--panel:#171a21;--line:#2a2f3a;--text:#e7e9ee;--muted:#9aa3b2;--accent:#7aa2f7;--linkw:#39404f;--linkm:#56607a;--node:#202637;--ring:#565f73;--bq:#1c2230;--bqt:#cdd6f4;--mdtext:#cfd4df;--hudbg:rgba(23,26,33,.7);--alive:#34c759}
 :root[data-theme="light"]{color-scheme:light;--bg:#f7f8fa;--panel:#ffffff;--line:#e2e5ea;--text:#1f2430;--muted:#6b7280;--accent:#3b5bdb;--linkw:#c5cad4;--linkm:#9aa3b2;--node:#eef1f6;--ring:#9aa3b2;--bq:#eef1fb;--bqt:#26324d;--mdtext:#3a4150;--hudbg:rgba(255,255,255,.82);--alive:#2bb24c}
 /* 中国水墨 · 宣纸（浅）*/
 :root[data-theme="ink"]{color-scheme:light;--bg:#efe5cf;--panel:#f6f0e1;--line:#d8ccae;--text:#2b2620;--muted:#8a7c64;--accent:#9c3b2e;--linkw:#cdc1a3;--linkm:#b1a181;--node:#e6dbbf;--ring:#b1a486;--bq:#ece1c8;--bqt:#4a4030;--mdtext:#403a2d;--hudbg:rgba(246,240,225,.82);--alive:#5a8f6d}

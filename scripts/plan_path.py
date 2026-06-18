@@ -433,8 +433,24 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 .gsum{font-size:14.5px;line-height:1.7;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
 .gh3{font-size:13px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin:22px 0 8px}
 .greqs{display:flex;flex-direction:column;gap:6px}.greq{display:flex;gap:10px;align-items:flex-start;font-size:14px}.greq em{color:var(--muted);font-style:normal;font-size:12.5px}
-.gck{width:20px;height:20px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.gck{width:20px;height:20px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-top:1px}
 .gck.ok{color:var(--green);background:color-mix(in srgb,var(--green) 16%,transparent)}.gck.no{color:var(--muted);background:color-mix(in srgb,var(--muted) 14%,transparent)}
+.gck.part{color:transparent;box-shadow:0 0 0 1px color-mix(in srgb,var(--muted) 22%,transparent) inset}
+.greqn{flex:1;line-height:1.5}
+.gcap{font-size:12.5px;color:var(--muted);line-height:1.65;margin:0 0 10px}
+.gvia1,.gviac{color:var(--accent);text-decoration:none;cursor:pointer;font-size:13px}
+.gvia1:hover,.gviac:hover{text-decoration:underline}
+.gexp{position:relative;display:inline}
+.gexpb{color:var(--accent);cursor:pointer;font-size:12.5px;padding:1px 8px;border-radius:8px;white-space:nowrap;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--accent) 15%,transparent))}
+.gexpb:hover{background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--accent) 26%,transparent))}
+.gexpbody{display:none;margin-left:7px}
+.gexp.open .gexpbody{display:inline}
+.gvsep{color:var(--muted);margin:0 6px}
+.gpracts{display:flex;flex-direction:column;gap:6px}
+.gpract{display:flex;gap:10px;align-items:flex-start;font-size:14px;cursor:pointer}
+.gpract:hover .gpck{color:var(--green)}
+.gpck{width:20px;height:20px;flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--muted);margin-top:1px;transition:color .15s}
+.gpck.on{color:var(--green)}
 .grecs{display:flex;flex-direction:column;gap:8px}.grec{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .gp{flex:none;font-size:12px;font-weight:700;color:#fff;background:var(--accent);border-radius:8px;padding:3px 8px}.grn{font-weight:600;font-size:15px}.grw{color:var(--muted);font-size:13px;margin-top:3px;line-height:1.5}
 .celebrate{background:color-mix(in srgb,var(--green) 12%,transparent);border:1px solid color-mix(in srgb,var(--green) 40%,var(--line));border-radius:14px;padding:18px;margin-bottom:16px;animation:fadeInUp .5s ease-out}.celebrate .cbig{font-size:22px;font-weight:700;margin-bottom:4px}
@@ -570,6 +586,16 @@ function gHasGoal(){return !!(GOAL&&GOAL.goal);}
 function gUnlocked(){return gHasGoal()||R.learned>0;}
 function gReqOk(r){return r&&(r.have===true||r.status==='✓'||r.status==='ok'||r.status===true);}
 function gReqVia(r){return (r&&(r.via||r.refs||r.by))||[];}
+function gReqName(r){return (typeof r==='string')?r:(r.name||r.req||'');}
+function gReqKind(r){return (r&&r.kind&&(r.kind==='实践型'||r.kind==='practice'))?'实践型':'知识型';}
+function gAttr(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function gLearnedSet(){var s={};(R.order||[]).forEach(function(o){if(o.status==='已学透')s[o.title]=1;});return s;}
+// 知识型覆盖度：via 概念里有多少已学透 / via 总数；via 空时回退 have 兜底
+function gCov(r,LRN){var via=gReqVia(r);if(!via.length){var ok=gReqOk(r);return {pct:ok?100:0,n:0,tot:0,done:ok};}var n=0;via.forEach(function(c){if(LRN[c])n++;});return {pct:Math.round(n/via.length*100),n:n,tot:via.length,done:n>=via.length};}
+function gCircle(c){if(c.done)return '<span class="gck ok">✓</span>';if(c.pct<=0)return '<span class="gck no">○</span>';return '<span class="gck part" title="'+c.n+'/'+c.tot+' 概念已学透" style="background:conic-gradient(var(--green) 0% '+c.pct+'%, color-mix(in srgb,var(--muted) 14%,transparent) '+c.pct+'% 100%)"></span>';}
+// via 概念链接：单个直接可点；多个收成「{ N个概念 ⌄」点击展开
+function gVia(via){if(!via.length)return '';if(via.length===1)return ' <a class="gvia1" data-go="'+gAttr(via[0])+'">'+via[0]+'</a>';var items=via.map(function(c){return '<a class="gviac" data-go="'+gAttr(c)+'">'+c+'</a>';}).join('<span class="gvsep">·</span>');return ' <span class="gexp"><span class="gexpb">{ '+via.length+'个概念 ⌄</span><span class="gexpbody">'+items+'</span></span>';}
+function gPractOn(i){try{return localStorage.getItem('goal_pract_'+CAT+'_'+i)==='1';}catch(e){return false;}}
 function gTierColor(t){return t==='高'?'var(--green)':(t==='中'?'var(--yellow)':'var(--red)');}
 function updateGoalNav(){var gl=document.getElementById('goallink');if(!gl)return;gl.classList.toggle('disabled',!gUnlocked());gl.textContent=gIsDone()?'🎯 目标完成 ✅':'🎯 目标规划';}
 function renderGoal(){
@@ -581,7 +607,20 @@ function renderGoal(){
   var pct=done?100:(g.match||0),tc=gTierColor(done?'高':g.tier);
   h+='<div class="gmeter"><div class="gpct" style="color:'+tc+'">'+pct+'%</div><div class="gbar"><i style="width:'+pct+'%;background:'+tc+'"></i></div><div class="gtier">与目标匹配度 · '+(done?'已达成':(g.tier||'')+' 档')+'</div></div>';
   if(g.summary)h+='<p class="gsum">'+g.summary+'</p>';
-  if(g.requirements&&g.requirements.length)h+='<div class="gh3">目标要求对照</div><div class="greqs">'+g.requirements.map(function(r){var ok=gReqOk(r),via=gReqVia(r),nm=(typeof r==='string'?r:(r.name||r.req||''));return '<div class="greq"><span class="gck '+(ok?'ok':'no')+'">'+(ok?'✓':'○')+'</span><span>'+nm+(via&&via.length?' <em>('+via.join('、')+')</em>':'')+'</span></div>';}).join('')+'</div>';
+  if(g.requirements&&g.requirements.length){
+    var LRN=gLearnedSet();
+    var kreqs=g.requirements.filter(function(r){return gReqKind(r)!=='实践型';});
+    var preqs=g.requirements.filter(function(r){return gReqKind(r)==='实践型';});
+    if(kreqs.length){
+      h+='<div class="gh3">目标要求对照 · 知识覆盖</div>';
+      h+='<div class="gcap">真实世界对该目标的要求清单，用来查你的<b>学习覆盖度</b>；与左侧概念<b>非一一对应</b>——一条要求可能由多个概念覆盖，✓＝其覆盖概念已学透（部分学透按比例填充）。</div>';
+      h+='<div class="greqs">'+kreqs.map(function(r){var c=gCov(r,LRN);return '<div class="greq">'+gCircle(c)+'<span class="greqn">'+gReqName(r)+gVia(gReqVia(r))+'</span></div>';}).join('')+'</div>';
+    }
+    if(preqs.length){
+      h+='<div class="gh3">实践清单 · 靠动手达成（自检）</div>';
+      h+='<div class="gpracts">'+preqs.map(function(r,i){var on=gPractOn(i);return '<div class="gpract" data-pi="'+i+'"><span class="gpck'+(on?' on':'')+'">'+(on?'☑':'▢')+'</span><span class="greqn">'+gReqName(r)+'</span></div>';}).join('')+'</div>';
+    }
+  }
   if(!done&&g.tier!=='高'&&g.recommend&&g.recommend.length)h+='<div class="gh3">下一步学习规划 · 按优先级</div><div class="grecs">'+g.recommend.map(function(r,i){if(typeof r==='string'){return '<div class="grec"><span class="gp">P'+(i+1)+'</span><div><div class="grn">'+r+'</div></div></div>';}var nm=r.concept||r.name||'',why=r.why||r.reason||'';return '<div class="grec"><span class="gp">P'+(r.priority||i+1)+'</span><div><div class="grn">'+nm+'</div>'+(why?'<div class="grw">'+why+'</div>':'')+'</div></div>';}).join('')+'</div>';
   if((done||g.tier==='高')&&g.high_actions&&g.high_actions.length)h+='<div class="gh3">去实践 · 把知识用起来</div><ul class="gacts">'+g.high_actions.map(function(a){return '<li>'+a+'</li>';}).join('')+'</ul>';
   if(g.sources&&g.sources.length)h+='<div class="gsrc">目标要求来源：'+g.sources.map(function(s,i){return '<a href="'+s+'" target="_blank" rel="noopener">来源'+(i+1)+'</a>';}).join(' · ')+'</div>';
@@ -590,6 +629,13 @@ function renderGoal(){
   else h+='<div class="gnote">已完成。若有新目标，告诉我即可重新规划。</div>';
   h+='</div>';
   b.innerHTML=h;
+  // via 概念点击跳转（单个 / 展开后的多个）
+  b.querySelectorAll('[data-go]').forEach(function(a){a.onclick=function(e){e.stopPropagation();go(this.getAttribute('data-go'));};});
+  // 多概念大括号：点击展开/收起（展开他人先收起）；点页面别处收回
+  b.querySelectorAll('.gexpb').forEach(function(el){el.onclick=function(e){e.stopPropagation();var p=el.parentNode,wasOpen=p.classList.contains('open');document.querySelectorAll('.gexp.open').forEach(function(x){x.classList.remove('open');var bb=x.querySelector('.gexpb');if(bb)bb.textContent=bb.textContent.replace('⌃','⌄');});if(!wasOpen){p.classList.add('open');el.textContent=el.textContent.replace('⌄','⌃');}};});
+  if(!window.__gexpBound){document.addEventListener('click',function(e){if(!(e.target.closest&&e.target.closest('.gexp'))){document.querySelectorAll('.gexp.open').forEach(function(x){x.classList.remove('open');var bb=x.querySelector('.gexpb');if(bb)bb.textContent=bb.textContent.replace('⌃','⌄');});}});window.__gexpBound=true;}
+  // 实践清单自检（localStorage 持久）
+  b.querySelectorAll('.gpract').forEach(function(el){el.onclick=function(){var i=el.getAttribute('data-pi'),k='goal_pract_'+CAT+'_'+i,on=false;try{on=localStorage.getItem(k)==='1';}catch(e){}try{localStorage.setItem(k,on?'0':'1');}catch(e){}var ck=el.querySelector('.gpck');ck.classList.toggle('on',!on);ck.textContent=!on?'☑':'▢';};});
   var db=document.getElementById('gdone');
   if(db)db.onclick=function(){try{localStorage.setItem('goal_done_'+CAT,'1');var fb=document.getElementById('gfbtext');if(fb&&fb.value)localStorage.setItem('goal_fb_'+CAT,fb.value);}catch(e){}updateGoalNav();renderGoal();try{var gf=document.getElementById('graphframe');if(gf&&gf.src&&gf.src!=='about:blank')gf.contentWindow.postMessage({goalDone:true},'*');}catch(e){}window.scrollTo(0,0);};
 }
