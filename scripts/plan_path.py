@@ -642,13 +642,19 @@ function renderGoal(){
   var g=GOAL,done=gIsDone(),h='';
   h+='<div class="ghead"><h1>🎯 '+g.goal+'</h1>'+(g.goal_category?'<span class="gtag">'+g.goal_category+'</span>':'')+(g.sample?'<span class="gtag sample">示例</span>':'')+'</div><div class="gsub">更新于 '+(g.updated||'')+'</div>';
   if(done)h+='<div class="celebrate"><div class="cbig">🎉 目标完成！</div><div>恭喜拿下「'+g.goal+'」。</div></div>';
-  var pct=done?100:(g.match||0),tc=gTierColor(done?'高':g.tier);
-  h+='<div class="gmeter"><div class="gpct" style="color:'+tc+'">'+pct+'%</div><div class="gbar"><i style="width:'+pct+'%;background:'+tc+'"></i></div><div class="gtier">与目标匹配度 · '+(done?'已达成':(g.tier||'')+' 档')+'</div></div>';
+  // 顶部进度＝实时完成进度：知识型按覆盖比例 + 实践型按 ☑ 勾选，合计/总要求数（不再读 AI 写的 match，随 ✓/☑ 自动刷新）
+  var LRN=gLearnedSet();
+  var reqs=g.requirements||[];
+  var kreqs=reqs.filter(function(r){return gReqKind(r)!=='实践型';});
+  var preqs=reqs.filter(function(r){return gReqKind(r)==='实践型';});
+  var psum=0;
+  kreqs.forEach(function(r){psum+=gCov(r,LRN).pct/100;});
+  preqs.forEach(function(r,i){if(gPractOn(i))psum+=1;});
+  var prog=reqs.length?Math.round(psum/reqs.length*100):0; if(done)prog=100;
+  var ptier=prog>=80?'高':(prog>=50?'中':'低'),tc=gTierColor(ptier);
+  h+='<div class="gmeter"><div class="gpct" style="color:'+tc+'">'+prog+'%</div><div class="gbar"><i style="width:'+prog+'%;background:'+tc+'"></i></div><div class="gtier">目标完成进度 · '+(done?'已完成':ptier+' 档')+'</div></div>';
   if(g.summary)h+='<p class="gsum">'+g.summary+'</p>';
-  if(g.requirements&&g.requirements.length){
-    var LRN=gLearnedSet();
-    var kreqs=g.requirements.filter(function(r){return gReqKind(r)!=='实践型';});
-    var preqs=g.requirements.filter(function(r){return gReqKind(r)==='实践型';});
+  if(reqs.length){
     if(kreqs.length){
       h+='<div class="gh3">目标要求对照 · 知识覆盖</div>';
       h+='<div class="gcap">真实世界对该目标的要求清单，用来查你的<b>学习覆盖度</b>；与左侧概念<b>非一一对应</b>——一条要求可能由多个概念覆盖，✓＝其覆盖概念已学透（部分学透按比例填充）。</div>';
@@ -659,8 +665,8 @@ function renderGoal(){
       h+='<div class="gpracts">'+preqs.map(function(r,i){var on=gPractOn(i);return '<div class="gpract" data-pi="'+i+'"><span class="gpck'+(on?' on':'')+'">'+(on?'☑':'▢')+'</span><span class="greqn">'+gReqName(r)+'</span></div>';}).join('')+'</div>';
     }
   }
-  if(!done&&g.tier!=='高'&&g.recommend&&g.recommend.length)h+='<div class="gh3">下一步学习规划 · 按优先级</div><div class="grecs">'+g.recommend.map(function(r,i){if(typeof r==='string'){return '<div class="grec"><span class="gp">P'+(i+1)+'</span><div><div class="grn">'+r+'</div></div></div>';}var nm=r.concept||r.name||'',why=r.why||r.reason||'';return '<div class="grec"><span class="gp">P'+(r.priority||i+1)+'</span><div><div class="grn">'+nm+'</div>'+(why?'<div class="grw">'+why+'</div>':'')+'</div></div>';}).join('')+'</div>';
-  if((done||g.tier==='高')&&g.high_actions&&g.high_actions.length)h+='<div class="gh3">去实践 · 把知识用起来</div><ul class="gacts">'+g.high_actions.map(function(a){return '<li>'+a+'</li>';}).join('')+'</ul>';
+  if(!done&&ptier!=='高'&&g.recommend&&g.recommend.length)h+='<div class="gh3">下一步学习规划 · 按优先级</div><div class="grecs">'+g.recommend.map(function(r,i){if(typeof r==='string'){return '<div class="grec"><span class="gp">P'+(i+1)+'</span><div><div class="grn">'+r+'</div></div></div>';}var nm=r.concept||r.name||'',why=r.why||r.reason||'';return '<div class="grec"><span class="gp">P'+(r.priority||i+1)+'</span><div><div class="grn">'+nm+'</div>'+(why?'<div class="grw">'+why+'</div>':'')+'</div></div>';}).join('')+'</div>';
+  if((done||ptier==='高')&&g.high_actions&&g.high_actions.length)h+='<div class="gh3">去实践 · 把知识用起来</div><ul class="gacts">'+g.high_actions.map(function(a){return '<li>'+a+'</li>';}).join('')+'</ul>';
   if(g.sources&&g.sources.length)h+='<div class="gsrc">目标要求来源：'+g.sources.map(function(s,i){return '<a href="'+s+'" target="_blank" rel="noopener">来源'+(i+1)+'</a>';}).join(' · ')+'</div>';
   h+='<div class="gfb"><div class="gh3">完成反馈</div><textarea id="gfbtext" placeholder="例如：参加 CET-4 考试通过！/ 已做完 3 套模拟题，阅读还需加强…"></textarea>';
   if(!done)h+='<div><button id="gdone" class="gbtn">🎉 标记目标完成</button><span class="gnote">点完成后请告诉我一声，我会更新数据、让知识图谱里这部分知识“活”起来。</span></div>';
@@ -672,8 +678,8 @@ function renderGoal(){
   // 多概念大括号：点击展开/收起（展开他人先收起）；点页面别处收回
   b.querySelectorAll('.gexpb').forEach(function(el){el.onclick=function(e){e.stopPropagation();var p=el.parentNode,wasOpen=p.classList.contains('open');document.querySelectorAll('.gexp.open').forEach(function(x){x.classList.remove('open');var bb=x.querySelector('.gexpb');if(bb)bb.textContent=bb.textContent.replace('⌃','⌄');});if(!wasOpen){p.classList.add('open');el.textContent=el.textContent.replace('⌄','⌃');}};});
   if(!window.__gexpBound){document.addEventListener('click',function(e){if(!(e.target.closest&&e.target.closest('.gexp'))){document.querySelectorAll('.gexp.open').forEach(function(x){x.classList.remove('open');var bb=x.querySelector('.gexpb');if(bb)bb.textContent=bb.textContent.replace('⌃','⌄');});}});window.__gexpBound=true;}
-  // 实践清单自检（localStorage 持久）
-  b.querySelectorAll('.gpract').forEach(function(el){el.onclick=function(){var i=el.getAttribute('data-pi'),k='goal_pract_'+CAT+'_'+i,on=false;try{on=localStorage.getItem(k)==='1';}catch(e){}try{localStorage.setItem(k,on?'0':'1');}catch(e){}var ck=el.querySelector('.gpck');ck.classList.toggle('on',!on);ck.textContent=!on?'☑':'▢';};});
+  // 实践清单自检（localStorage 持久）；勾选后重渲染，让顶部完成进度实时刷新
+  b.querySelectorAll('.gpract').forEach(function(el){el.onclick=function(){var i=el.getAttribute('data-pi'),k='goal_pract_'+CAT+'_'+i,on=false;try{on=localStorage.getItem(k)==='1';}catch(e){}try{localStorage.setItem(k,on?'0':'1');}catch(e){}renderGoal();};});
   var db=document.getElementById('gdone');
   if(db)db.onclick=function(){try{localStorage.setItem('goal_done_'+CAT,'1');var fb=document.getElementById('gfbtext');if(fb&&fb.value)localStorage.setItem('goal_fb_'+CAT,fb.value);}catch(e){}updateGoalNav();renderGoal();try{var gf=document.getElementById('graphframe');if(gf&&gf.src&&gf.src!=='about:blank')gf.contentWindow.postMessage({goalDone:true},'*');}catch(e){}window.scrollTo(0,0);};
 }
