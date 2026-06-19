@@ -1,6 +1,6 @@
 {
-  "generated": "2026-06-16 23:09",
-  "goal": "",
+  "generated": "2026-06-19 13:31",
+  "goal": "工程",
   "categories": {
     "AI": {
       "order": [
@@ -136,6 +136,42 @@
             "MCP",
             "Skill"
           ]
+        },
+        {
+          "title": "EOS token",
+          "status": "已学透",
+          "stage": 1,
+          "importance": 3,
+          "base_importance": 3,
+          "prereqs": [
+            "Token"
+          ],
+          "desc": "它属于 AI 大模型，是词表里一个**特殊 token**：模型生成出它，就表示\"我说完了\"，解码循环据此**停止**。",
+          "groups": [
+            "模型基础"
+          ],
+          "related": [
+            "Token",
+            "贪心解码"
+          ]
+        },
+        {
+          "title": "贪心解码",
+          "status": "已学透",
+          "stage": 1,
+          "importance": 3,
+          "base_importance": 3,
+          "prereqs": [
+            "Token"
+          ],
+          "desc": "它属于 AI 大模型的**解码策略**，规则极简——每一步都选**当前概率最高**的那个 token。",
+          "groups": [
+            "模型基础"
+          ],
+          "related": [
+            "EOS token",
+            "Token"
+          ]
         }
       ],
       "current": "Agent",
@@ -144,8 +180,8 @@
         "MCP",
         "Plugin"
       ],
-      "learned": 3,
-      "total": 7,
+      "learned": 5,
+      "total": 9,
       "max_stage": 4
     }
   },

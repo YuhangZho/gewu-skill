@@ -64,7 +64,10 @@ def plan_category(items, goal=None):
     def nscore(t):
         rel = len(neighbors[t] & base)
         return (-(rel * 2 + imp(t)), placed.index(t))
-    next3 = sorted(cand, key=nscore)[:3]
+    # outer fringe 闸门（KST）：优先推荐前置全部已学透的概念；ready 非空时只从中选
+    ready_cand = [t for t in cand if prereqs[t] <= learned]
+    pool = ready_cand if ready_cand else cand
+    next3 = sorted(pool, key=nscore)[:3]
     order = []
     for t in placed:
         n = items[t]

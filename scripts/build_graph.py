@@ -142,6 +142,16 @@ def build_graph(notes):
         categories[n['category']] += 1
 
     nodes, links, seen, depseen = [], [], set(), set()
+
+    # outer fringe（知识空间理论 KST）：前置全部已学透、自身未学透 → ready=可学的"下一站"
+    def is_ready(n):
+        if n['status'] == '已学透':
+            return False
+        for raw in n['prereqs']:
+            src = index.get(str(raw).strip().lower())
+            if src is None or notes[src]['status'] != '已学透':
+                return False
+        return True
     # 大类中心节点
     for cat, cnt in categories.items():
         nodes.append({'id': 'cat::' + cat, 'label': cat, 'type': 'category',
@@ -150,6 +160,7 @@ def build_graph(notes):
     for t, n in notes.items():
         nodes.append({'id': t, 'label': t, 'type': 'concept', 'category': n['category'],
                       'status': n['status'], 'importance': n['importance'],
+                      'ready': is_ready(n),
                       'aliases': n['aliases'], 'body': n['body'], 'rel': n['rel'],
                       'viz': n.get('viz', '')})
         links.append({'source': t, 'target': 'cat::' + n['category'], 'kind': 'belong'})
