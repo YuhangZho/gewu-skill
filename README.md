@@ -119,10 +119,10 @@ npx skills add YuhangZho/gewu-skill
 | Codex | `~/.codex/skills/gewu/` |
 | Cursor | `~/.cursor/skills/gewu/` |
 | OpenClaw | `~/.openclaw/skills/gewu/` |
-| Qoder | `~/.qoder/skills/gewu/` |
+| Qoder | `~/.qoder/skills/gewu/`  // 如果是Qoder CN 就是 `~/.qoder-cn/skills/gewu/` |
 | Kimi Code CLI | `~/.config/agents/skills/gewu/` |
+| Kimi Work | `~/AppData/Roaming/kimi-desktop/daimon-share/daimon/skills`  // 复制后需要重启 |
 | 其他 50+ agent | 路径各异，见 [vercel-labs/skills 支持表](https://github.com/vercel-labs/skills#supported-agents) |
-
 
 </details>
 
@@ -149,6 +149,14 @@ npx skills add YuhangZho/gewu-skill
 
 ---
 
+## 导师 · Mentor（开始新领域时问你一次）
+
+觉得 AI 说话太"AI 味"？格物支持给问答和笔记换一种**导师口吻**——始终在费曼七步框架内，绝不打乱步骤。**默认在你开始一个新领域时问一句：直接开始（原味），还是选一位导师**；选了才生效，可随时「回到原味」。自带费曼、爱因斯坦、Karpathy、孙武、苏格拉底等 10 位（历史人物可第一人称，在世真人只做风格参照、不冒名），也能加性格、临时换人或长期绑定。
+
+> 完整机制与配置（开关 / 绑定 / 性格冲突规则）见 `SKILL.md` 的「导师风格子系统」；可选导师名册以 `mentors/roster.json` 为准。
+
+---
+
 ## 目录结构 · Structure
 
 ```
@@ -156,6 +164,9 @@ gewu-skill/
   SKILL.md                      技能主文件(流程 + 触发词 + 视觉规范)
   README.md                     本文件
   templates/concept-template.md 概念笔记模板
+  templates/mentors.example.json 导师绑定模板
+  mentors/<id>/profile.md       导师教学人设(随skill,可复用)
+  mentors/conflict-table.json   性格冲突表
   scripts/build_graph.py        扫描笔记 → 知识图谱 HTML(力导向、依赖箭头、目标呼吸)
   scripts/plan_path.py          → 知识站单页(路线图/概念文档/目标规划/嵌入图谱)
   assets/hero.svg               宣传动画

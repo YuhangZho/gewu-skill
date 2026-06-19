@@ -77,11 +77,15 @@ def plan_category(items, goal=None):
             'max_stage': max(stage.values()) if stage else 0}
 
 # ---------- Markdown -> HTML（带 ## / ### 锚点 + 目录） ----------
-_LINK = re.compile(r'\[([^\]]+)\]\((https?://[^)]+)\)')
+_IMG  = re.compile(r'!\[([^\]]*)\]\(([^)]+)\)')
+_LINK = re.compile(r'\[([^\]]+)\]\(([^)]+)\)')   # 同时支持 http(s) 与相对路径（如 _viz/X.html）
 _BARE = re.compile(r'&lt;(https?://[^&]+)&gt;')
 _BOLD = re.compile(r'\*\*([^*]+)\*\*')
 _CODE = re.compile(r'`([^`]+)`')
 _WIKI = re.compile(r'\[\[([^\]|]+?)(?:\|[^\]]+)?\]\]')
+
+def _href(u):
+    return u.strip().replace(' ', '%20')   # 路径里的空格转义，保证相对链接可点
 
 def _inline(s, linkset):
     s = H.escape(s)
@@ -91,20 +95,35 @@ def _inline(s, linkset):
             return '<a class="xref" data-go="%s">%s</a>' % (H.escape(nm), H.escape(nm))
         return H.escape(nm)
     s = _WIKI.sub(wl, s)
-    s = _LINK.sub(r'<a href="\2" target="_blank" rel="noopener">\1</a>', s)
+    s = _IMG.sub(lambda m: '<img src="%s" alt="%s" style="max-width:100%%;border-radius:10px">' % (_href(m.group(2)), m.group(1)), s)
+    s = _LINK.sub(lambda m: '<a href="%s" target="_blank" rel="noopener">%s</a>' % (_href(m.group(2)), m.group(1)), s)
     s = _BARE.sub(r'<a href="\1" target="_blank" rel="noopener">\1</a>', s)
     s = _BOLD.sub(r'<strong>\1</strong>', s)
     s = _CODE.sub(r'<code>\1</code>', s)
     return s
 
-def md_render(body, linkset):
+def _nested_list(items):
+    """items: [(缩进空格数, 已转义内联HTML)] → 嵌套 <ul> 树（脑图/大纲效果）。"""
+    html, stack = [], []
+    for indent, txt in items:
+        while stack and indent < stack[-1]:
+            html.append('</li></ul>'); stack.pop()
+        if not stack or indent > stack[-1]:
+            html.append('<ul>'); stack.append(indent); html.append('<li>' + txt)
+        else:
+            html.append('</li><li>' + txt)
+    while stack:
+        html.append('</li></ul>'); stack.pop()
+    return ''.join(html)
+
+def md_render(body, linkset, viz_block=''):
     # 去掉首个 # 标题（与 dochead 重复）
     lines = body.split('\n')
     while lines and not lines[0].strip():
         lines.pop(0)
     if lines and re.match(r'^#\s+', lines[0].strip()):
         lines = lines[1:]
-    out, toc, i, n, para, hid = [], [], 0, len(lines), [], [0]
+    out, toc, i, n, para, hid, fold, vizdone = [], [], 0, len(lines), [], [0], [0], [False]
     def flush():
         if para:
             out.append('<p>' + '<br>'.join(_inline(x, linkset) for x in para) + '</p>'); para.clear()
@@ -112,6 +131,14 @@ def md_render(body, linkset):
         st = lines[i].strip()
         if not st:
             flush(); i += 1; continue
+        # 折叠块：<details> / <summary> 透传（不转义），并记录折叠深度
+        if st.startswith('<details'):
+            flush(); out.append('<details class="lp-fold">'); fold[0] += 1; i += 1; continue
+        if st == '</details>':
+            flush(); out.append('</details>'); fold[0] = max(0, fold[0] - 1); i += 1; continue
+        ms = re.match(r'^<summary>(.*)</summary>\s*$', st)
+        if ms:
+            flush(); out.append('<summary>' + _inline(ms.group(1), linkset) + '</summary>'); i += 1; continue
         if re.match(r'^-{3,}$', st):
             flush(); out.append('<hr>'); i += 1; continue
         m = re.match(r'^(#{1,6})\s+(.*)$', st)
@@ -120,7 +147,11 @@ def md_render(body, linkset):
             if lv in (2, 3):
                 hid[0] += 1; sid = 'sec-%d' % hid[0]
                 out.append('<h%d id="%s">%s</h%d>' % (lv, sid, _inline(txt, linkset), lv))
-                toc.append({'lvl': lv, 'text': re.sub(r'<[^>]+>', '', _inline(txt, linkset)), 'id': sid})
+                if not fold[0]:  # 折叠区内的标题不进"本文导读"
+                    toc.append({'lvl': lv, 'text': re.sub(r'<[^>]+>', '', _inline(txt, linkset)), 'id': sid})
+                # 把动态画面 iframe 放到「动态画面」标题下，而不是落到全文末尾
+                if viz_block and not vizdone[0] and ('动态画面' in txt or 'Dynamic View' in txt):
+                    out.append(viz_block); vizdone[0] = True
             else:
                 out.append('<h%d>%s</h%d>' % (lv, _inline(txt, linkset), lv))
             i += 1; continue
@@ -130,10 +161,12 @@ def md_render(body, linkset):
                 buf.append(re.sub(r'^\s*>\s?', '', lines[i])); i += 1
             out.append('<blockquote>' + '<br>'.join(_inline(x, linkset) for x in buf) + '</blockquote>'); continue
         if re.match(r'^[-*]\s+', st):
-            flush(); buf = []
+            flush(); items = []
             while i < n and re.match(r'^\s*[-*]\s+', lines[i]):
-                buf.append(re.sub(r'^\s*[-*]\s+', '', lines[i])); i += 1
-            out.append('<ul>' + ''.join('<li>%s</li>' % _inline(x, linkset) for x in buf) + '</ul>'); continue
+                raw = lines[i]; indent = len(raw) - len(raw.lstrip(' '))
+                txt = re.sub(r'^\s*[-*]\s+', '', raw)
+                items.append((indent, _inline(txt, linkset))); i += 1
+            out.append(_nested_list(items)); continue
         if re.match(r'^\d+\.\s+', st):
             flush(); buf = []
             while i < n and re.match(r'^\s*\d+\.\s+', lines[i]):
@@ -141,6 +174,8 @@ def md_render(body, linkset):
             out.append('<ol>' + ''.join('<li>%s</li>' % _inline(x, linkset) for x in buf) + '</ol>'); continue
         para.append(st); i += 1
     flush()
+    if viz_block and not vizdone[0]:  # 笔记没有「动态画面」标题时兜底追加
+        out.append(viz_block)
     return '\n'.join(out), toc
 
 def stars(k):
@@ -154,17 +189,18 @@ def build_docs(cat, items, plan, vault):
     docs = {}
     for o in learned:
         t = o['title']; note = items[t]
-        body_html, toc = md_render(note['body'], linkset)
         viz = note.get('viz', '')
         viz_block = ''
         if viz:
             rel = os.path.relpath(os.path.join(vault, viz), cdir).replace('\\', '/')
-            viz_block = ('<div class="vizwrap"><div class="vizbar"><span>动态画面 / Dynamic View</span>'
+            href = rel.replace(' ', '%20')
+            viz_block = ('<div class="vizwrap"><div class="vizbar"><span>动态画面</span>'
                          '<a href="%s" target="_blank" rel="noopener">新标签打开 ↗</a></div>'
-                         '<iframe class="vizframe" data-src="%s" loading="lazy"></iframe></div>') % (rel, rel)
+                         '<iframe class="vizframe" data-src="%s" loading="lazy"></iframe></div>') % (href, href)
+        body_html, toc = md_render(note['body'], linkset, viz_block)
         doc = ('<div class="dochead"><h1>%s <span class="stars">%s</span></h1>'
-               '<span class="badge ok">✓ 已学透</span></div><div class="md">%s</div>%s'
-               % (H.escape(t), stars(o['importance']), body_html, viz_block))
+               '<span class="badge ok">✓ 已学透</span></div><div class="md">%s</div>'
+               % (H.escape(t), stars(o['importance']), body_html))
         toc_html = '<div class="tochd">本文导读</div>' + (''.join(
             '<a class="tl lv%d" data-id="%s">%s</a>' % (x['lvl'], x['id'], x['text']) for x in toc)
             or '<div class="tnote">（无小节）</div>')
@@ -197,9 +233,68 @@ def _apply_config(html, cfg):
     return html
 
 
+def _read_profile(here, mid):
+    """读 mentors/<id>/profile.md 的 frontmatter（name_en/color/voice_mode 等）。"""
+    p = os.path.join(here, '..', 'mentors', mid, 'profile.md')
+    if not os.path.isfile(p):
+        return None
+    m = re.match(r'^---\s*\n(.*?)\n---', open(p, encoding='utf-8').read(), re.S)
+    fm = {}
+    if m:
+        for line in m.group(1).splitlines():
+            mm = re.match(r'^(\w+):\s*(.*)$', line)
+            if mm:
+                v = mm.group(2).strip()
+                if v[:1] in ('"', "'"):
+                    q = v[0]; e = v.find(q, 1)
+                    v = v[1:e] if e > 0 else v[1:]
+                else:
+                    h = v.find(' #')
+                    if h >= 0:
+                        v = v[:h]
+                    v = v.strip()
+                fm[mm.group(1)] = v
+    return fm
+
+def _mentor_tags(vault, here):
+    """返回 {大类: 标签HTML}。_system/mentors.json enabled=false 或无绑定 → 空 dict。"""
+    p = os.path.join(vault, '_system', 'mentors.json')
+    if not os.path.isfile(p):
+        return {}
+    try:
+        m = json.load(open(p, encoding='utf-8'))
+    except Exception:
+        return {}
+    if not m.get('enabled'):
+        return {}
+    out = {}
+    for cat, b in (m.get('bindings') or {}).items():
+        if not b or not b.get('mentor'):
+            continue
+        prof = _read_profile(here, b['mentor'])
+        if not prof:
+            continue
+        name = prof.get('name_en') or prof.get('name') or b['mentor']
+        color = prof.get('color') or 'var(--accent)'
+        traits = [t for t in (b.get('traits') or []) if t]
+        if prof.get('voice_mode') == 'style_reference':
+            disc = '导师风格 · 风格参照（非第一人称扮演）· 基于公开信息演绎'
+        else:
+            disc = '导师风格 · 基于公开信息的教学风格演绎，非本人'
+        nameseg = '<span class="mt-name">%s</span>' % H.escape(name)
+        if traits:
+            tag = ('<span class="mentortag" title="%s"><span class="mt-trait" style="background:%s">%s</span>%s</span>'
+                   % (H.escape(disc), color, H.escape('·'.join(traits)), nameseg))
+        else:
+            tag = '<span class="mentortag" title="%s">%s</span>' % (H.escape(disc), nameseg)
+        out[cat] = tag
+    return out
+
+
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
-    default_vault = os.environ.get('GEWU_VAULT') or os.path.join(os.getcwd(), '知识库')
+    # 知识库根目录 = 主题名文件夹本身（不再套一层「知识库/」）
+    default_vault = os.environ.get('GEWU_VAULT') or os.getcwd()
     ap = argparse.ArgumentParser()
     ap.add_argument('--vault', default=default_vault)
     ap.add_argument('--goal', default=None)
@@ -207,6 +302,7 @@ def main():
     vault = args.vault
     notes = collect(vault)
     cfg = _load_config(vault)
+    mtags = _mentor_tags(vault, here)
     sysdir = os.path.join(vault, '_system'); os.makedirs(sysdir, exist_ok=True)
     cats = {}
     for t, n in notes.items():
@@ -237,7 +333,8 @@ def main():
         html = (HTML.replace('__CAT__', H.escape(c))
                     .replace('__DATA__', json.dumps(data, ensure_ascii=False))
                     .replace('__DOCS__', json.dumps(docs, ensure_ascii=False))
-                    .replace('__GOAL__', json.dumps(goals_all.get(c, {}), ensure_ascii=False)))
+                    .replace('__GOAL__', json.dumps(goals_all.get(c, {}), ensure_ascii=False))
+                    .replace('__MENTORTAG__', mtags.get(c, '')))
         html = _apply_config(html, cfg)
         open(os.path.join(cdir, c + '-路线图.html'), 'w', encoding='utf-8').write(html)
         # 清理旧的独立子页与连续手册
@@ -276,6 +373,9 @@ background:var(--panel);border-bottom:1px solid var(--line);backdrop-filter:blur
 .topbar .crumb b{color:var(--text)}
 .topbar .crumb .cl{color:var(--accent);cursor:pointer}
 .topbar .sp{flex:1}
+.mentortag{display:inline-flex;align-items:center;font-size:11px;line-height:1;border-radius:3px;overflow:hidden;margin-left:4px;font-weight:600;vertical-align:middle;box-shadow:0 1px 2px rgba(0,0,0,.14);cursor:default}
+.mentortag .mt-trait{padding:4px 7px;color:#fff;white-space:nowrap}
+.mentortag .mt-name{padding:4px 7px;background:#e7e7ea;color:#333;white-space:nowrap}
 .themebtn{background:var(--solid);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:13px;cursor:pointer}
 .shell{display:grid;grid-template-columns:252px minmax(0,1fr)}
 #sidenav{position:sticky;top:49px;align-self:start;height:calc(100vh - 49px);overflow-y:auto;padding:16px 12px;border-right:1px solid var(--line)}
@@ -341,6 +441,19 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 .md{font-size:15px;line-height:1.78;margin-top:14px}
 .md h2{font-size:18px;margin:1.5em 0 .4em;scroll-margin-top:64px}.md h3{font-size:15px;margin:1.2em 0 .3em;color:var(--muted);scroll-margin-top:64px}
 .md p{margin:.6em 0}.md ul,.md ol{margin:.5em 0;padding-left:1.4em}.md li{margin:.25em 0}
+/* 嵌套大纲 = 树状脑图效果 */
+.md ul ul{margin:.2em 0;padding-left:1.1em;border-left:1px dashed var(--line)}
+.md ul ul li{position:relative}
+/* 折叠块：学习过程记录默认收起 */
+.md details.lp-fold{margin:16px 0;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+.md details.lp-fold>summary{cursor:pointer;list-style:none;user-select:none;padding:11px 16px;font-weight:600;font-size:14px;color:var(--text);background:color-mix(in srgb,var(--muted) 8%,transparent)}
+.md details.lp-fold>summary::-webkit-details-marker{display:none}
+.md details.lp-fold>summary::before{content:"▸ ";color:var(--muted)}
+.md details.lp-fold[open]>summary{border-bottom:1px solid var(--line)}
+.md details.lp-fold[open]>summary::before{content:"▾ "}
+.md details.lp-fold>:not(summary){margin-left:16px;margin-right:16px}
+.md details.lp-fold>:first-of-type:not(summary){margin-top:10px}
+.md details.lp-fold>:last-child{margin-bottom:12px}
 .md blockquote{margin:.7em 0;padding:.5em .9em;border-left:3px solid var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:0 8px 8px 0}
 .md code{background:var(--code);padding:1px 6px;border-radius:5px;font-size:.92em;font-family:ui-monospace,Menlo,Consolas,monospace}
 .md a{color:var(--accent);text-decoration:none}.md a:hover{text-decoration:underline}.md a.xref{cursor:pointer}
@@ -369,8 +482,24 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 .gsum{font-size:14.5px;line-height:1.7;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
 .gh3{font-size:13px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;margin:22px 0 8px}
 .greqs{display:flex;flex-direction:column;gap:6px}.greq{display:flex;gap:10px;align-items:flex-start;font-size:14px}.greq em{color:var(--muted);font-style:normal;font-size:12.5px}
-.gck{width:20px;height:20px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.gck{width:20px;height:20px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-top:1px}
 .gck.ok{color:var(--green);background:color-mix(in srgb,var(--green) 16%,transparent)}.gck.no{color:var(--muted);background:color-mix(in srgb,var(--muted) 14%,transparent)}
+.gck.part{color:transparent;box-shadow:0 0 0 1px color-mix(in srgb,var(--muted) 22%,transparent) inset}
+.greqn{flex:1;line-height:1.5}
+.gcap{font-size:12.5px;color:var(--muted);line-height:1.65;margin:0 0 10px}
+.gvia1,.gviac{color:var(--accent);text-decoration:none;cursor:pointer;font-size:13px}
+.gvia1:hover,.gviac:hover{text-decoration:underline}
+.gexp{position:relative;display:inline}
+.gexpb{color:var(--accent);cursor:pointer;font-size:12.5px;padding:1px 8px;border-radius:8px;white-space:nowrap;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--accent) 15%,transparent))}
+.gexpb:hover{background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--accent) 26%,transparent))}
+.gexpbody{display:none;margin-left:7px}
+.gexp.open .gexpbody{display:inline}
+.gvsep{color:var(--muted);margin:0 6px}
+.gpracts{display:flex;flex-direction:column;gap:6px}
+.gpract{display:flex;gap:10px;align-items:flex-start;font-size:14px;cursor:default}
+.gpck{width:20px;height:20px;flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--muted);margin-top:1px;transition:color .15s;cursor:pointer}
+.gpck:hover{color:var(--green)}
+.gpck.on{color:var(--green)}
 .grecs{display:flex;flex-direction:column;gap:8px}.grec{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
 .gp{flex:none;font-size:12px;font-weight:700;color:#fff;background:var(--accent);border-radius:8px;padding:3px 8px}.grn{font-weight:600;font-size:15px}.grw{color:var(--muted);font-size:13px;margin-top:3px;line-height:1.5}
 .celebrate{background:color-mix(in srgb,var(--green) 12%,transparent);border:1px solid color-mix(in srgb,var(--green) 40%,var(--line));border-radius:14px;padding:18px;margin-bottom:16px;animation:fadeInUp .5s ease-out}.celebrate .cbig{font-size:22px;font-weight:700;margin-bottom:4px}
@@ -397,7 +526,7 @@ font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spaci
 :root[data-theme="ink"] .md blockquote,:root[data-theme="inkdark"] .md blockquote{border-left-width:4px;font-style:italic}
 </style></head><body>
 <div class="topbar">
-  <span class="brand">__CAT__ 学习站</span>
+  <span class="brand">__CAT__ 学习站</span>__MENTORTAG__
   <span class="crumb" id="crumb"></span>
   <span class="sp"></span>
   <button class="themebtn" id="themebtn">◑ 深</button>
@@ -501,34 +630,95 @@ function bindToc(){
   document.querySelectorAll('#docview h2[id],#docview h3[id]').forEach(h=>window.__tio.observe(h));
 }
 function gIsDone(){var ls=false;try{ls=localStorage.getItem('goal_done_'+CAT)==='1';}catch(e){}return ls||(GOAL&&GOAL.status==='已完成');}
+function gHasGoal(){return !!(GOAL&&GOAL.goal);}
+// 解锁：本大类已设目标(goals.json 有该大类)即点亮；或已有概念学透。两者皆无才灰显。
+function gUnlocked(){return gHasGoal()||R.learned>0;}
+function gReqOk(r){return r&&(r.have===true||r.status==='✓'||r.status==='ok'||r.status===true);}
+function gReqVia(r){return (r&&(r.via||r.refs||r.by))||[];}
+function gReqName(r){return (typeof r==='string')?r:(r.name||r.req||'');}
+function gReqKind(r){return (r&&r.kind&&(r.kind==='实践型'||r.kind==='practice'))?'实践型':'知识型';}
+function gAttr(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function gLearnedSet(){var s={};(R.order||[]).forEach(function(o){if(o.status==='已学透')s[o.title]=1;});return s;}
+// 知识型覆盖度：via 概念里有多少已学透 / via 总数；via 空时回退 have 兜底
+function gCov(r,LRN){var via=gReqVia(r);if(!via.length){var ok=gReqOk(r);return {pct:ok?100:0,n:0,tot:0,done:ok};}var n=0;via.forEach(function(c){if(LRN[c])n++;});return {pct:Math.round(n/via.length*100),n:n,tot:via.length,done:n>=via.length};}
+function gCircle(c){if(c.done)return '<span class="gck ok">✓</span>';if(c.pct<=0)return '<span class="gck no">○</span>';return '<span class="gck part" title="'+c.n+'/'+c.tot+' 概念已学透" style="background:conic-gradient(var(--green) 0% '+c.pct+'%, color-mix(in srgb,var(--muted) 14%,transparent) '+c.pct+'% 100%)"></span>';}
+// via 概念链接：单个直接可点；多个收成「{ N个概念 ⌄」点击展开
+function gVia(via){if(!via.length)return '';if(via.length===1)return ' <a class="gvia1" data-go="'+gAttr(via[0])+'">'+via[0]+'</a>';var items=via.map(function(c){return '<a class="gviac" data-go="'+gAttr(c)+'">'+c+'</a>';}).join('<span class="gvsep">·</span>');return ' <span class="gexp"><span class="gexpb">{ '+via.length+'个概念 ⌄</span><span class="gexpbody">'+items+'</span></span>';}
+function gPractOn(i){try{return localStorage.getItem('goal_pract_'+CAT+'_'+i)==='1';}catch(e){return false;}}
+// 实时完成进度：知识型按覆盖比例 + 实践型按 ☑ 勾选，合计/总要求数
+function gProgress(){
+  var g=GOAL||{},done=gIsDone(),LRN=gLearnedSet(),reqs=g.requirements||[];
+  var kreqs=reqs.filter(function(r){return gReqKind(r)!=='实践型';});
+  var preqs=reqs.filter(function(r){return gReqKind(r)==='实践型';});
+  var psum=0;
+  kreqs.forEach(function(r){psum+=gCov(r,LRN).pct/100;});
+  preqs.forEach(function(r,i){if(gPractOn(i))psum+=1;});
+  var prog=reqs.length?Math.round(psum/reqs.length*100):0; if(done)prog=100;
+  var ptier=prog>=80?'高':(prog>=50?'中':'低');
+  return {prog:prog,ptier:ptier,tc:gTierColor(ptier)};
+}
 function gTierColor(t){return t==='高'?'var(--green)':(t==='中'?'var(--yellow)':'var(--red)');}
-function updateGoalNav(){var gl=document.getElementById('goallink');if(!gl)return;gl.classList.toggle('disabled',R.learned===0);gl.textContent=gIsDone()?'🎯 目标完成 ✅':'🎯 目标规划';}
+function updateGoalNav(){var gl=document.getElementById('goallink');if(!gl)return;gl.classList.toggle('disabled',!gUnlocked());gl.textContent=gIsDone()?'🎯 目标完成 ✅':'🎯 目标规划';}
 function renderGoal(){
   var b=document.getElementById('goalbody');
-  if(R.learned===0){b.innerHTML='<div class="gempty">完成第一个知识点后，这里才会解锁「目标规划」。</div>';return;}
-  if(!GOAL||!GOAL.goal){b.innerHTML='<div class="gempty"><h1>🎯 目标规划</h1><p>你还没设定本领域的学习目标。告诉我你的<b>具体目标</b>（越细分越好：「CET-4 英语考试」优于「考试」，「企业内训分享」优于「分享」），我会联网对照真实要求、分析你与目标的差距并按优先级规划下一步。</p><p class="gref">参考分类：应试 · 求职 · 分享 · 知识变现 · 自主学习 · 无目标(AI自主发散)</p></div>';return;}
+  if(!gHasGoal()){b.innerHTML='<div class="gempty"><h1>🎯 目标规划</h1><p>你还没设定本领域的学习目标。告诉我你的<b>具体目标</b>（越细分越好：「CET-4 英语考试」优于「考试」，「企业内训分享」优于「分享」），我会联网对照真实要求、分析你与目标的差距并按优先级规划下一步。</p><p class="gref">参考分类：应试 · 求职 · 分享 · 知识变现 · 自主学习 · 无目标(AI自主发散)</p></div>';return;}
   var g=GOAL,done=gIsDone(),h='';
   h+='<div class="ghead"><h1>🎯 '+g.goal+'</h1>'+(g.goal_category?'<span class="gtag">'+g.goal_category+'</span>':'')+(g.sample?'<span class="gtag sample">示例</span>':'')+'</div><div class="gsub">更新于 '+(g.updated||'')+'</div>';
   if(done)h+='<div class="celebrate"><div class="cbig">🎉 目标完成！</div><div>恭喜拿下「'+g.goal+'」。</div></div>';
-  var pct=done?100:(g.match||0),tc=gTierColor(done?'高':g.tier);
-  h+='<div class="gmeter"><div class="gpct" style="color:'+tc+'">'+pct+'%</div><div class="gbar"><i style="width:'+pct+'%;background:'+tc+'"></i></div><div class="gtier">与目标匹配度 · '+(done?'已达成':(g.tier||'')+' 档')+'</div></div>';
+  // 顶部进度＝实时完成进度（不再读 AI 写的 match，随 ✓/☑ 自动刷新）
+  var LRN=gLearnedSet();
+  var reqs=g.requirements||[];
+  var kreqs=reqs.filter(function(r){return gReqKind(r)!=='实践型';});
+  var preqs=reqs.filter(function(r){return gReqKind(r)==='实践型';});
+  var P=gProgress();
+  h+='<div class="gmeter"><div class="gpct" style="color:'+P.tc+'">'+P.prog+'%</div><div class="gbar"><i style="width:'+P.prog+'%;background:'+P.tc+'"></i></div><div class="gtier">目标完成进度 · '+(done?'已完成':P.ptier+' 档')+'</div></div>';
   if(g.summary)h+='<p class="gsum">'+g.summary+'</p>';
-  if(g.requirements&&g.requirements.length)h+='<div class="gh3">目标要求对照</div><div class="greqs">'+g.requirements.map(function(r){return '<div class="greq"><span class="gck '+(r.have?'ok':'no')+'">'+(r.have?'✓':'○')+'</span><span>'+r.name+(r.via&&r.via.length?' <em>('+r.via.join('、')+')</em>':'')+'</span></div>';}).join('')+'</div>';
-  if(!done&&g.tier!=='高'&&g.recommend&&g.recommend.length)h+='<div class="gh3">下一步学习规划 · 按优先级</div><div class="grecs">'+g.recommend.map(function(r){return '<div class="grec"><span class="gp">P'+r.priority+'</span><div><div class="grn">'+r.concept+'</div><div class="grw">'+r.why+'</div></div></div>';}).join('')+'</div>';
-  if((done||g.tier==='高')&&g.high_actions&&g.high_actions.length)h+='<div class="gh3">去实践 · 把知识用起来</div><ul class="gacts">'+g.high_actions.map(function(a){return '<li>'+a+'</li>';}).join('')+'</ul>';
+  if(reqs.length){
+    if(kreqs.length){
+      h+='<div class="gh3">目标要求对照 · 知识覆盖</div>';
+      h+='<div class="gcap">真实世界对该目标的要求清单，用来查你的<b>学习覆盖度</b>；与左侧概念<b>非一一对应</b>——一条要求可能由多个概念覆盖，✓＝其覆盖概念已学透（部分学透按比例填充）。</div>';
+      h+='<div class="greqs">'+kreqs.map(function(r){var c=gCov(r,LRN);return '<div class="greq">'+gCircle(c)+'<span class="greqn">'+gReqName(r)+gVia(gReqVia(r))+'</span></div>';}).join('')+'</div>';
+    }
+    if(preqs.length){
+      h+='<div class="gh3">实践清单 · 靠动手达成（自检）</div>';
+      h+='<div class="gpracts">'+preqs.map(function(r,i){var on=gPractOn(i);return '<div class="gpract"><span class="gpck'+(on?' on':'')+'" data-pi="'+i+'" role="checkbox" aria-checked="'+(on?'true':'false')+'" tabindex="0" title="点这个方框手动勾选">'+(on?'☑':'▢')+'</span><span class="greqn">'+gReqName(r)+'</span></div>';}).join('')+'</div>';
+    }
+  }
+  if(!done&&P.ptier!=='高'&&g.recommend&&g.recommend.length)h+='<div class="gh3">下一步学习规划 · 按优先级</div><div class="grecs">'+g.recommend.map(function(r,i){if(typeof r==='string'){return '<div class="grec"><span class="gp">P'+(i+1)+'</span><div><div class="grn">'+r+'</div></div></div>';}var nm=r.concept||r.name||'',why=r.why||r.reason||'';return '<div class="grec"><span class="gp">P'+(r.priority||i+1)+'</span><div><div class="grn">'+nm+'</div>'+(why?'<div class="grw">'+why+'</div>':'')+'</div></div>';}).join('')+'</div>';
+  if((done||P.ptier==='高')&&g.high_actions&&g.high_actions.length)h+='<div class="gh3">去实践 · 把知识用起来</div><ul class="gacts">'+g.high_actions.map(function(a){return '<li>'+a+'</li>';}).join('')+'</ul>';
   if(g.sources&&g.sources.length)h+='<div class="gsrc">目标要求来源：'+g.sources.map(function(s,i){return '<a href="'+s+'" target="_blank" rel="noopener">来源'+(i+1)+'</a>';}).join(' · ')+'</div>';
   h+='<div class="gfb"><div class="gh3">完成反馈</div><textarea id="gfbtext" placeholder="例如：参加 CET-4 考试通过！/ 已做完 3 套模拟题，阅读还需加强…"></textarea>';
   if(!done)h+='<div><button id="gdone" class="gbtn">🎉 标记目标完成</button><span class="gnote">点完成后请告诉我一声，我会更新数据、让知识图谱里这部分知识“活”起来。</span></div>';
   else h+='<div class="gnote">已完成。若有新目标，告诉我即可重新规划。</div>';
   h+='</div>';
   b.innerHTML=h;
+  // via 概念点击跳转（单个 / 展开后的多个）
+  b.querySelectorAll('[data-go]').forEach(function(a){a.onclick=function(e){e.stopPropagation();go(this.getAttribute('data-go'));};});
+  // 多概念大括号：点击展开/收起（展开他人先收起）；点页面别处收回
+  b.querySelectorAll('.gexpb').forEach(function(el){el.onclick=function(e){e.stopPropagation();var p=el.parentNode,wasOpen=p.classList.contains('open');document.querySelectorAll('.gexp.open').forEach(function(x){x.classList.remove('open');var bb=x.querySelector('.gexpb');if(bb)bb.textContent=bb.textContent.replace('⌃','⌄');});if(!wasOpen){p.classList.add('open');el.textContent=el.textContent.replace('⌄','⌃');}};});
+  if(!window.__gexpBound){document.addEventListener('click',function(e){if(!(e.target.closest&&e.target.closest('.gexp'))){document.querySelectorAll('.gexp.open').forEach(function(x){x.classList.remove('open');var bb=x.querySelector('.gexpb');if(bb)bb.textContent=bb.textContent.replace('⌃','⌄');});}});window.__gexpBound=true;}
+  // 实践清单自检：仅当用户【手动点击复选框本身】才切换；就地更新，绝不因重渲染/切回页面而自动改动
+  b.querySelectorAll('.gpck[data-pi]').forEach(function(ck){
+    ck.onclick=function(e){
+      e.stopPropagation();
+      var i=ck.getAttribute('data-pi'),k='goal_pract_'+CAT+'_'+i,on=false;
+      try{on=localStorage.getItem(k)==='1';}catch(e){}
+      var now=!on;
+      try{localStorage.setItem(k,now?'1':'0');}catch(e){}
+      ck.classList.toggle('on',now); ck.textContent=now?'☑':'▢'; ck.setAttribute('aria-checked',now?'true':'false');
+      var P=gProgress();   // 仅就地刷新顶部进度，不整页重渲染
+      var pe=b.querySelector('.gpct'); if(pe){pe.textContent=P.prog+'%';pe.style.color=P.tc;}
+      var be=b.querySelector('.gbar>i'); if(be){be.style.width=P.prog+'%';be.style.background=P.tc;}
+      var te=b.querySelector('.gtier'); if(te)te.textContent='目标完成进度 · '+(gIsDone()?'已完成':P.ptier+' 档');
+    };
+  });
   var db=document.getElementById('gdone');
   if(db)db.onclick=function(){try{localStorage.setItem('goal_done_'+CAT,'1');var fb=document.getElementById('gfbtext');if(fb&&fb.value)localStorage.setItem('goal_fb_'+CAT,fb.value);}catch(e){}updateGoalNav();renderGoal();try{var gf=document.getElementById('graphframe');if(gf&&gf.src&&gf.src!=='about:blank')gf.contentWindow.postMessage({goalDone:true},'*');}catch(e){}window.scrollTo(0,0);};
 }
 function go(v){
   const ov=document.getElementById('overview'),dw=document.getElementById('docwrap'),gw=document.getElementById('graphwrap'),goalw=document.getElementById('goalwrap');
   gw.style.display='none';goalw.style.display='none';
-  if(v==='__goal__'){if(R.learned===0){go('__overview__');return;}ov.style.display='none';dw.style.display='none';goalw.style.display='block';renderGoal();setActive('__goal__');document.getElementById('crumb').innerHTML='/ <b>'+(gIsDone()?'目标完成 ✅':'目标规划')+'</b>';location.hash=encodeURIComponent('__goal__');window.scrollTo(0,0);return;}
+  if(v==='__goal__'){if(!gUnlocked()){go('__overview__');return;}ov.style.display='none';dw.style.display='none';goalw.style.display='block';renderGoal();setActive('__goal__');document.getElementById('crumb').innerHTML='/ <b>'+(gIsDone()?'目标完成 ✅':'目标规划')+'</b>';location.hash=encodeURIComponent('__goal__');window.scrollTo(0,0);return;}
   if(v==='__graph__'){ov.style.display='none';dw.style.display='none';gw.style.display='block';
     const gf=document.getElementById('graphframe');if(!gf.src||gf.src==='about:blank'){gf.src=gf.dataset.src+'?theme='+theme()+'&goaldone='+(gIsDone()?1:0);}else{try{gf.contentWindow.postMessage({theme:theme()},'*');gf.contentWindow.postMessage({goalDone:gIsDone()},'*');}catch(e){}}
     setActive('__graph__');document.getElementById('crumb').innerHTML='/ <b>知识图谱</b>';location.hash=encodeURIComponent('__graph__');window.scrollTo(0,0);return;}
@@ -553,7 +743,7 @@ document.getElementById('themebtn').onclick=function(){var cur=document.document
 setTheme(document.documentElement.dataset.theme||'light');
 document.getElementById('homelink').onclick=()=>go('__overview__');
 document.getElementById('graphlink').onclick=()=>go('__graph__');
-document.getElementById('goallink').onclick=()=>{if(R.learned>0)go('__goal__');};
+document.getElementById('goallink').onclick=()=>{if(gUnlocked())go('__goal__');};
 window.addEventListener('message',function(e){if(e&&e.data&&e.data.goto){var g=e.data.goto;if(DOCS[g])go(g);else{go('__overview__');setTimeout(function(){var el=cardEls[g];if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},80);}}});
 renderOverview();buildNav();updateGoalNav();
 go(location.hash?decodeURIComponent(location.hash.slice(1)):'__overview__');
@@ -562,3 +752,4 @@ window.addEventListener('hashchange',()=>{go(location.hash?decodeURIComponent(lo
 
 if __name__ == '__main__':
     main()
+# end of plan_path.py

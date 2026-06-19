@@ -147,6 +147,46 @@ Vuelve a ejecutar `python scripts/plan_path.py` — el sitio de conocimiento aho
 
 ---
 
+## Mentor (te pregunta una vez por cada dominio nuevo)
+
+¿La voz de la IA suena demasiado "a IA"? Dale a las preguntas y notas una **voz de mentor** — siempre dentro de los 7 pasos Feynman, sin romperlos nunca. **Por defecto te pregunta una vez al empezar un dominio nuevo: empezar directo (puro) o elegir un mentor.** Solo se aplica si eliges uno, y puedes decir "volver a la voz pura" cuando quieras. Pon `intro` en `off` en `mentors.json` para no recibir la pregunta.
+
+El interruptor y los enlaces están en `知识库/_system/mentors.json` (plantilla `templates/mentors.example.json`); los perfiles de mentor vienen con el skill en `mentors/<id>/profile.md` y son reutilizables entre bóvedas. Diez ejemplos incluidos:
+
+| Mentor | Categoría por defecto | Modo |
+|---|---|---|
+| Feynman | general | primera persona |
+| Einstein | física | primera persona |
+| Karpathy | IA | referencia de estilo (sin suplantar a personas vivas) |
+| Sun Tzu | estrategia | primera persona |
+| Hua Luogeng | matemáticas | primera persona |
+| Sócrates | filosofía | primera persona |
+| Laozi | filosofía | primera persona |
+| Wang Yangming | filosofía | primera persona |
+| Aristóteles | lógica | primera persona |
+| Ashish Vaswani | IA | referencia de estilo (sin suplantar a personas vivas) |
+
+```jsonc
+// 知识库/_system/mentors.json
+{
+  "intro": "ask",                           // preguntar una vez por dominio: empezar / elegir (def.)
+  "enabled": true,                          // ← si los enlaces se aplican, por defecto false
+  "default": "原味",
+  "bindings": {
+    "AI":   { "mentor": "andrej-karpathy", "traits": ["逻辑清晰"] },
+    "物理": { "mentor": "einstein", "traits": [] }
+  }
+}
+```
+
+También puedes decir: "asigna a Karpathy (lógico) como mentor de IA" (permanente), "que enseñe Feynman" (temporal), "volver a la voz pura" (desactivar).
+
+- Los rasgos se acumulan pero **no pueden entrar en conflicto** (amable ↔ severo no coexisten, ni colándolos con "y/pero"); sin rasgo → la voz propia del mentor.
+- Las figuras históricas pueden hablar en primera persona; las personas vivas son solo referencia de estilo. Un mentor solo cambia la voz — **nunca sacrifica la precisión ni la estructura de 7 pasos, y severo ≠ humillante**.
+- Al activarlo, la página de categoría muestra una insignia de mentor (rasgo a la izquierda/color, nombre a la derecha/gris claro).
+
+---
+
 ## Estructura
 
 ```
@@ -154,6 +194,9 @@ gewu-skill/
   SKILL.md                      archivo principal del skill (flujo + disparadores + spec visual)
   README.md                     este archivo
   templates/concept-template.md plantilla de nota de concepto
+  templates/mentors.example.json plantilla de enlace de mentor
+  mentors/<id>/profile.md       perfil docente del mentor (viene con el skill, reutilizable)
+  mentors/conflict-table.json   tabla de conflictos de rasgos
   scripts/build_graph.py        escanea notas → grafo de conocimiento HTML (dirigido por fuerzas, flechas de dependencia, "respiración" de objetivos)
   scripts/plan_path.py          → sitio de conocimiento de una página (hoja de ruta / docs de conceptos / planificación de objetivos / grafo embebido)
   assets/hero.svg               animación promocional

@@ -1,0 +1,14 @@
+{
+  "_README": "导师绑定文件。复制到 知识库/_system/mentors.json。intro 控制开场是否主动问；enabled 控制绑定是否生效；导师档案本体在 skill 的 mentors/<id>/profile.md。改完无需跑脚本即在对话生效；知识站标签需重跑 plan_path.py。",
+  "_intro": "ask=开始新领域时问你一次『直接开始 还是 选导师』（默认）；off=从不主动问。",
+  "intro": "ask",
+  "enabled": false,
+  "_default": "未绑定大类回退到什么；固定『原味』。",
+  "default": "原味",
+  "_bindings": "键=大类名。值 {mentor: mentors/ 下的 id, traits: 性格数组(可空)}；或 {mentor: \"原味\"} 表示该大类已选原味、不再问。性格冲突规则见 mentors/conflict-table.json。",
+  "bindings": {
+    "AI": { "mentor": "andrej-karpathy", "traits": ["逻辑清晰"] },
+    "物理": { "mentor": "einstein", "traits": [] },
+    "历史": { "mentor": "原味" }
+  }
+}

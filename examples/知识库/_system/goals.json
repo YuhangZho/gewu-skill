@@ -11,43 +11,58 @@
     "requirements": [
       {
         "name": "大模型基础概念(Token / Context / 上下文管理)",
-        "have": true,
+        "kind": "知识型",
         "via": [
           "Token",
           "Context"
-        ]
+        ],
+        "have": true
       },
       {
         "name": "Skill / 工具化与流程固化",
-        "have": true,
+        "kind": "知识型",
         "via": [
           "Skill"
-        ]
+        ],
+        "have": true
       },
       {
-        "name": "Agent / 工具调用 · 业务 Agent 系统(从0到1)",
-        "have": false,
-        "via": []
+        "name": "Agent / 工具调用机制",
+        "kind": "知识型",
+        "via": [
+          "Agent"
+        ],
+        "have": false
       },
       {
         "name": "RAG / 向量检索问答",
-        "have": false,
-        "via": []
+        "kind": "知识型",
+        "via": [],
+        "have": false
       },
       {
         "name": "Python + PyTorch/TensorFlow 等主流框架",
-        "have": false,
-        "via": []
+        "kind": "知识型",
+        "via": [],
+        "have": false
       },
       {
         "name": "模型部署、服务化与性能优化",
-        "have": false,
-        "via": []
+        "kind": "知识型",
+        "via": [],
+        "have": false
       },
       {
         "name": "机器学习 / 深度学习基础",
-        "have": false,
-        "via": []
+        "kind": "知识型",
+        "via": [],
+        "have": false
+      },
+      {
+        "name": "从0到1 独立搭一个业务 Agent 系统并跑通",
+        "kind": "实践型",
+        "via": [],
+        "have": false
       }
     ],
     "recommend": [
