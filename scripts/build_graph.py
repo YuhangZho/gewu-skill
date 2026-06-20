@@ -515,10 +515,24 @@ def write_graph_html(graph, out):
         f.write(html)
 
 
+def global_vault_path():
+    """读用户主目录的全局指针 ~/.gewu/glb_vault_path.json 的 vault_path（跨 agent 共享、跨 OS）；
+    用 expanduser 适配 Windows(C:\\Users\\X)/mac(/Users/X)/Linux(/home/X)。库不存在则返回 None。"""
+    try:
+        gp = os.path.join(os.path.expanduser('~'), '.gewu', 'glb_vault_path.json')
+        if os.path.isfile(gp):
+            vp = (json.load(open(gp, encoding='utf-8')) or {}).get('vault_path')
+            if vp and os.path.isdir(vp):
+                return vp
+    except Exception:
+        pass
+    return None
+
+
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     # 知识库根目录 = 主题名文件夹本身（不再套一层「知识库/」）
-    default_vault = os.environ.get('GEWU_VAULT') or os.getcwd()
+    default_vault = os.environ.get('GEWU_VAULT') or global_vault_path() or os.getcwd()
     ap = argparse.ArgumentParser()
     ap.add_argument('--vault', default=default_vault)
     args = ap.parse_args()

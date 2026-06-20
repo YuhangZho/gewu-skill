@@ -169,7 +169,7 @@ gewu-skill/
   mentors/conflict-table.json   性格冲突表
   scripts/build_graph.py        扫描笔记 → 知识图谱 HTML(力导向、依赖箭头、目标呼吸)
   scripts/plan_path.py          → 知识站单页(路线图/概念文档/目标规划/嵌入图谱)
-  assets/hero.svg               宣传动画
+  assets/merged_output.mp4      宣传动画
 ```
 
 运行后在你的学习目录生成(示例)：
