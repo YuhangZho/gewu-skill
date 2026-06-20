@@ -20,11 +20,29 @@ def desc_of(note):
             return s.lstrip('> ').strip()
     return ''
 
-def plan_category(items, goal=None):
+def plan_category(items, goal=None, all_notes=None):
     index = {t.lower(): t for t in items}
     for t, n in items.items():
         for a in n['aliases']:
             index[a.lower()] = t
+    # 跨大类前置：用全库索引解析"不在本类"的前置（修跨学科 gap：如生信的概念依赖编程大类的 Python基础）
+    gidx = {}
+    if all_notes:
+        for gt, gn in all_notes.items():
+            gidx[gt.lower()] = gt
+            for a in (gn.get('aliases') or []):
+                gidx[a.lower()] = gt
+    def xprereq_info(n):
+        out = []
+        for r in (n.get('prereqs') or []):
+            key = str(r).strip().lower()
+            if key in index:
+                continue  # 同类前置，走常规逻辑
+            gt = gidx.get(key)
+            if gt and all_notes and all_notes[gt]['category'] != n['category']:
+                gn = all_notes[gt]
+                out.append({'title': gt, 'category': gn['category'], 'status': gn['status']})
+        return out
     def resolve(names):
         out = set()
         for r in names:
@@ -39,6 +57,9 @@ def plan_category(items, goal=None):
         return b
     prereqs = {t: resolve(n['prereqs']) for t, n in items.items()}
     neighbors = {t: (resolve(n['prereqs']) | resolve(n['links'])) for t, n in items.items()}
+    xpre = {t: xprereq_info(n) for t, n in items.items()}
+    def cross_ok(t):
+        return all(x['status'] == '已学透' for x in xpre[t])
     stage = {}
     def depth(t, guard):
         if t in stage: return stage[t]
@@ -58,14 +79,19 @@ def plan_category(items, goal=None):
         avail.sort(key=score)
         nxt = avail[0]; placed.append(nxt); placedset.add(nxt)
     learned = {t for t in items if items[t]['status'] == '已学透'}
-    current = next((t for t in placed if items[t]['status'] != '已学透'), None)
+    # 浅学=已轻学，作侧节点；不抢占“当前/下一站”，保增量稳定（加零散浅学点不打乱规划路径）
+    SKIP_NEXT = ('已学透', '浅学')
+    planned = [t for t in placed if items[t]['status'] not in SKIP_NEXT]
+    current = planned[0] if planned else next((t for t in placed if items[t]['status'] != '已学透'), None)
     base = set(learned) | ({current} if current else set())
-    cand = [t for t in placed if items[t]['status'] != '已学透' and t != current]
+    cand = [t for t in placed if items[t]['status'] not in SKIP_NEXT and t != current]
+    if not cand:  # 已无待学 → 回退：让浅学点可作“深化”推荐
+        cand = [t for t in placed if items[t]['status'] != '已学透' and t != current]
     def nscore(t):
         rel = len(neighbors[t] & base)
         return (-(rel * 2 + imp(t)), placed.index(t))
     # outer fringe 闸门（KST）：优先推荐前置全部已学透的概念；ready 非空时只从中选
-    ready_cand = [t for t in cand if prereqs[t] <= learned]
+    ready_cand = [t for t in cand if prereqs[t] <= learned and cross_ok(t)]
     pool = ready_cand if ready_cand else cand
     next3 = sorted(pool, key=nscore)[:3]
     order = []
@@ -74,6 +100,7 @@ def plan_category(items, goal=None):
         order.append({'title': t, 'status': n['status'], 'stage': stage[t],
                       'importance': imp(t), 'base_importance': n['importance'],
                       'prereqs': sorted(prereqs[t]), 'desc': desc_of(n),
+                      'xprereqs': [x for x in xpre[t] if x['status'] != '已学透'],
                       'groups': n.get('groups', []), 'related': sorted(neighbors[t])})
     return {'order': order, 'current': current, 'next3': next3,
             'learned': len(learned), 'total': len(items),
@@ -294,6 +321,31 @@ def _mentor_tags(vault, here):
     return out
 
 
+def _mech_cards(items):
+    """从已学透笔记结构【零 token】派生兜底自测题（定位/边界/双链），
+    供前期概念少、AI 卡池小时补足，避免抽卡 3 张就见底。质量不如 AI 整合题，故标 kind=自测。"""
+    out = []
+    for t, n in items.items():
+        if n.get('status') != '已学透':
+            continue
+        body = n.get('body', '') or ''
+        m = re.search(r'#+\s*一句话定位\s*\n+>?\s*(.+)', body)
+        if m:
+            a = m.group(1).strip().lstrip('>').strip()
+            if a:
+                out.append({"q": "用一句话说清「%s」是什么、解决什么问题？" % t, "kind": "自测", "answer": a[:240]})
+        m2 = re.search(r'#+\s*[^\n]*(?:失效边界|边界)[^\n]*\n+(.+?)(?:\n#+\s|\Z)', body, re.S)
+        if m2:
+            a = m2.group(1).strip()
+            if a:
+                out.append({"q": "说出「%s」的失效边界——它什么时候不适用 / 会踩什么坑？" % t, "kind": "自测", "answer": a[:300]})
+        rels = [x for x in (n.get('links') or []) if x and x != t]
+        if rels:
+            out.append({"q": "「%s」和「%s」是什么关系？先自己说，再翻两篇笔记对照。" % (t, rels[0]),
+                        "kind": "自测", "answer": "（开放·对照两篇笔记的双链/前置关系自检，无标准答案）"})
+    return out
+
+
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     # 知识库根目录 = 主题名文件夹本身（不再套一层「知识库/」）
@@ -343,7 +395,7 @@ def main():
     gen = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
     full = {'generated': gen, 'goal': args.goal or '', 'categories': {}, 'expansions': expansions}
     for c in sorted(cats.keys()):
-        full['categories'][c] = plan_category(cats[c], args.goal)
+        full['categories'][c] = plan_category(cats[c], args.goal, notes)
     with open(os.path.join(sysdir, 'roadmap_data.json'), 'w', encoding='utf-8') as f:
         json.dump(full, f, ensure_ascii=False, indent=2)
     for c, items in sorted(cats.items()):
@@ -353,16 +405,30 @@ def main():
         docs = build_docs(c, items, r, vault)
         data = {'generated': gen, 'goal': args.goal or '',
                 'categories': {c: r}, 'expansions': {c: expansions.get(c, [])}}
+        # 卡池 = AI 卡 + 机械兜底卡（零 token，从已学透笔记派生；去重、上限 12）
+        _flash_obj = dict(flash_all.get(c) or {})
+        _ai_cards = list(_flash_obj.get('cards') or [])
+        if flash_on:
+            _seen_q = {x.get('q') for x in _ai_cards}
+            _mech = [m for m in _mech_cards(items) if m['q'] not in _seen_q]
+            _flash_obj['cards'] = (_ai_cards + _mech)[:12]
         html = (HTML.replace('__CAT__', H.escape(c))
                     .replace('__DATA__', json.dumps(data, ensure_ascii=False))
                     .replace('__DOCS__', json.dumps(docs, ensure_ascii=False))
                     .replace('__GOAL__', json.dumps(goals_all.get(c, {}), ensure_ascii=False))
-                    .replace('__FLASH__', json.dumps(flash_all.get(c, {}), ensure_ascii=False))
+                    .replace('__FLASH__', json.dumps(_flash_obj, ensure_ascii=False))
                     .replace('__FLASH_ON__', 'true' if flash_on else 'false')
                     .replace('__CARDCSS__', card_css)
                     .replace('__MENTORTAG__', mtags.get(c, '')))
         html = _apply_config(html, cfg)
-        open(os.path.join(cdir, c + '-路线图.html'), 'w', encoding='utf-8').write(html)
+        # 边触发门：该类存在概念间边(prereq/双链)才出路线图；否则只留 .md，清理旧文件
+        _has_edge = any(o.get('prereqs') or o.get('related') for o in r.get('order', []))
+        _rp = os.path.join(cdir, c + '-路线图.html')
+        if _has_edge:
+            open(_rp, 'w', encoding='utf-8').write(html)
+        elif os.path.isfile(_rp):
+            try: os.remove(_rp)
+            except OSError: pass
         # 清理旧的独立子页与连续手册
         for old in [os.path.join(cdir, c + '-学习手册.html')]:
             if os.path.isfile(old):
@@ -448,6 +514,7 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 .t{font-weight:600}.t .stars{color:var(--yellow);font-size:12px;margin-left:6px}
 .d{color:var(--muted);font-size:13px;margin-top:3px;line-height:1.5}
 .pre{color:var(--muted);font-size:12px;margin-top:5px}.pre b{font-weight:500}
+.xpre{color:var(--red)}.xpre b{color:var(--red)}
 .tag{position:absolute;top:13px;right:15px;font-size:11px;font-weight:600;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 34%,var(--line));border-radius:12px;padding:4px 11px}
 .tag.ok{color:var(--green);background:color-mix(in srgb,var(--green) 14%,transparent);border-color:color-mix(in srgb,var(--green) 40%,var(--line))}
 .side h3{font-size:12px;color:var(--muted);margin:0 0 8px;letter-spacing:.05em;text-transform:uppercase}
@@ -513,6 +580,8 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 .gck.part{color:transparent;box-shadow:0 0 0 1px color-mix(in srgb,var(--muted) 22%,transparent) inset}
 .greqn{flex:1;line-height:1.5}
 .gcap{font-size:12.5px;color:var(--muted);line-height:1.65;margin:0 0 10px}
+.gpractice{background:color-mix(in srgb,var(--accent) 10%,var(--panel));border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));border-left:3px solid var(--accent);border-radius:10px;padding:11px 14px;margin:6px 0 14px;font-size:13px;line-height:1.6;color:var(--text)}
+.gpractice b{color:var(--accent)}
 .gvia1,.gviac{color:var(--accent);text-decoration:none;cursor:pointer;font-size:13px}
 .gvia1:hover,.gviac:hover{text-decoration:underline}
 .gexp{position:relative;display:inline}
@@ -571,6 +640,7 @@ font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spaci
       <div class="legend">
         <span><i style="background:var(--green)"></i>已学透</span>
         <span><i style="background:var(--yellow)"></i>巩固中</span>
+        <span><i style="background:var(--grad)"></i>浅学</span>
         <span><i style="background:var(--gray)"></i>待学</span>
         <span>★ = 重要度　|　按依赖顺序自上而下</span>
       </div>
@@ -614,7 +684,7 @@ __CARDCSS__
 const DATA=__DATA__, DOCS=__DOCS__, GOAL=__GOAL__;
 const FLASH=__FLASH__, FLASH_ON=__FLASH_ON__;
 const CAT=Object.keys(DATA.categories)[0], R=DATA.categories[CAT];
-const DOTC={"已学透":"var(--green)","巩固中":"var(--yellow)","待学":"var(--gray)"};
+const DOTC={"已学透":"var(--green)","巩固中":"var(--yellow)","浅学":"var(--grad)","待学":"var(--gray)"};
 const cardEls={};
 function stars(n){return '★'.repeat(n)+'<span class="se">'+'★'.repeat(Math.max(0,5-n))+'</span>';}
 function theme(){return document.documentElement.dataset.theme;}
@@ -636,7 +706,8 @@ function renderOverview(){
     card.innerHTML='<span class="dot" style="background:'+(DOTC[it.status]||'var(--gray)')+'"></span>'
       +'<div style="flex:1"><div class="t">'+it.title+'<span class="stars">'+stars(it.importance)+'</span></div>'
       +(it.desc?'<div class="d">'+it.desc+'</div>':'')
-      +(it.prereqs.length?'<div class="pre"><b>前置：</b>'+it.prereqs.join(' · ')+'</div>':'')+'</div>'
+      +(it.prereqs.length?'<div class="pre"><b>前置：</b>'+it.prereqs.join(' · ')+'</div>':'')
+      +((it.xprereqs&&it.xprereqs.length)?'<div class="pre xpre"><b>⚠ 跨类前置：</b>'+it.xprereqs.map(x=>x.title+'（在「'+x.category+'」大类，未学透）').join(' · ')+'</div>':'')+'</div>'
       +(it.title===R.current?'<span class="tag">▶ 你在这里 / 下一个</span>':(done?'<span class="tag ok">✓ 已学透 ›</span>':''));
     tl.appendChild(card);
   });
@@ -719,6 +790,7 @@ function renderGoal(){
   var g=GOAL,done=gIsDone(),h='';
   h+='<div class="ghead"><h1>🎯 '+g.goal+'</h1>'+(g.goal_category?'<span class="gtag">'+g.goal_category+'</span>':'')+(g.sample?'<span class="gtag sample">示例</span>':'')+'</div><div class="gsub">更新于 '+(g.updated||'')+'</div>';
   if(done)h+='<div class="celebrate"><div class="cbig">🎉 目标完成！</div><div>恭喜拿下「'+g.goal+'」。</div></div>';
+  if(g.practice_note)h+='<div class="gpractice">'+(g.domain_type?'<b>['+g.domain_type+'] </b>':'')+g.practice_note+'</div>';
   // 顶部进度＝实时完成进度（不再读 AI 写的 match，随 ✓/☑ 自动刷新）
   var LRN=gLearnedSet();
   var reqs=g.requirements||[];
@@ -772,11 +844,11 @@ function renderGoal(){
 function flashKey(s){return 'flash_'+s+'_'+CAT;}
 function flashHist(){try{return JSON.parse(localStorage.getItem(flashKey('hist'))||'[]');}catch(e){return [];}}
 function flashBuildId(){return (FLASH&&FLASH.generated)||'0';}
-function flashDone(){try{return JSON.parse(localStorage.getItem(flashKey('done')+'_'+flashBuildId())||'null');}catch(e){return null;}}
-function setFlashDone(rec){try{localStorage.setItem(flashKey('done')+'_'+flashBuildId(),JSON.stringify(rec));}catch(e){}}
+function flashState(){try{return JSON.parse(localStorage.getItem(flashKey('st')+'_'+flashBuildId())||'{"round":0,"answers":{}}');}catch(e){return {round:0,answers:{}};}}
+function setFlashState(st){try{localStorage.setItem(flashKey('st')+'_'+flashBuildId(),JSON.stringify(st));}catch(e){}}
 function pushHist(rec){var h=flashHist();h.unshift(rec);try{localStorage.setItem(flashKey('hist'),JSON.stringify(h));}catch(e){}}
 function fesc(x){return (x==null?'':String(x)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function kindLabel(k){return k==='实践型'?'参考方案 · 方案与计划':'参考答案 · 答案与分析';}
+function kindLabel(k){return k==='实践型'?'参考方案 · 方案与计划':(k==='自测'?'参考（笔记原文 / 自己先说再对照）':'参考答案 · 答案与分析');}
 function updateFlashNav(){var fl=document.getElementById('flashlink');if(!fl)return;fl.style.display=FLASH_ON?'':'none';}
 function histHtml(){var hist=flashHist();return '<details class="fhist"><summary>📋 已答记录（'+hist.length+'）</summary>'+(hist.length?hist.map(function(r){return '<div class="fhrec"><div class="fhq">'+fesc(r.q)+' <span class="fkind">'+fesc(r.kind)+'</span></div><div class="fha"><b>你的回答：</b>'+fesc(r.user||'（未填）')+'</div><div class="fha"><b>'+fesc(kindLabel(r.kind))+'：</b>'+fesc(r.answer)+'</div><div class="fhts">'+fesc(r.ts)+'</div></div>';}).join(''):'<div class="fmuted">还没有已答记录。</div>')+'</details>';}
 function renderFlash(){
@@ -788,18 +860,23 @@ function renderFlash(){
     return;
   }
   var cards=(FLASH&&FLASH.cards)||[];
-  if(!cards.length){b.innerHTML='<h1 class="ttl">🎴 抽卡复习</h1><div class="fbuild">本次构建尚未生成卡片。下次刷新视图时会基于已学知识点生成 3 道整合题。</div>'+histHtml();return;}
-  var head='<h1 class="ttl">🎴 抽卡复习 <span style="color:var(--muted);font-weight:400;font-size:14px">每次构建 3 道新题 · 翻一张作答</span></h1>';
-  var done=flashDone();
-  if(done){
-    b.innerHTML=head+'<div class="fdeck"><div class="fcard flip"><div class="fqonly">'+fesc(done.q)+' <span class="fkind">'+fesc(done.kind)+'</span></div></div></div>'+
-      '<div class="fqbox show"><b>问题：</b>'+fesc(done.q)+'</div>'+
-      '<div class="fauser"><b>你的回答：</b>'+fesc(done.user||'（未填）')+'</div>'+
-      '<div class="fabox show"><b>'+fesc(kindLabel(done.kind))+'：</b><br>'+fesc(done.answer)+'</div>'+
-      '<div class="fmuted">本次已作答。下次构建会刷新 3 道新题，这条进入下方“已答记录”。</div>'+histHtml();
-    return;
+  if(!cards.length){b.innerHTML='<h1 class="ttl">🎴 抽卡复习</h1><div class="fbuild">本次构建尚未生成卡池。下次刷新视图时会基于已学知识点生成卡池。</div>'+histHtml();return;}
+  var rounds=Math.ceil(cards.length/3);
+  var st=flashState(); if(st.round>rounds-1)st.round=rounds-1; if(st.round<0)st.round=0; var round=st.round;
+  var head='<h1 class="ttl">🎴 抽卡复习 <span style="color:var(--muted);font-weight:400;font-size:14px">卡池 '+cards.length+' 张 · 第 '+(round+1)+'/'+rounds+' 批 · 每批翻 1 张'+(rounds>1?'（可刷新 '+(rounds-1)+' 次）':'')+'</span></h1>';
+  var batch=cards.slice(round*3,round*3+3);
+  function refreshBtn(){return round<rounds-1?'<div style="margin:12px 0"><button class="gbtn" id="frefresh">🔄 再抽一批（还剩 '+(rounds-1-round)+' 批）</button></div>':'<div class="fmuted">本卡池已抽完。下次构建刷新出新卡池，已答的进下方“已答记录”。</div>';}
+  function bindRefresh(){var rb=document.getElementById('frefresh');if(rb)rb.onclick=function(){st.round=round+1;setFlashState(st);renderFlash();};}
+  var ans=st.answers&&st.answers[round];
+  if(ans){
+    b.innerHTML=head+'<div class="fdeck"><div class="fcard flip"><div class="fqonly">'+fesc(ans.q)+' <span class="fkind">'+fesc(ans.kind)+'</span></div></div></div>'+
+      '<div class="fqbox show"><b>问题：</b>'+fesc(ans.q)+'</div>'+
+      '<div class="fauser"><b>你的回答：</b>'+fesc(ans.user||'（未填）')+'</div>'+
+      '<div class="fabox show"><b>'+fesc(kindLabel(ans.kind))+'：</b><br>'+fesc(ans.answer)+'</div>'+
+      refreshBtn()+histHtml();
+    bindRefresh();return;
   }
-  b.innerHTML=head+'<div class="fdeck" id="fdeck">'+cards.map(function(c,i){return '<div class="fcard back" data-i="'+i+'"></div>';}).join('')+'</div>'+
+  b.innerHTML=head+'<div class="fdeck" id="fdeck">'+batch.map(function(c,i){return '<div class="fcard back" data-i="'+i+'"></div>';}).join('')+'</div>'+
     '<div class="fqbox" id="fqbox">翻开一张卡，这里显示问题。</div>'+
     '<textarea class="finput" id="finput" disabled placeholder="翻牌后在此作答…"></textarea>'+
     '<div style="margin:8px 0"><button class="gbtn" id="fsubmit" disabled>提交答案</button></div>'+
@@ -807,7 +884,7 @@ function renderFlash(){
   var picked=null;
   document.querySelectorAll('#fdeck .fcard').forEach(function(el){
     el.onclick=function(){
-      if(picked!==null)return;picked=parseInt(el.dataset.i,10);var c=cards[picked];
+      if(picked!==null)return;picked=parseInt(el.dataset.i,10);var c=batch[picked];
       document.querySelectorAll('#fdeck .fcard').forEach(function(x){if(x!==el)x.remove();});
       el.classList.remove('back');el.classList.add('flip');el.innerHTML='<div class="fqonly">'+fesc(c.q)+' <span class="fkind">'+fesc(c.kind)+'</span></div>';
       var qb=document.getElementById('fqbox');qb.classList.add('show');qb.innerHTML='<b>问题：</b>'+fesc(c.q);
@@ -815,11 +892,11 @@ function renderFlash(){
     };
   });
   document.getElementById('fsubmit').onclick=function(){
-    if(picked===null)return;var c=cards[picked];var user=document.getElementById('finput').value;
+    if(picked===null)return;var c=batch[picked];var user=document.getElementById('finput').value;
     var ab=document.getElementById('fabox');ab.classList.add('show');ab.innerHTML='<b>'+fesc(kindLabel(c.kind))+'：</b><br>'+fesc(c.answer);
     document.getElementById('finput').disabled=true;this.disabled=true;
     var rec={q:c.q,kind:c.kind,answer:c.answer,user:user,ts:new Date().toLocaleString()};
-    setFlashDone(rec);pushHist(rec);renderFlash();
+    if(!st.answers)st.answers={};st.answers[round]=rec;setFlashState(st);pushHist(rec);renderFlash();
   };
 }
 function go(v){

@@ -312,9 +312,9 @@ const DATA = __DATA__;
 // 两套色板：modern（科技黑白）与 ink（传统国画颜料：花青·朱砂·石绿·赭石·黛紫·藤黄·石青·胭脂·墨青）
 const PALETTES = {
   modern:{cat:["#7aa2f7","#9ece6a","#e0af68","#bb9af7","#f7768e","#2ac3de","#ff9e64","#73daca","#c0caf5"],
-          status:{"已学透":"#9ece6a","巩固中":"#e0af68","待学":"#565f73"}},
+          status:{"已学透":"#9ece6a","巩固中":"#e0af68","浅学":"#56b6c2","待学":"#565f73"}},
   ink:{cat:["#2e5b7c","#b83a2e","#5a8f6d","#9c6b3f","#6a5a7d","#c89a3c","#3f6f8f","#a23b53","#4a5a66"],
-       status:{"已学透":"#5a8f6d","巩固中":"#c89a3c","待学":"#9a8f78"}}};
+       status:{"已学透":"#5a8f6d","巩固中":"#c89a3c","浅学":"#5a86a0","待学":"#9a8f78"}}};
 function themeFamily(){var t=document.documentElement.dataset.theme;return (t==='ink'||t==='inkdark')?'ink':'modern';}
 let CATCOLORS, STATUSRING; const catColor = {};
 function buildPalette(){var p=PALETTES[themeFamily()];CATCOLORS=p.cat;STATUSRING=p.status;
@@ -541,14 +541,23 @@ def main():
         try: os.remove(_legacy)
         except OSError: pass
     # 各大类单独图谱（放进各自文件夹，prefix=../ 以正确链接 _viz）
+    gen_cats = []
     for c in cats:
         sub = {t: n for t, n in notes.items() if n['category'] == c}
         gc = build_graph(sub); gc['prefix'] = '../'; _apply_alive(gc, _potential, _baked)
         cdir = os.path.join(vault, c)
-        if os.path.isdir(cdir):
-            write_graph_html(gc, os.path.join(cdir, c + '-知识图谱.html'))
+        if not os.path.isdir(cdir):
+            continue
+        # 边触发门：仅当该类存在概念间的边(prereq/双链)才出图谱；否则只留 .md，并清理旧图
+        has_edge = any(l.get('kind') in ('dep', 'link') for l in gc['links'])
+        gp = os.path.join(cdir, c + '-知识图谱.html')
+        if has_edge:
+            write_graph_html(gc, gp); gen_cats.append(c)
+        elif os.path.isfile(gp):
+            try: os.remove(gp)
+            except OSError: pass
     concepts = [n for n in g['nodes'] if n['type'] == 'concept']
-    print('OK 全局概念=%d 大类=%d；各大类图谱已生成（根目录不再输出全局图谱）' % (len(concepts), len(cats)))
+    print('OK 全局概念=%d 大类=%d；出图谱的大类=%d（仅含概念间边者；根目录不再输出全局图谱）' % (len(concepts), len(cats), len(gen_cats)))
 
 
 if __name__ == '__main__':
