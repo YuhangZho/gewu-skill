@@ -1,1 +1,1 @@
-{"enabled": false, "theme_default": "light", "accent": {"light": "#007aff", "dark": "#0a84ff"}}
+{"enabled": false, "theme_default": "light", "accent": {"light": "#007aff", "dark": "#0a84ff"}, "flashcard_review": true}

@@ -5,7 +5,7 @@
       "label": "AI",
       "type": "category",
       "category": "AI",
-      "count": 7
+      "count": 9
     },
     {
       "id": "Agent",
@@ -14,6 +14,7 @@
       "category": "AI",
       "status": "待学",
       "importance": 5,
+      "ready": true,
       "aliases": [
         "智能体",
         "代理"
@@ -31,6 +32,7 @@
       "category": "AI",
       "status": "已学透",
       "importance": 5,
+      "ready": false,
       "aliases": [
         "上下文",
         "上下文窗口",
@@ -43,12 +45,32 @@
       "alive": ""
     },
     {
+      "id": "EOS token",
+      "label": "EOS token",
+      "type": "concept",
+      "category": "AI",
+      "status": "已学透",
+      "importance": 3,
+      "ready": false,
+      "aliases": [
+        "结束符",
+        "End of Sequence",
+        "结束 token"
+      ],
+      "body": "# EOS token\n\n## 一句话定位\n> 它属于 AI 大模型，是词表里一个**特殊 token**：模型生成出它，就表示\"我说完了\"，解码循环据此**停止**。\n\n## 🎯 核心收获 · 重点知识\n**一句话成果**：你现在能解释\"模型怎么知道该停\"，以及回答\"被截断没说完\"是怎么回事。\n\n**重点结论**\n- **EOS = End Of Sequence**，是词表里一个专门的特殊 token（常见写法 `</s>`、`<|endoftext|>`），**不对应任何人话**。\n- 自回归模型一个接一个吐 token，本身没有\"句号\"概念；**采样到 EOS 就停止生成**。\n- 训练时在每条样本结尾放上 EOS，模型于是学会\"该结束时把它输出来\"。\n- 若 `max_tokens` 上限先到，会在**还没吐 EOS** 时被强行截断 → 回答看起来\"没说完\"。\n\n**例子**：你问\"1+1=?\"，模型吐出 `2` 然后吐出 EOS → 接口收到 EOS 停止，返回\"2\"。\n**换场景举例**：代码补全时，模型写完一个函数后吐 EOS，表示\"这段补全到此结束\"。\n\n## 📂 学习过程记录\n<details>\n<summary>📂 学习过程记录（点开看分诊与快轨推演）</summary>\n\n**起点认知**：只知道\"模型会自己停下来\"，不知道靠什么停。\n\n**分诊定轨**：Q1 部件数=1（单一哨兵 token + 一个停止条件）；Q2 未学前置=0（Token 已学透）；Q3 转化/枢纽=0（不反直觉、非枢纽）。**合计 1 → 快轨**。\n\n**快轨流程（已跑）**：设问 1 个（\"模型怎么知道该停？\"）→ 直接讲清 + 1 例 → 自己换场景举 1 例 → 轻落盘。**跳过**：视觉建模渲染、三套讲法、_viz 动效、隔天重讲（依据：冗余效应 + 4C/ID 重复性技能）。\n</details>\n\n## 参考资料\n- HuggingFace Text Generation 文档（special tokens / eos_token_id），来源类型：官方文档，抓取 2026-06-19。可信度：高\n\n## 相关\n[[Token]] · [[贪心解码]]",
+      "rel": "AI/EOS-token.md",
+      "viz": "",
+      "alivep": "full",
+      "alive": ""
+    },
+    {
       "id": "Harness",
       "label": "Harness",
       "type": "concept",
       "category": "AI",
       "status": "待学",
       "importance": 3,
+      "ready": false,
       "aliases": [
         "框架",
         "脚手架"
@@ -66,6 +88,7 @@
       "category": "AI",
       "status": "待学",
       "importance": 4,
+      "ready": false,
       "aliases": [
         "Model Context Protocol",
         "模型上下文协议"
@@ -83,6 +106,7 @@
       "category": "AI",
       "status": "待学",
       "importance": 3,
+      "ready": false,
       "aliases": [
         "插件"
       ],
@@ -99,6 +123,7 @@
       "category": "AI",
       "status": "已学透",
       "importance": 4,
+      "ready": false,
       "aliases": [
         "技能",
         "技能包"
@@ -116,12 +141,32 @@
       "category": "AI",
       "status": "已学透",
       "importance": 5,
+      "ready": false,
       "aliases": [
         "令牌",
         "词元"
       ],
       "body": "# Token\n\n## 一句话定位\n> 它属于 AI 大模型，是模型处理文本的**最小单位**：一段\"词的碎片\"，也是衡量长度与计费的单位。\n\n## 动态图像（视觉建模）\n一条翻译流水线，进来是人话、出去也是人话，中间一段模型只认数字：\n人话 → 分词器**切成碎片**（token）→ **查词表换成编号**（id）→ 模型在 id 上计算 → 吐出新 id → **拼回人话**。\n关键两道工序：① 切碎片 ② 碎片↔id 查表。**token = 碎片本身，id = 它在词表里的门牌号**（id 数值大小没有含义，只是编号）。\n\n## 类比\n像拼高达：设计师把成品拆成一个个**最小零部件**（token），每个零件有**编号**（id）；拿到一袋带编号的零件，再按说明书拼回成品（解码）。\n\n## 大白话讲解（讲给外行）\ntoken 是\"词的碎片\"，不等于字 / 词 / 字符——分词器**不按词边界切，按语料里的高频片段切**。\n例：`ChatGPT is great!` 实际是 **6 个 token**：`Chat | G | PT | ␣is | ␣great | !`（\"ChatGPT\"不是常见词被剪成三块，\" great\"带空格算一个）。\n为什么要这层：模型只能吃**固定词表里的整数 id**。按整词建表 → 生僻词/新词爆表且认不出（OOV）；按单字符 → 序列太长。**子词分词（BPE）是折中**：常见词留成 1 个 token，罕见词拆成已知子词。\n经验值：英文 **1 token ≈ 4 字符 ≈ ¾ 个词**。\n\n## 三个应用例子\n1. 数 token / 估长度：用 OpenAI Tokenizer 之类工具先数 token，再决定能不能塞进上下文。\n2. 估成本：API 按 token 计费（输入/输出/缓存分开计价），不是按字数。\n3. 压缩上下文：把啰嗦 prompt 改短、把中文换成等价英文，都能省 token。\n\n## 失效边界（不懂 token 会踩的坑）\n- **算钱**：以为按\"文字数量\"收费，实际按拆出的 **token 数** → 账单/预算算错（非英文尤甚）。\n- **上下文上限**：塞了很多内容，拆成 token 后**超限被截断**，模型其实没看到后半段。\n- **非英文**：同一个上下文窗口/同样预算，中文能装的实际内容比英文少一截；拿英文 demo 估的长度与成本，搬到中文会**双双爆掉**。\n- 根因澄清：中文更费 token **不是因为中文啰嗦**（中文信息密度其实更高），而是**分词器主要在英文上训练、没给中文学到高效合并片段**——是工具偏科。\n\n## 卡壳点复盘\n- 起初把 token 和 id 混为一谈 → 其实是两样：碎片（token）↔ 编号（id），中间隔一次查表。\n- \"ChatGPT is great!\" 直觉数成 5，实际 6 → 碎片按**高频片段**切，不按词/字边界。\n- 误以为\"中文费 token = 中文啰嗦\" → 反了，是分词器对中文压缩效率低。\n\n## 成长对比\n- 起点认知：token 是 AI 计量的基本单位，可能是一个字或多字组合。\n- 现在的理解：token = 高频\"词碎片\"（≠字/词），经查表变成 id 喂给模型；是长度与计费单位；中文更费源于分词器偏科；不懂它会在算钱/超限/非英文上踩坑。\n\n## 出处 / Sources\n- 〔OpenAI 官方帮助中心，一手，抓取 2026-06-15〕<https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them>\n  - 原话引述：「Tokens can be thought of as pieces of words... tokens can include trailing spaces and even sub-words.」「1 token ~= 4 chars in English」「1 token ~= ¾ words」「The higher token-to-char ratio can make it more expensive to implement the API for languages other than English.」\n  - AI 转述（可信度：高）：token 是词的碎片、按高频片段切、英文约 4 字符/词元、非英文 token-字符比更高更贵。\n- 〔Hugging Face Transformers 分词文档，技术资料，抓取 2026-06-15〕<https://huggingface.co/docs/transformers/main/en/tokenizer_summary>\n  - AI 转述（可信度：高）：子词分词（BPE）保留固定词表、常见词成单 token、罕见词拆子词以解决 OOV。\n- 〔arXiv 2305.17179 多语言分词，论文，抓取 2026-06-15〕<https://arxiv.org/pdf/2305.17179>\n  - AI 转述（可信度：中）：分词器在不同语言间的词表分配不均，影响非英文的 token 效率。\n\n## 相关\n[[Context]] · [[Agent]]",
       "rel": "AI/Token.md",
+      "viz": "",
+      "alivep": "full",
+      "alive": ""
+    },
+    {
+      "id": "贪心解码",
+      "label": "贪心解码",
+      "type": "concept",
+      "category": "AI",
+      "status": "已学透",
+      "importance": 3,
+      "ready": false,
+      "aliases": [
+        "greedy decoding",
+        "贪婪解码",
+        "贪心搜索"
+      ],
+      "body": "# 贪心解码\n\n## 一句话定位\n> 它属于 AI 大模型的**解码策略**，规则极简——每一步都选**当前概率最高**的那个 token。\n\n## 🎯 核心收获 · 重点知识\n**一句话成果**：你现在能解释 `temperature=0` 为什么结果稳定可复现，以及它什么时候不够用。\n\n**重点结论**\n- 模型每步输出的是**整个词表上的概率分布**；贪心 = 每步永远取 **argmax**（最大那个）。\n- **确定性**：同样输入 → 永远同样输出（无随机性）。\n- **代价**：每步局部最优 ≠ 全局最优，容易陷入**重复、平庸**的句子（短视）。\n- **对比**：温度采样 / top-p / beam search 都是为缓解贪心的\"短视\"而生。\n\n**例子**：输入\"中国的首都是\"，每步选最高概率 token → \"北京\"。\n**换场景举例**：分类/信息抽取要**稳定可复现**时，用贪心（temperature=0）保证每次结果一致。\n\n## 📂 学习过程记录\n<details>\n<summary>📂 学习过程记录（点开看分诊与快轨推演）</summary>\n\n**起点认知**：以为模型\"随机\"挑词，不清楚最简单的挑法是什么。\n\n**分诊定轨**：Q1 部件数=1（单一规则：每步取 argmax）；Q2 未学前置=0（Token 已学透）；Q3 转化/枢纽=0。**合计 1 → 快轨**。\n\n**快轨流程（已跑）**：设问 1 个（\"最简单的挑词规则是什么？\"）→ 直接讲清 + 1 例 → 自己换场景举 1 例 → 轻落盘。**跳过**：视觉建模渲染、三套讲法、_viz、隔天重讲。\n</details>\n\n## 参考资料\n- HuggingFace Generation Strategies（greedy search / do_sample=False），来源类型：官方文档，抓取 2026-06-19。可信度：高\n\n## 相关\n[[Token]] · [[EOS token]]",
+      "rel": "AI/贪心解码.md",
       "viz": "",
       "alivep": "full",
       "alive": ""
@@ -135,6 +180,11 @@
     },
     {
       "source": "Context",
+      "target": "cat::AI",
+      "kind": "belong"
+    },
+    {
+      "source": "EOS token",
       "target": "cat::AI",
       "kind": "belong"
     },
@@ -164,6 +214,11 @@
       "kind": "belong"
     },
     {
+      "source": "贪心解码",
+      "target": "cat::AI",
+      "kind": "belong"
+    },
+    {
       "source": "Context",
       "target": "Agent",
       "kind": "dep"
@@ -176,6 +231,11 @@
     {
       "source": "Token",
       "target": "Context",
+      "kind": "dep"
+    },
+    {
+      "source": "Token",
+      "target": "EOS token",
       "kind": "dep"
     },
     {
@@ -209,6 +269,16 @@
       "kind": "dep"
     },
     {
+      "source": "Token",
+      "target": "贪心解码",
+      "kind": "dep"
+    },
+    {
+      "source": "EOS token",
+      "target": "贪心解码",
+      "kind": "link"
+    },
+    {
       "source": "Skill",
       "target": "MCP",
       "kind": "link"
@@ -222,6 +292,6 @@
   "categories": [
     "AI"
   ],
-  "generated": "2026-06-16 23:09",
+  "generated": "2026-06-19 17:06",
   "prefix": ""
 }

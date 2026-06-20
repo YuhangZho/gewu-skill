@@ -20,11 +20,29 @@ def desc_of(note):
             return s.lstrip('> ').strip()
     return ''
 
-def plan_category(items, goal=None):
+def plan_category(items, goal=None, all_notes=None):
     index = {t.lower(): t for t in items}
     for t, n in items.items():
         for a in n['aliases']:
             index[a.lower()] = t
+    # 跨大类前置：用全库索引解析"不在本类"的前置（修跨学科 gap：如生信的概念依赖编程大类的 Python基础）
+    gidx = {}
+    if all_notes:
+        for gt, gn in all_notes.items():
+            gidx[gt.lower()] = gt
+            for a in (gn.get('aliases') or []):
+                gidx[a.lower()] = gt
+    def xprereq_info(n):
+        out = []
+        for r in (n.get('prereqs') or []):
+            key = str(r).strip().lower()
+            if key in index:
+                continue  # 同类前置，走常规逻辑
+            gt = gidx.get(key)
+            if gt and all_notes and all_notes[gt]['category'] != n['category']:
+                gn = all_notes[gt]
+                out.append({'title': gt, 'category': gn['category'], 'status': gn['status']})
+        return out
     def resolve(names):
         out = set()
         for r in names:
@@ -39,6 +57,9 @@ def plan_category(items, goal=None):
         return b
     prereqs = {t: resolve(n['prereqs']) for t, n in items.items()}
     neighbors = {t: (resolve(n['prereqs']) | resolve(n['links'])) for t, n in items.items()}
+    xpre = {t: xprereq_info(n) for t, n in items.items()}
+    def cross_ok(t):
+        return all(x['status'] == '已学透' for x in xpre[t])
     stage = {}
     def depth(t, guard):
         if t in stage: return stage[t]
@@ -58,19 +79,28 @@ def plan_category(items, goal=None):
         avail.sort(key=score)
         nxt = avail[0]; placed.append(nxt); placedset.add(nxt)
     learned = {t for t in items if items[t]['status'] == '已学透'}
-    current = next((t for t in placed if items[t]['status'] != '已学透'), None)
+    # 浅学=已轻学，作侧节点；不抢占“当前/下一站”，保增量稳定（加零散浅学点不打乱规划路径）
+    SKIP_NEXT = ('已学透', '浅学')
+    planned = [t for t in placed if items[t]['status'] not in SKIP_NEXT]
+    current = planned[0] if planned else next((t for t in placed if items[t]['status'] != '已学透'), None)
     base = set(learned) | ({current} if current else set())
-    cand = [t for t in placed if items[t]['status'] != '已学透' and t != current]
+    cand = [t for t in placed if items[t]['status'] not in SKIP_NEXT and t != current]
+    if not cand:  # 已无待学 → 回退：让浅学点可作“深化”推荐
+        cand = [t for t in placed if items[t]['status'] != '已学透' and t != current]
     def nscore(t):
         rel = len(neighbors[t] & base)
         return (-(rel * 2 + imp(t)), placed.index(t))
-    next3 = sorted(cand, key=nscore)[:3]
+    # outer fringe 闸门（KST）：优先推荐前置全部已学透的概念；ready 非空时只从中选
+    ready_cand = [t for t in cand if prereqs[t] <= learned and cross_ok(t)]
+    pool = ready_cand if ready_cand else cand
+    next3 = sorted(pool, key=nscore)[:3]
     order = []
     for t in placed:
         n = items[t]
         order.append({'title': t, 'status': n['status'], 'stage': stage[t],
                       'importance': imp(t), 'base_importance': n['importance'],
                       'prereqs': sorted(prereqs[t]), 'desc': desc_of(n),
+                      'xprereqs': [x for x in xpre[t] if x['status'] != '已学透'],
                       'groups': n.get('groups', []), 'related': sorted(neighbors[t])})
     return {'order': order, 'current': current, 'next3': next3,
             'learned': len(learned), 'total': len(items),
@@ -291,6 +321,31 @@ def _mentor_tags(vault, here):
     return out
 
 
+def _mech_cards(items):
+    """从已学透笔记结构【零 token】派生兜底自测题（定位/边界/双链），
+    供前期概念少、AI 卡池小时补足，避免抽卡 3 张就见底。质量不如 AI 整合题，故标 kind=自测。"""
+    out = []
+    for t, n in items.items():
+        if n.get('status') != '已学透':
+            continue
+        body = n.get('body', '') or ''
+        m = re.search(r'#+\s*一句话定位\s*\n+>?\s*(.+)', body)
+        if m:
+            a = m.group(1).strip().lstrip('>').strip()
+            if a:
+                out.append({"q": "用一句话说清「%s」是什么、解决什么问题？" % t, "kind": "自测", "answer": a[:240]})
+        m2 = re.search(r'#+\s*[^\n]*(?:失效边界|边界)[^\n]*\n+(.+?)(?:\n#+\s|\Z)', body, re.S)
+        if m2:
+            a = m2.group(1).strip()
+            if a:
+                out.append({"q": "说出「%s」的失效边界——它什么时候不适用 / 会踩什么坑？" % t, "kind": "自测", "answer": a[:300]})
+        rels = [x for x in (n.get('links') or []) if x and x != t]
+        if rels:
+            out.append({"q": "「%s」和「%s」是什么关系？先自己说，再翻两篇笔记对照。" % (t, rels[0]),
+                        "kind": "自测", "answer": "（开放·对照两篇笔记的双链/前置关系自检，无标准答案）"})
+    return out
+
+
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     # 知识库根目录 = 主题名文件夹本身（不再套一层「知识库/」）
@@ -317,10 +372,30 @@ def main():
     if os.path.isfile(_gp):
         try: goals_all = json.load(open(_gp, encoding='utf-8'))
         except Exception: goals_all = {}
+    flash_all = {}
+    _fp = os.path.join(sysdir, 'flashcards.json')
+    if os.path.isfile(_fp):
+        try: flash_all = json.load(open(_fp, encoding='utf-8'))
+        except Exception: flash_all = {}
+    flash_on = bool(cfg.get('flashcard_review')) if cfg else False
+    # 抽卡卡背：按主题不撞色匹配（浅→obsidian / 深→cinnabar / 宣纸→pine / 夜墨→indigo），内联为 data-URI 保证离线自包含
+    import base64 as _b64
+    _card_map = {'light': 'card-back-obsidian.svg', 'dark': 'card-back-cinnabar.svg',
+                 'ink': 'card-back-pine.svg', 'inkdark': 'card-back-indigo.svg'}
+    _assets = os.path.join(here, '..', 'assets')
+    _card_rules = []
+    for _th, _fn in _card_map.items():
+        _fp2 = os.path.join(_assets, _fn)
+        if os.path.isfile(_fp2):
+            try:
+                _b = _b64.b64encode(open(_fp2, 'rb').read()).decode('ascii')
+                _card_rules.append(':root[data-theme="%s"] .fcard.back{background-image:url("data:image/svg+xml;base64,%s")}' % (_th, _b))
+            except Exception: pass
+    card_css = '\n'.join(_card_rules)
     gen = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
     full = {'generated': gen, 'goal': args.goal or '', 'categories': {}, 'expansions': expansions}
     for c in sorted(cats.keys()):
-        full['categories'][c] = plan_category(cats[c], args.goal)
+        full['categories'][c] = plan_category(cats[c], args.goal, notes)
     with open(os.path.join(sysdir, 'roadmap_data.json'), 'w', encoding='utf-8') as f:
         json.dump(full, f, ensure_ascii=False, indent=2)
     for c, items in sorted(cats.items()):
@@ -330,13 +405,30 @@ def main():
         docs = build_docs(c, items, r, vault)
         data = {'generated': gen, 'goal': args.goal or '',
                 'categories': {c: r}, 'expansions': {c: expansions.get(c, [])}}
+        # 卡池 = AI 卡 + 机械兜底卡（零 token，从已学透笔记派生；去重、上限 12）
+        _flash_obj = dict(flash_all.get(c) or {})
+        _ai_cards = list(_flash_obj.get('cards') or [])
+        if flash_on:
+            _seen_q = {x.get('q') for x in _ai_cards}
+            _mech = [m for m in _mech_cards(items) if m['q'] not in _seen_q]
+            _flash_obj['cards'] = (_ai_cards + _mech)[:12]
         html = (HTML.replace('__CAT__', H.escape(c))
                     .replace('__DATA__', json.dumps(data, ensure_ascii=False))
                     .replace('__DOCS__', json.dumps(docs, ensure_ascii=False))
                     .replace('__GOAL__', json.dumps(goals_all.get(c, {}), ensure_ascii=False))
+                    .replace('__FLASH__', json.dumps(_flash_obj, ensure_ascii=False))
+                    .replace('__FLASH_ON__', 'true' if flash_on else 'false')
+                    .replace('__CARDCSS__', card_css)
                     .replace('__MENTORTAG__', mtags.get(c, '')))
         html = _apply_config(html, cfg)
-        open(os.path.join(cdir, c + '-路线图.html'), 'w', encoding='utf-8').write(html)
+        # 边触发门：该类存在概念间边(prereq/双链)才出路线图；否则只留 .md，清理旧文件
+        _has_edge = any(o.get('prereqs') or o.get('related') for o in r.get('order', []))
+        _rp = os.path.join(cdir, c + '-路线图.html')
+        if _has_edge:
+            open(_rp, 'w', encoding='utf-8').write(html)
+        elif os.path.isfile(_rp):
+            try: os.remove(_rp)
+            except OSError: pass
         # 清理旧的独立子页与连续手册
         for old in [os.path.join(cdir, c + '-学习手册.html')]:
             if os.path.isfile(old):
@@ -422,6 +514,7 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 .t{font-weight:600}.t .stars{color:var(--yellow);font-size:12px;margin-left:6px}
 .d{color:var(--muted);font-size:13px;margin-top:3px;line-height:1.5}
 .pre{color:var(--muted);font-size:12px;margin-top:5px}.pre b{font-weight:500}
+.xpre{color:var(--red)}.xpre b{color:var(--red)}
 .tag{position:absolute;top:13px;right:15px;font-size:11px;font-weight:600;color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid color-mix(in srgb,var(--accent) 34%,var(--line));border-radius:12px;padding:4px 11px}
 .tag.ok{color:var(--green);background:color-mix(in srgb,var(--green) 14%,transparent);border-color:color-mix(in srgb,var(--green) 40%,var(--line))}
 .side h3{font-size:12px;color:var(--muted);margin:0 0 8px;letter-spacing:.05em;text-transform:uppercase}
@@ -487,6 +580,8 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 .gck.part{color:transparent;box-shadow:0 0 0 1px color-mix(in srgb,var(--muted) 22%,transparent) inset}
 .greqn{flex:1;line-height:1.5}
 .gcap{font-size:12.5px;color:var(--muted);line-height:1.65;margin:0 0 10px}
+.gpractice{background:color-mix(in srgb,var(--accent) 10%,var(--panel));border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));border-left:3px solid var(--accent);border-radius:10px;padding:11px 14px;margin:6px 0 14px;font-size:13px;line-height:1.6;color:var(--text)}
+.gpractice b{color:var(--accent)}
 .gvia1,.gviac{color:var(--accent);text-decoration:none;cursor:pointer;font-size:13px}
 .gvia1:hover,.gviac:hover{text-decoration:underline}
 .gexp{position:relative;display:inline}
@@ -532,7 +627,7 @@ font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spaci
   <button class="themebtn" id="themebtn">◑ 深</button>
 </div>
 <div class="shell">
-  <nav id="sidenav"><a class="navlink home" id="homelink">📋 学习路线图</a><a class="navlink home" id="graphlink">🕸 知识图谱</a><a class="navlink home" id="goallink">🎯 目标规划</a><div id="navbody"></div></nav>
+  <nav id="sidenav"><a class="navlink home" id="homelink">📋 学习路线图</a><a class="navlink home" id="graphlink">🕸 知识图谱</a><a class="navlink home" id="goallink">🎯 目标规划</a><a class="navlink home" id="flashlink" style="display:none">🎴 抽卡复习</a><div id="navbody"></div></nav>
   <main>
     <section id="overview">
       <h1 class="ttl">学习路线图 <span style="color:var(--muted);font-weight:400;font-size:15px">Learning Roadmap</span></h1>
@@ -545,6 +640,7 @@ font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spaci
       <div class="legend">
         <span><i style="background:var(--green)"></i>已学透</span>
         <span><i style="background:var(--yellow)"></i>巩固中</span>
+        <span><i style="background:var(--grad)"></i>浅学</span>
         <span><i style="background:var(--gray)"></i>待学</span>
         <span>★ = 重要度　|　按依赖顺序自上而下</span>
       </div>
@@ -555,12 +651,40 @@ font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spaci
     <section id="docwrap" style="display:none"><div id="docview"></div><aside id="toc"></aside></section>
     <section id="graphwrap" style="display:none"><iframe id="graphframe" data-src="__CAT__-知识图谱.html"></iframe></section>
     <section id="goalwrap" style="display:none"><div id="goalbody"></div></section>
+    <section id="flashwrap" style="display:none"><div id="flashbody"></div></section>
   </main>
 </div>
+<style>
+#flashwrap{padding:26px 32px 80px;max-width:1060px}
+#flashwrap .ttl{font-size:26px;font-weight:700;margin:0 0 16px}
+.fbuild{background:var(--panel);border:1px dashed var(--line);border-radius:12px;padding:14px 16px;color:var(--muted);margin-bottom:16px}
+.fdeck{display:flex;gap:16px;margin:8px 0 18px;flex-wrap:wrap}
+.fcard{flex:0 1 190px;max-width:200px;aspect-ratio:360/504;border-radius:16px;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(18px) saturate(180%);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform .18s,box-shadow .18s;font-size:12px;color:var(--muted);overflow:hidden}
+.fcard.back:hover{transform:translateY(-4px);box-shadow:0 10px 26px rgba(0,0,0,.18);border-color:var(--accent)}
+.fcard.back{background-size:contain;background-position:center;background-repeat:no-repeat}
+.fcard.flip{cursor:default;flex:1 1 100%;max-width:none;aspect-ratio:auto;align-items:flex-start;justify-content:flex-start;padding:16px;color:var(--text);background:color-mix(in srgb,var(--accent) 8%,var(--panel))}
+.fqonly{font-size:15px;font-weight:600;line-height:1.5}
+.fkind{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:10px;background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent);margin-left:6px}
+.fqbox,.fabox{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;color:var(--muted);margin:10px 0;line-height:1.65}
+.fqbox.show,.fabox.show,.fauser{color:var(--text)}
+.fauser{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:10px 0;line-height:1.65}
+.finput{width:100%;min-height:90px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:12px 14px;font:inherit;resize:vertical;box-sizing:border-box}
+.finput:disabled{opacity:.7}
+.dim{opacity:.45;pointer-events:none;filter:grayscale(.4)}
+.fmuted{color:var(--muted);font-size:13px;margin:8px 0}
+.fhist{margin-top:22px;border-top:1px solid var(--line);padding-top:12px}
+.fhist summary{cursor:pointer;font-weight:600;color:var(--text)}
+.fhrec{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;line-height:1.6}
+.fhq{font-weight:600;margin-bottom:4px}
+.fha{font-size:13px;color:var(--muted);margin-top:3px}
+.fhts{font-size:11px;color:var(--muted);margin-top:6px}
+__CARDCSS__
+</style>
 <script>
 const DATA=__DATA__, DOCS=__DOCS__, GOAL=__GOAL__;
+const FLASH=__FLASH__, FLASH_ON=__FLASH_ON__;
 const CAT=Object.keys(DATA.categories)[0], R=DATA.categories[CAT];
-const DOTC={"已学透":"var(--green)","巩固中":"var(--yellow)","待学":"var(--gray)"};
+const DOTC={"已学透":"var(--green)","巩固中":"var(--yellow)","浅学":"var(--grad)","待学":"var(--gray)"};
 const cardEls={};
 function stars(n){return '★'.repeat(n)+'<span class="se">'+'★'.repeat(Math.max(0,5-n))+'</span>';}
 function theme(){return document.documentElement.dataset.theme;}
@@ -582,7 +706,8 @@ function renderOverview(){
     card.innerHTML='<span class="dot" style="background:'+(DOTC[it.status]||'var(--gray)')+'"></span>'
       +'<div style="flex:1"><div class="t">'+it.title+'<span class="stars">'+stars(it.importance)+'</span></div>'
       +(it.desc?'<div class="d">'+it.desc+'</div>':'')
-      +(it.prereqs.length?'<div class="pre"><b>前置：</b>'+it.prereqs.join(' · ')+'</div>':'')+'</div>'
+      +(it.prereqs.length?'<div class="pre"><b>前置：</b>'+it.prereqs.join(' · ')+'</div>':'')
+      +((it.xprereqs&&it.xprereqs.length)?'<div class="pre xpre"><b>⚠ 跨类前置：</b>'+it.xprereqs.map(x=>x.title+'（在「'+x.category+'」大类，未学透）').join(' · ')+'</div>':'')+'</div>'
       +(it.title===R.current?'<span class="tag">▶ 你在这里 / 下一个</span>':(done?'<span class="tag ok">✓ 已学透 ›</span>':''));
     tl.appendChild(card);
   });
@@ -619,7 +744,7 @@ function buildNav(){
   });
 }
 function setActive(v){document.querySelectorAll('#sidenav .navlink').forEach(x=>x.classList.toggle('active',x.dataset.k===v));
-  document.getElementById('homelink').classList.toggle('active',v==='__overview__');document.getElementById('graphlink').classList.toggle('active',v==='__graph__');document.getElementById('goallink').classList.toggle('active',v==='__goal__');}
+  document.getElementById('homelink').classList.toggle('active',v==='__overview__');document.getElementById('graphlink').classList.toggle('active',v==='__graph__');document.getElementById('goallink').classList.toggle('active',v==='__goal__');var _fl=document.getElementById('flashlink');if(_fl)_fl.classList.toggle('active',v==='__flash__');}
 function applyVizTheme(){document.querySelectorAll('#docview .vizframe').forEach(f=>{if(!f.src||f.src==='about:blank'){f.src=f.dataset.src+'?theme='+theme();}});}
 function bindXref(){document.querySelectorAll('#docview a.xref').forEach(a=>a.onclick=()=>go(a.dataset.go));}
 function bindToc(){
@@ -665,6 +790,7 @@ function renderGoal(){
   var g=GOAL,done=gIsDone(),h='';
   h+='<div class="ghead"><h1>🎯 '+g.goal+'</h1>'+(g.goal_category?'<span class="gtag">'+g.goal_category+'</span>':'')+(g.sample?'<span class="gtag sample">示例</span>':'')+'</div><div class="gsub">更新于 '+(g.updated||'')+'</div>';
   if(done)h+='<div class="celebrate"><div class="cbig">🎉 目标完成！</div><div>恭喜拿下「'+g.goal+'」。</div></div>';
+  if(g.practice_note)h+='<div class="gpractice">'+(g.domain_type?'<b>['+g.domain_type+'] </b>':'')+g.practice_note+'</div>';
   // 顶部进度＝实时完成进度（不再读 AI 写的 match，随 ✓/☑ 自动刷新）
   var LRN=gLearnedSet();
   var reqs=g.requirements||[];
@@ -715,13 +841,72 @@ function renderGoal(){
   var db=document.getElementById('gdone');
   if(db)db.onclick=function(){try{localStorage.setItem('goal_done_'+CAT,'1');var fb=document.getElementById('gfbtext');if(fb&&fb.value)localStorage.setItem('goal_fb_'+CAT,fb.value);}catch(e){}updateGoalNav();renderGoal();try{var gf=document.getElementById('graphframe');if(gf&&gf.src&&gf.src!=='about:blank')gf.contentWindow.postMessage({goalDone:true},'*');}catch(e){}window.scrollTo(0,0);};
 }
+function flashKey(s){return 'flash_'+s+'_'+CAT;}
+function flashHist(){try{return JSON.parse(localStorage.getItem(flashKey('hist'))||'[]');}catch(e){return [];}}
+function flashBuildId(){return (FLASH&&FLASH.generated)||'0';}
+function flashState(){try{return JSON.parse(localStorage.getItem(flashKey('st')+'_'+flashBuildId())||'{"round":0,"answers":{}}');}catch(e){return {round:0,answers:{}};}}
+function setFlashState(st){try{localStorage.setItem(flashKey('st')+'_'+flashBuildId(),JSON.stringify(st));}catch(e){}}
+function pushHist(rec){var h=flashHist();h.unshift(rec);try{localStorage.setItem(flashKey('hist'),JSON.stringify(h));}catch(e){}}
+function fesc(x){return (x==null?'':String(x)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function kindLabel(k){return k==='实践型'?'参考方案 · 方案与计划':(k==='自测'?'参考（笔记原文 / 自己先说再对照）':'参考答案 · 答案与分析');}
+function updateFlashNav(){var fl=document.getElementById('flashlink');if(!fl)return;fl.style.display=FLASH_ON?'':'none';}
+function histHtml(){var hist=flashHist();return '<details class="fhist"><summary>📋 已答记录（'+hist.length+'）</summary>'+(hist.length?hist.map(function(r){return '<div class="fhrec"><div class="fhq">'+fesc(r.q)+' <span class="fkind">'+fesc(r.kind)+'</span></div><div class="fha"><b>你的回答：</b>'+fesc(r.user||'（未填）')+'</div><div class="fha"><b>'+fesc(kindLabel(r.kind))+'：</b>'+fesc(r.answer)+'</div><div class="fhts">'+fesc(r.ts)+'</div></div>';}).join(''):'<div class="fmuted">还没有已答记录。</div>')+'</details>';}
+function renderFlash(){
+  var b=document.getElementById('flashbody');var learned=(R&&R.learned)||0;
+  if(learned<2){
+    b.innerHTML='<h1 class="ttl">🎴 抽卡复习</h1><div class="fbuild">建设中…　学满 2 个知识点后开启（当前 '+learned+'/2）</div>'+
+      '<div class="fdeck dim">'+[0,1,2].map(function(i){return '<div class="fcard back"></div>';}).join('')+'</div>'+
+      '<div class="fqbox dim">问题显示框</div><textarea class="finput dim" disabled placeholder="用户输入框（学满 2 个知识点后激活）"></textarea><div class="fabox dim">答案显示框</div>'+histHtml();
+    return;
+  }
+  var cards=(FLASH&&FLASH.cards)||[];
+  if(!cards.length){b.innerHTML='<h1 class="ttl">🎴 抽卡复习</h1><div class="fbuild">本次构建尚未生成卡池。下次刷新视图时会基于已学知识点生成卡池。</div>'+histHtml();return;}
+  var rounds=Math.ceil(cards.length/3);
+  var st=flashState(); if(st.round>rounds-1)st.round=rounds-1; if(st.round<0)st.round=0; var round=st.round;
+  var head='<h1 class="ttl">🎴 抽卡复习 <span style="color:var(--muted);font-weight:400;font-size:14px">卡池 '+cards.length+' 张 · 第 '+(round+1)+'/'+rounds+' 批 · 每批翻 1 张'+(rounds>1?'（可刷新 '+(rounds-1)+' 次）':'')+'</span></h1>';
+  var batch=cards.slice(round*3,round*3+3);
+  function refreshBtn(){return round<rounds-1?'<div style="margin:12px 0"><button class="gbtn" id="frefresh">🔄 再抽一批（还剩 '+(rounds-1-round)+' 批）</button></div>':'<div class="fmuted">本卡池已抽完。下次构建刷新出新卡池，已答的进下方“已答记录”。</div>';}
+  function bindRefresh(){var rb=document.getElementById('frefresh');if(rb)rb.onclick=function(){st.round=round+1;setFlashState(st);renderFlash();};}
+  var ans=st.answers&&st.answers[round];
+  if(ans){
+    b.innerHTML=head+'<div class="fdeck"><div class="fcard flip"><div class="fqonly">'+fesc(ans.q)+' <span class="fkind">'+fesc(ans.kind)+'</span></div></div></div>'+
+      '<div class="fqbox show"><b>问题：</b>'+fesc(ans.q)+'</div>'+
+      '<div class="fauser"><b>你的回答：</b>'+fesc(ans.user||'（未填）')+'</div>'+
+      '<div class="fabox show"><b>'+fesc(kindLabel(ans.kind))+'：</b><br>'+fesc(ans.answer)+'</div>'+
+      refreshBtn()+histHtml();
+    bindRefresh();return;
+  }
+  b.innerHTML=head+'<div class="fdeck" id="fdeck">'+batch.map(function(c,i){return '<div class="fcard back" data-i="'+i+'"></div>';}).join('')+'</div>'+
+    '<div class="fqbox" id="fqbox">翻开一张卡，这里显示问题。</div>'+
+    '<textarea class="finput" id="finput" disabled placeholder="翻牌后在此作答…"></textarea>'+
+    '<div style="margin:8px 0"><button class="gbtn" id="fsubmit" disabled>提交答案</button></div>'+
+    '<div class="fabox" id="fabox">提交后显示参考答案。</div>'+histHtml();
+  var picked=null;
+  document.querySelectorAll('#fdeck .fcard').forEach(function(el){
+    el.onclick=function(){
+      if(picked!==null)return;picked=parseInt(el.dataset.i,10);var c=batch[picked];
+      document.querySelectorAll('#fdeck .fcard').forEach(function(x){if(x!==el)x.remove();});
+      el.classList.remove('back');el.classList.add('flip');el.innerHTML='<div class="fqonly">'+fesc(c.q)+' <span class="fkind">'+fesc(c.kind)+'</span></div>';
+      var qb=document.getElementById('fqbox');qb.classList.add('show');qb.innerHTML='<b>问题：</b>'+fesc(c.q);
+      var inp=document.getElementById('finput');inp.disabled=false;inp.focus();document.getElementById('fsubmit').disabled=false;
+    };
+  });
+  document.getElementById('fsubmit').onclick=function(){
+    if(picked===null)return;var c=batch[picked];var user=document.getElementById('finput').value;
+    var ab=document.getElementById('fabox');ab.classList.add('show');ab.innerHTML='<b>'+fesc(kindLabel(c.kind))+'：</b><br>'+fesc(c.answer);
+    document.getElementById('finput').disabled=true;this.disabled=true;
+    var rec={q:c.q,kind:c.kind,answer:c.answer,user:user,ts:new Date().toLocaleString()};
+    if(!st.answers)st.answers={};st.answers[round]=rec;setFlashState(st);pushHist(rec);renderFlash();
+  };
+}
 function go(v){
-  const ov=document.getElementById('overview'),dw=document.getElementById('docwrap'),gw=document.getElementById('graphwrap'),goalw=document.getElementById('goalwrap');
-  gw.style.display='none';goalw.style.display='none';
+  const ov=document.getElementById('overview'),dw=document.getElementById('docwrap'),gw=document.getElementById('graphwrap'),goalw=document.getElementById('goalwrap'),flashw=document.getElementById('flashwrap');
+  gw.style.display='none';goalw.style.display='none';flashw.style.display='none';
   if(v==='__goal__'){if(!gUnlocked()){go('__overview__');return;}ov.style.display='none';dw.style.display='none';goalw.style.display='block';renderGoal();setActive('__goal__');document.getElementById('crumb').innerHTML='/ <b>'+(gIsDone()?'目标完成 ✅':'目标规划')+'</b>';location.hash=encodeURIComponent('__goal__');window.scrollTo(0,0);return;}
   if(v==='__graph__'){ov.style.display='none';dw.style.display='none';gw.style.display='block';
     const gf=document.getElementById('graphframe');if(!gf.src||gf.src==='about:blank'){gf.src=gf.dataset.src+'?theme='+theme()+'&goaldone='+(gIsDone()?1:0);}else{try{gf.contentWindow.postMessage({theme:theme()},'*');gf.contentWindow.postMessage({goalDone:gIsDone()},'*');}catch(e){}}
     setActive('__graph__');document.getElementById('crumb').innerHTML='/ <b>知识图谱</b>';location.hash=encodeURIComponent('__graph__');window.scrollTo(0,0);return;}
+  if(v==='__flash__'){if(!FLASH_ON){go('__overview__');return;}ov.style.display='none';dw.style.display='none';flashw.style.display='block';renderFlash();setActive('__flash__');document.getElementById('crumb').innerHTML='/ <b>抽卡复习</b>';location.hash=encodeURIComponent('__flash__');window.scrollTo(0,0);return;}
   if(v==='__overview__'||!DOCS[v]){ov.style.display='';dw.style.display='none';setActive('__overview__');
     document.getElementById('crumb').innerHTML='/ <b>学习路线图</b>';location.hash='';window.scrollTo(0,0);return;}
   ov.style.display='none';dw.style.display='grid';
@@ -744,8 +929,9 @@ setTheme(document.documentElement.dataset.theme||'light');
 document.getElementById('homelink').onclick=()=>go('__overview__');
 document.getElementById('graphlink').onclick=()=>go('__graph__');
 document.getElementById('goallink').onclick=()=>{if(gUnlocked())go('__goal__');};
+document.getElementById('flashlink').onclick=()=>{if(FLASH_ON)go('__flash__');};
 window.addEventListener('message',function(e){if(e&&e.data&&e.data.goto){var g=e.data.goto;if(DOCS[g])go(g);else{go('__overview__');setTimeout(function(){var el=cardEls[g];if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},80);}}});
-renderOverview();buildNav();updateGoalNav();
+renderOverview();buildNav();updateGoalNav();updateFlashNav();
 go(location.hash?decodeURIComponent(location.hash.slice(1)):'__overview__');
 window.addEventListener('hashchange',()=>{go(location.hash?decodeURIComponent(location.hash.slice(1)):'__overview__');});
 </script></body></html>"""
