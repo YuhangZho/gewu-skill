@@ -557,6 +557,7 @@ def main():
     # 各大类单独图谱（放进各自文件夹，prefix=../ 以正确链接 _viz）
     gen_cats = []
     for c in cats:
+        if c in ('fragment', '碎片'): continue  # 碎片暂存区：纯 .md 存储，不出图谱
         sub = {t: n for t, n in notes.items() if n['category'] == c}
         gc = build_graph(sub); gc['prefix'] = '../'; _apply_alive(gc, _potential, _baked)
         cdir = os.path.join(vault, c)

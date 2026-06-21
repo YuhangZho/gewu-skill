@@ -399,6 +399,7 @@ def main():
     with open(os.path.join(sysdir, 'roadmap_data.json'), 'w', encoding='utf-8') as f:
         json.dump(full, f, ensure_ascii=False, indent=2)
     for c, items in sorted(cats.items()):
+        if c in ('fragment', '碎片'): continue  # 碎片暂存区：纯 .md 存储，不出路线图/图谱
         cdir = os.path.join(vault, c)
         if not os.path.isdir(cdir): continue
         r = full['categories'][c]
