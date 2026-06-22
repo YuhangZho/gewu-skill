@@ -11,7 +11,7 @@ plan_path.py — 为每个大类生成「知识站」单页 <大类>/<大类>-�
 """
 import os, sys, re, json, html as H, argparse, datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from build_graph import collect, global_vault_path
+from build_graph import collect, global_vault_path, LEARNED  # LEARNED=('已学透','浅学')：浅学与已学透同级
 
 def desc_of(note):
     for line in note['body'].split('\n'):
@@ -59,7 +59,7 @@ def plan_category(items, goal=None, all_notes=None):
     neighbors = {t: (resolve(n['prereqs']) | resolve(n['links'])) for t, n in items.items()}
     xpre = {t: xprereq_info(n) for t, n in items.items()}
     def cross_ok(t):
-        return all(x['status'] == '已学透' for x in xpre[t])
+        return all(x['status'] in LEARNED for x in xpre[t])
     stage = {}
     def depth(t, guard):
         if t in stage: return stage[t]
@@ -78,19 +78,16 @@ def plan_category(items, goal=None, all_notes=None):
             return (-imp(t), -rel, stage[t], t)
         avail.sort(key=score)
         nxt = avail[0]; placed.append(nxt); placedset.add(nxt)
-    learned = {t for t in items if items[t]['status'] == '已学透'}
-    # 浅学=已轻学，作侧节点；不抢占“当前/下一站”，保增量稳定（加零散浅学点不打乱规划路径）
-    SKIP_NEXT = ('已学透', '浅学')
-    planned = [t for t in placed if items[t]['status'] not in SKIP_NEXT]
-    current = planned[0] if planned else next((t for t in placed if items[t]['status'] != '已学透'), None)
+    # 已掌握＝已学透 或 浅学（浅学与已学透同级：一样计入、一样解锁下游、一样满足前置）
+    learned = {t for t in items if items[t]['status'] in LEARNED}
+    planned = [t for t in placed if items[t]['status'] not in LEARNED]   # 仅"待学"才是要学的下一站
+    current = planned[0] if planned else None
     base = set(learned) | ({current} if current else set())
-    cand = [t for t in placed if items[t]['status'] not in SKIP_NEXT and t != current]
-    if not cand:  # 已无待学 → 回退：让浅学点可作“深化”推荐
-        cand = [t for t in placed if items[t]['status'] != '已学透' and t != current]
+    cand = [t for t in placed if items[t]['status'] not in LEARNED and t != current]
     def nscore(t):
         rel = len(neighbors[t] & base)
         return (-(rel * 2 + imp(t)), placed.index(t))
-    # outer fringe 闸门（KST）：优先推荐前置全部已学透的概念；ready 非空时只从中选
+    # outer fringe 闸门（KST）：优先推荐前置全部已掌握的概念；ready 非空时只从中选
     ready_cand = [t for t in cand if prereqs[t] <= learned and cross_ok(t)]
     pool = ready_cand if ready_cand else cand
     next3 = sorted(pool, key=nscore)[:3]
@@ -100,7 +97,7 @@ def plan_category(items, goal=None, all_notes=None):
         order.append({'title': t, 'status': n['status'], 'stage': stage[t],
                       'importance': imp(t), 'base_importance': n['importance'],
                       'prereqs': sorted(prereqs[t]), 'desc': desc_of(n),
-                      'xprereqs': [x for x in xpre[t] if x['status'] != '已学透'],
+                      'xprereqs': [x for x in xpre[t] if x['status'] not in LEARNED],
                       'groups': n.get('groups', []), 'related': sorted(neighbors[t])})
     return {'order': order, 'current': current, 'next3': next3,
             'learned': len(learned), 'total': len(items),
@@ -213,12 +210,21 @@ def stars(k):
     return '★' * k + '<span class="se">' + '★' * (5 - k) + '</span>'
 
 def build_docs(cat, items, plan, vault):
-    learned = [o for o in plan['order'] if items[o['title']]['status'] == '已学透']
-    linkset = set(o['title'] for o in learned)
+    # 出文档页的判据＝"学过且有正文"，而非死磕"已学透"字符串：
+    # 已学透/浅学都算学过（用户点它就该能打开）；只有"待学"占位（或空正文）不出页。
+    # 治"学完一个概念、点它没反应/没生成页面"——根因是旧逻辑只认已学透，Codex 把状态写成
+    # 浅学（或带空格/引号）时就静默无页。
+    _STUDIED = ('已学透', '浅学')
+    def _studied(o):
+        n = items[o['title']]
+        return (n.get('status') or '').strip() in _STUDIED and (n.get('body') or '').strip()
+    studied = [o for o in plan['order'] if _studied(o)]
+    linkset = set(o['title'] for o in studied)
     cdir = os.path.join(vault, cat)
+    _BADGE = {'已学透': ('ok', '✓ 已学透'), '浅学': ('light', '○ 浅学')}
     docs = {}
-    for o in learned:
-        t = o['title']; note = items[t]
+    for o in studied:
+        t = o['title']; note = items[t]; st = (note.get('status') or '').strip()
         viz = note.get('viz', '')
         viz_block = ''
         if viz:
@@ -228,9 +234,10 @@ def build_docs(cat, items, plan, vault):
                          '<a href="%s" target="_blank" rel="noopener">新标签打开 ↗</a></div>'
                          '<iframe class="vizframe" data-src="%s" loading="lazy"></iframe></div>') % (href, href)
         body_html, toc = md_render(note['body'], linkset, viz_block)
+        _bc, _bt = _BADGE.get(st, ('ok', st))
         doc = ('<div class="dochead"><h1>%s <span class="stars">%s</span></h1>'
-               '<span class="badge ok">✓ 已学透</span></div><div class="md">%s</div>'
-               % (H.escape(t), stars(o['importance']), body_html))
+               '<span class="badge %s">%s</span></div><div class="md">%s</div>'
+               % (H.escape(t), stars(o['importance']), _bc, _bt, body_html))
         toc_html = '<div class="tochd">本文导读</div>' + (''.join(
             '<a class="tl lv%d" data-id="%s">%s</a>' % (x['lvl'], x['id'], x['text']) for x in toc)
             or '<div class="tnote">（无小节）</div>')
@@ -322,11 +329,11 @@ def _mentor_tags(vault, here):
 
 
 def _mech_cards(items):
-    """从已学透笔记结构【零 token】派生兜底自测题（定位/边界/双链），
+    """从已掌握（已学透/浅学）笔记结构【零 token】派生兜底自测题（定位/边界/双链），
     供前期概念少、AI 卡池小时补足，避免抽卡 3 张就见底。质量不如 AI 整合题，故标 kind=自测。"""
     out = []
     for t, n in items.items():
-        if n.get('status') != '已学透':
+        if (n.get('status') or '').strip() not in LEARNED:
             continue
         body = n.get('body', '') or ''
         m = re.search(r'#+\s*一句话定位\s*\n+>?\s*(.+)', body)
@@ -532,6 +539,7 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 .dochead h1{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0}
 .dochead .stars{color:var(--yellow);font-size:15px}
 .badge.ok{font-size:12px;font-weight:600;border-radius:12px;padding:3px 10px;color:var(--green);background:color-mix(in srgb,var(--green) 14%,transparent);border:1px solid color-mix(in srgb,var(--green) 40%,var(--line))}
+.badge.light{font-size:12px;font-weight:600;border-radius:12px;padding:3px 10px;color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line))}
 .md{font-size:15px;line-height:1.78;margin-top:14px}
 .md h2{font-size:18px;margin:1.5em 0 .4em;scroll-margin-top:64px}.md h3{font-size:15px;margin:1.2em 0 .3em;color:var(--muted);scroll-margin-top:64px}
 .md p{margin:.6em 0}.md ul,.md ol{margin:.5em 0;padding-left:1.4em}.md li{margin:.25em 0}
@@ -640,7 +648,6 @@ font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spaci
       </div>
       <div class="legend">
         <span><i style="background:var(--green)"></i>已学透</span>
-        <span><i style="background:var(--yellow)"></i>巩固中</span>
         <span><i style="background:var(--grad)"></i>浅学</span>
         <span><i style="background:var(--gray)"></i>待学</span>
         <span>★ = 重要度　|　按依赖顺序自上而下</span>
@@ -685,7 +692,7 @@ __CARDCSS__
 const DATA=__DATA__, DOCS=__DOCS__, GOAL=__GOAL__;
 const FLASH=__FLASH__, FLASH_ON=__FLASH_ON__;
 const CAT=Object.keys(DATA.categories)[0], R=DATA.categories[CAT];
-const DOTC={"已学透":"var(--green)","巩固中":"var(--yellow)","浅学":"var(--grad)","待学":"var(--gray)"};
+const DOTC={"已学透":"var(--green)","浅学":"var(--grad)","待学":"var(--gray)"};
 const cardEls={};
 function stars(n){return '★'.repeat(n)+'<span class="se">'+'★'.repeat(Math.max(0,5-n))+'</span>';}
 function theme(){return document.documentElement.dataset.theme;}
@@ -694,22 +701,22 @@ function renderOverview(){
   if(DATA.goal){const g=document.getElementById('goal');g.style.display='';g.textContent='目标：'+DATA.goal;}
   const pct=R.total?Math.round(R.learned/R.total*100):0;
   document.getElementById('progbar').style.width=pct+'%';
-  document.getElementById('progtxt').textContent=R.learned+'/'+R.total+' 已学透 · '+pct+'%';
+  document.getElementById('progtxt').textContent=R.learned+'/'+R.total+' 已掌握 · '+pct+'%';
   const tl=document.getElementById('timeline');tl.innerHTML='';let ls=-1;
   R.order.forEach(it=>{
     if(it.stage!==ls){const s=document.createElement('div');s.className='stage';
       s.textContent='阶段 '+(it.stage+1)+(it.stage===0?'（地基 · 无前置）':'（需先掌握前置）');tl.appendChild(s);ls=it.stage;}
-    const done=it.status==='已学透';
+    const done=it.status==='已学透';const hasDoc=!!DOCS[it.title];
     const card=document.createElement('div');
-    card.className='card'+(it.title===R.current?' cur':'')+(done?' done linkcard':'');
+    card.className='card'+(it.title===R.current?' cur':'')+(done?' done':'')+(hasDoc?' linkcard':'');
     card.id='card-'+it.title;card.dataset.k=it.title;cardEls[it.title]=card;
-    if(done)card.onclick=()=>go(it.title);
+    if(hasDoc)card.onclick=()=>go(it.title);
     card.innerHTML='<span class="dot" style="background:'+(DOTC[it.status]||'var(--gray)')+'"></span>'
       +'<div style="flex:1"><div class="t">'+it.title+'<span class="stars">'+stars(it.importance)+'</span></div>'
       +(it.desc?'<div class="d">'+it.desc+'</div>':'')
       +(it.prereqs.length?'<div class="pre"><b>前置：</b>'+it.prereqs.join(' · ')+'</div>':'')
       +((it.xprereqs&&it.xprereqs.length)?'<div class="pre xpre"><b>⚠ 跨类前置：</b>'+it.xprereqs.map(x=>x.title+'（在「'+x.category+'」大类，未学透）').join(' · ')+'</div>':'')+'</div>'
-      +(it.title===R.current?'<span class="tag">▶ 你在这里 / 下一个</span>':(done?'<span class="tag ok">✓ 已学透 ›</span>':''));
+      +(it.title===R.current&&!hasDoc?'<span class="tag">▶ 你在这里 / 下一个</span>':(hasDoc?'<span class="tag ok">'+(done?'✓ 已学透':it.status)+' ›</span>':''));
     tl.appendChild(card);
   });
   const nx=document.getElementById('next');
@@ -726,18 +733,19 @@ function renderOverview(){
 function buildNav(){
   const nb=document.getElementById('navbody');nb.innerHTML='';
   const groups=[],gmap={};
-  R.order.forEach(it=>{(it.groups&&it.groups.length?it.groups:['未分类']).forEach(g=>{
-    if(!gmap[g]){gmap[g]=[];groups.push(g);} gmap[g].push(it);});});
+  // 每个概念只进【一个】最贴近的分类（groups[0]），杜绝同一概念在多分类下重复出现
+  R.order.forEach(it=>{const g=(it.groups&&it.groups.length)?it.groups[0]:'未分类';
+    if(!gmap[g]){gmap[g]=[];groups.push(g);} gmap[g].push(it);});
   groups.forEach(g=>{
     const wrap=document.createElement('div');wrap.className='navgrp';
     const hd=document.createElement('div');hd.className='navhd2';
     hd.innerHTML='<span class="chev">▸</span><span>'+g+'</span><span class="gc">'+gmap[g].length+'</span>';
     const body=document.createElement('div');body.className='navgbody';
     gmap[g].forEach(it=>{
-      const done=it.status==='已学透';
-      const a=document.createElement('a');a.className='navlink'+(done?'':' todo');a.dataset.k=it.title;
+      const hasDoc=!!DOCS[it.title];
+      const a=document.createElement('a');a.className='navlink'+(hasDoc?'':' todo');a.dataset.k=it.title;
       a.innerHTML='<span class="nd" style="background:'+(DOTC[it.status]||'var(--gray)')+'"></span>'+it.title;
-      a.onclick=function(e){e.stopPropagation(); if(done){go(it.title);} else {go('__overview__');setTimeout(()=>{const el=cardEls[it.title];if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},60);} };
+      a.onclick=function(e){e.stopPropagation(); if(hasDoc){go(it.title);} else {go('__overview__');setTimeout(()=>{const el=cardEls[it.title];if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},60);} };
       body.appendChild(a);
     });
     hd.onclick=function(){wrap.classList.toggle('collapsed');};
@@ -764,7 +772,7 @@ function gReqVia(r){return (r&&(r.via||r.refs||r.by))||[];}
 function gReqName(r){return (typeof r==='string')?r:(r.name||r.req||'');}
 function gReqKind(r){return (r&&r.kind&&(r.kind==='实践型'||r.kind==='practice'))?'实践型':'知识型';}
 function gAttr(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
-function gLearnedSet(){var s={};(R.order||[]).forEach(function(o){if(o.status==='已学透')s[o.title]=1;});return s;}
+function gLearnedSet(){var s={};(R.order||[]).forEach(function(o){if(o.status==='已学透'||o.status==='浅学')s[o.title]=1;});return s;}
 // 知识型覆盖度：via 概念里有多少已学透 / via 总数；via 空时回退 have 兜底
 function gCov(r,LRN){var via=gReqVia(r);if(!via.length){var ok=gReqOk(r);return {pct:ok?100:0,n:0,tot:0,done:ok};}var n=0;via.forEach(function(c){if(LRN[c])n++;});return {pct:Math.round(n/via.length*100),n:n,tot:via.length,done:n>=via.length};}
 function gCircle(c){if(c.done)return '<span class="gck ok">✓</span>';if(c.pct<=0)return '<span class="gck no">○</span>';return '<span class="gck part" title="'+c.n+'/'+c.tot+' 概念已学透" style="background:conic-gradient(var(--green) 0% '+c.pct+'%, color-mix(in srgb,var(--muted) 14%,transparent) '+c.pct+'% 100%)"></span>';}
@@ -787,7 +795,7 @@ function gTierColor(t){return t==='高'?'var(--green)':(t==='中'?'var(--yellow)
 function updateGoalNav(){var gl=document.getElementById('goallink');if(!gl)return;gl.classList.toggle('disabled',!gUnlocked());gl.textContent=gIsDone()?'🎯 目标完成 ✅':'🎯 目标规划';}
 function renderGoal(){
   var b=document.getElementById('goalbody');
-  if(!gHasGoal()){b.innerHTML='<div class="gempty"><h1>🎯 目标规划</h1><p>你还没设定本领域的学习目标。告诉我你的<b>具体目标</b>（越细分越好：「CET-4 英语考试」优于「考试」，「企业内训分享」优于「分享」），我会联网对照真实要求、分析你与目标的差距并按优先级规划下一步。</p><p class="gref">参考分类：应试 · 求职 · 分享 · 知识变现 · 自主学习 · 无目标(AI自主发散)</p></div>';return;}
+  if(!gHasGoal()){var _nx=(R&&R.next3)||[],_sg=(GOAL&&GOAL.suggested_goals)||[],_n=(R&&R.order)?R.order.length:0,_has=(_nx.length||_sg.length);var _h='<div class="gempty"><h1>🎯 目标规划</h1><p>这个领域你已攒了 <b>'+_n+'</b> 个知识点。'+(_has?'<b>定个目标</b>我就能联网对照真实要求、按优先级帮你规划；<b>不定也行</b>——下面有通用下一步。':'')+'</p>';if(_sg.length)_h+='<div class="gh3">💡 你可能想要的目标（说一个，或自己定）</div><div class="grecs">'+_sg.map(function(s){return '<div class="grec"><span class="gp">🎯</span><div class="grn">'+fesc(s)+'</div></div>';}).join('')+'</div>';if(_nx.length)_h+='<div class="gh3">👉 不定目标也能继续 · 下一步建议</div><div class="grecs">'+_nx.map(function(t,i){return '<div class="grec"><span class="gp">'+(i+1)+'</span><div class="grn">'+fesc(t)+'</div></div>';}).join('')+'</div>';if(!_has)_h+='<div class="grec" style="border-color:var(--accent)"><span class="gp">👉</span><div class="grn">你已学的点都点亮了，<b>但还没有"待学"的下一站</b>。想继续学这个领域，跟我说<b>「接着学」</b>或<b>定个目标</b>，我就把下一段路线铺出来（先补几个"待学"节点，再给你下一站）。</div></div>';_h+='<p class="gref">想定目标直接告诉我（参考分类：应试 · 求职 · 分享 · 知识变现 · 自主学习 · 无目标(AI自主发散)）。</p></div>';b.innerHTML=_h;return;}
   var g=GOAL,done=gIsDone(),h='';
   h+='<div class="ghead"><h1>🎯 '+g.goal+'</h1>'+(g.goal_category?'<span class="gtag">'+g.goal_category+'</span>':'')+(g.sample?'<span class="gtag sample">示例</span>':'')+'</div><div class="gsub">更新于 '+(g.updated||'')+'</div>';
   if(done)h+='<div class="celebrate"><div class="cbig">🎉 目标完成！</div><div>恭喜拿下「'+g.goal+'」。</div></div>';
