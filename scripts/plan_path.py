@@ -546,7 +546,7 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 /* 嵌套大纲 = 树状脑图效果 */
 .md ul ul{margin:.2em 0;padding-left:1.1em;border-left:1px dashed var(--line)}
 .md ul ul li{position:relative}
-/* 折叠块：学习过程记录默认收起 */
+/* 折叠块：高光原话 / 轻笔记默认收起 */
 .md details.lp-fold{margin:16px 0;border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
 .md details.lp-fold>summary{cursor:pointer;list-style:none;user-select:none;padding:11px 16px;font-weight:600;font-size:14px;color:var(--text);background:color-mix(in srgb,var(--muted) 8%,transparent)}
 .md details.lp-fold>summary::-webkit-details-marker{display:none}

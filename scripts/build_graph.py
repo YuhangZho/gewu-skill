@@ -81,10 +81,12 @@ def parse_frontmatter(text):
     return fm, body
 
 WIKILINK = re.compile(r'\[\[([^\]|]+?)(?:\|[^\]]+)?\]\]')
+SKIP_NOTE_DIRS = {'_transcript', '_system', '_viz'}
 
 def collect(vault):
     notes = {}
-    for root, _, files in os.walk(vault):
+    for root, dirs, files in os.walk(vault):
+        dirs[:] = [d for d in dirs if d.lower() not in SKIP_NOTE_DIRS]
         for fn in files:
             if not fn.lower().endswith('.md'):
                 continue
