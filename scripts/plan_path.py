@@ -5,13 +5,13 @@
 plan_path.py — 为每个大类生成「知识站」单页 <大类>/<大类>-路线图.html：
   · 顶栏固定 + 左侧目录固定 + 内容区内切换（单页，不跳独立页）
   · 起始视图=学习路线图（依赖分层/当前位置/下一步Top3/扩展）
-  · 点击已学透概念 → 同页切换到该概念文档（md 总结 + _viz 动效 + 右侧"本文导读"锚点）
+  · 点击已完成/学习中概念 → 同页切换到该概念文档（md 总结 + _viz 动效 + 右侧"本文导读"锚点）
   · 全局统一主题，默认浅色
 全量路线数据写入 _system/roadmap_data.json。
 """
 import os, sys, re, json, html as H, argparse, datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from build_graph import collect, global_vault_path, LEARNED  # LEARNED=('已学透','浅学')：浅学与已学透同级
+from build_graph import collect, global_vault_path, DONE_STATUS, IN_PROGRESS_STATUS, is_done
 
 def desc_of(note):
     for line in note['body'].split('\n'):
@@ -59,7 +59,7 @@ def plan_category(items, goal=None, all_notes=None):
     neighbors = {t: (resolve(n['prereqs']) | resolve(n['links'])) for t, n in items.items()}
     xpre = {t: xprereq_info(n) for t, n in items.items()}
     def cross_ok(t):
-        return all(x['status'] in LEARNED for x in xpre[t])
+        return all(x['status'] == DONE_STATUS for x in xpre[t])
     stage = {}
     def depth(t, guard):
         if t in stage: return stage[t]
@@ -78,26 +78,28 @@ def plan_category(items, goal=None, all_notes=None):
             return (-imp(t), -rel, stage[t], t)
         avail.sort(key=score)
         nxt = avail[0]; placed.append(nxt); placedset.add(nxt)
-    # 已掌握＝已学透 或 浅学（浅学与已学透同级：一样计入、一样解锁下游、一样满足前置）
-    learned = {t for t in items if items[t]['status'] in LEARNED}
-    planned = [t for t in placed if items[t]['status'] not in LEARNED]   # 仅"待学"才是要学的下一站
-    current = planned[0] if planned else None
+    # 已完成才计入进度、解锁下游、满足前置；学习中优先作为当前断点，不推新概念。
+    learned = {t for t in items if is_done(items[t])}
+    planned = [t for t in placed if not is_done(items[t])]   # 待学/学习中都是待推进项
+    in_progress = [t for t in placed if items[t]['status'] == IN_PROGRESS_STATUS]
+    current = in_progress[0] if in_progress else (planned[0] if planned else None)
     base = set(learned) | ({current} if current else set())
-    cand = [t for t in placed if items[t]['status'] not in LEARNED and t != current]
+    cand = [] if in_progress else [t for t in placed if not is_done(items[t]) and t != current]
     def nscore(t):
         rel = len(neighbors[t] & base)
         return (-(rel * 2 + imp(t)), placed.index(t))
-    # outer fringe 闸门（KST）：优先推荐前置全部已掌握的概念；ready 非空时只从中选
+    # outer fringe 闸门（KST）：优先推荐前置全部已完成的概念；ready 非空时只从中选
     ready_cand = [t for t in cand if prereqs[t] <= learned and cross_ok(t)]
     pool = ready_cand if ready_cand else cand
-    next3 = sorted(pool, key=nscore)[:3]
+    next3 = [] if in_progress else sorted(pool, key=nscore)[:3]
     order = []
     for t in placed:
         n = items[t]
         order.append({'title': t, 'status': n['status'], 'stage': stage[t],
                       'importance': imp(t), 'base_importance': n['importance'],
                       'prereqs': sorted(prereqs[t]), 'desc': desc_of(n),
-                      'xprereqs': [x for x in xpre[t] if x['status'] not in LEARNED],
+                      'xprereqs': [x for x in xpre[t] if x['status'] != DONE_STATUS],
+                      'track': n.get('track', ''),
                       'groups': n.get('groups', []), 'related': sorted(neighbors[t])})
     return {'order': order, 'current': current, 'next3': next3,
             'learned': len(learned), 'total': len(items),
@@ -210,18 +212,15 @@ def stars(k):
     return '★' * k + '<span class="se">' + '★' * (5 - k) + '</span>'
 
 def build_docs(cat, items, plan, vault):
-    # 出文档页的判据＝"学过且有正文"，而非死磕"已学透"字符串：
-    # 已学透/浅学都算学过（用户点它就该能打开）；只有"待学"占位（或空正文）不出页。
-    # 治"学完一个概念、点它没反应/没生成页面"——根因是旧逻辑只认已学透，Codex 把状态写成
-    # 浅学（或带空格/引号）时就静默无页。
-    _STUDIED = ('已学透', '浅学')
+    # 出文档页的判据＝已完成/学习中且有正文；待学占位不出页。
+    _STUDIED = (DONE_STATUS, IN_PROGRESS_STATUS)
     def _studied(o):
         n = items[o['title']]
         return (n.get('status') or '').strip() in _STUDIED and (n.get('body') or '').strip()
     studied = [o for o in plan['order'] if _studied(o)]
     linkset = set(o['title'] for o in studied)
     cdir = os.path.join(vault, cat)
-    _BADGE = {'已学透': ('ok', '✓ 已学透'), '浅学': ('light', '○ 浅学')}
+    _BADGE = {DONE_STATUS: ('ok', '✓ 已完成'), IN_PROGRESS_STATUS: ('light', '◌ 学习中')}
     docs = {}
     for o in studied:
         t = o['title']; note = items[t]; st = (note.get('status') or '').strip()
@@ -235,6 +234,8 @@ def build_docs(cat, items, plan, vault):
                          '<iframe class="vizframe" data-src="%s" loading="lazy"></iframe></div>') % (href, href)
         body_html, toc = md_render(note['body'], linkset, viz_block)
         _bc, _bt = _BADGE.get(st, ('ok', st))
+        if note.get('track'):
+            _bt += ' · ' + note.get('track')
         doc = ('<div class="dochead"><h1>%s <span class="stars">%s</span></h1>'
                '<span class="badge %s">%s</span></div><div class="md">%s</div>'
                % (H.escape(t), stars(o['importance']), _bc, _bt, body_html))
@@ -329,11 +330,11 @@ def _mentor_tags(vault, here):
 
 
 def _mech_cards(items):
-    """从已掌握（已学透/浅学）笔记结构【零 token】派生兜底自测题（定位/边界/双链），
+    """从已完成笔记结构【零 token】派生兜底自测题（定位/边界/双链），
     供前期概念少、AI 卡池小时补足，避免抽卡 3 张就见底。质量不如 AI 整合题，故标 kind=自测。"""
     out = []
     for t, n in items.items():
-        if (n.get('status') or '').strip() not in LEARNED:
+        if not is_done(n):
             continue
         body = n.get('body', '') or ''
         m = re.search(r'#+\s*一句话定位\s*\n+>?\s*(.+)', body)
@@ -413,7 +414,7 @@ def main():
         docs = build_docs(c, items, r, vault)
         data = {'generated': gen, 'goal': args.goal or '',
                 'categories': {c: r}, 'expansions': {c: expansions.get(c, [])}}
-        # 卡池 = AI 卡 + 机械兜底卡（零 token，从已学透笔记派生；去重、上限 12）
+        # 卡池 = AI 卡 + 机械兜底卡（零 token，从已完成笔记派生；去重、上限 12）
         _flash_obj = dict(flash_all.get(c) or {})
         _ai_cards = list(_flash_obj.get('cards') or [])
         if flash_on:
@@ -449,8 +450,8 @@ def main():
                 except OSError: pass
             try: os.rmdir(pdir)
             except OSError: pass
-        print('【%s】知识站：%d/%d 学透 · 当前 %s → %s-路线图.html'
-              % (c, r['learned'], r['total'], r['current'] or '（全部学透）', c))
+        print('【%s】知识站：%d/%d 已完成 · 当前 %s → %s-路线图.html'
+              % (c, r['learned'], r['total'], r['current'] or '（全部完成）', c))
 
 HTML = r"""<!DOCTYPE html>
 <html lang="zh" data-theme="light"><head><meta charset="utf-8">
@@ -647,8 +648,8 @@ font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spaci
         <span class="progtxt" id="progtxt"></span>
       </div>
       <div class="legend">
-        <span><i style="background:var(--green)"></i>已学透</span>
-        <span><i style="background:var(--grad)"></i>浅学</span>
+        <span><i style="background:var(--green)"></i>已完成</span>
+        <span><i style="background:var(--grad)"></i>学习中</span>
         <span><i style="background:var(--gray)"></i>待学</span>
         <span>★ = 重要度　|　按依赖顺序自上而下</span>
       </div>
@@ -692,7 +693,7 @@ __CARDCSS__
 const DATA=__DATA__, DOCS=__DOCS__, GOAL=__GOAL__;
 const FLASH=__FLASH__, FLASH_ON=__FLASH_ON__;
 const CAT=Object.keys(DATA.categories)[0], R=DATA.categories[CAT];
-const DOTC={"已学透":"var(--green)","浅学":"var(--grad)","待学":"var(--gray)"};
+const DOTC={"已完成":"var(--green)","学习中":"var(--grad)","待学":"var(--gray)"};
 const cardEls={};
 function stars(n){return '★'.repeat(n)+'<span class="se">'+'★'.repeat(Math.max(0,5-n))+'</span>';}
 function theme(){return document.documentElement.dataset.theme;}
@@ -701,12 +702,12 @@ function renderOverview(){
   if(DATA.goal){const g=document.getElementById('goal');g.style.display='';g.textContent='目标：'+DATA.goal;}
   const pct=R.total?Math.round(R.learned/R.total*100):0;
   document.getElementById('progbar').style.width=pct+'%';
-  document.getElementById('progtxt').textContent=R.learned+'/'+R.total+' 已掌握 · '+pct+'%';
+  document.getElementById('progtxt').textContent=R.learned+'/'+R.total+' 已完成 · '+pct+'%';
   const tl=document.getElementById('timeline');tl.innerHTML='';let ls=-1;
   R.order.forEach(it=>{
     if(it.stage!==ls){const s=document.createElement('div');s.className='stage';
-      s.textContent='阶段 '+(it.stage+1)+(it.stage===0?'（地基 · 无前置）':'（需先掌握前置）');tl.appendChild(s);ls=it.stage;}
-    const done=it.status==='已学透';const hasDoc=!!DOCS[it.title];
+      s.textContent='阶段 '+(it.stage+1)+(it.stage===0?'（地基 · 无前置）':'（需先完成前置）');tl.appendChild(s);ls=it.stage;}
+    const done=it.status==='已完成';const hasDoc=!!DOCS[it.title];
     const card=document.createElement('div');
     card.className='card'+(it.title===R.current?' cur':'')+(done?' done':'')+(hasDoc?' linkcard':'');
     card.id='card-'+it.title;card.dataset.k=it.title;cardEls[it.title]=card;
@@ -715,12 +716,14 @@ function renderOverview(){
       +'<div style="flex:1"><div class="t">'+it.title+'<span class="stars">'+stars(it.importance)+'</span></div>'
       +(it.desc?'<div class="d">'+it.desc+'</div>':'')
       +(it.prereqs.length?'<div class="pre"><b>前置：</b>'+it.prereqs.join(' · ')+'</div>':'')
-      +((it.xprereqs&&it.xprereqs.length)?'<div class="pre xpre"><b>⚠ 跨类前置：</b>'+it.xprereqs.map(x=>x.title+'（在「'+x.category+'」大类，未学透）').join(' · ')+'</div>':'')+'</div>'
-      +(it.title===R.current&&!hasDoc?'<span class="tag">▶ 你在这里 / 下一个</span>':(hasDoc?'<span class="tag ok">'+(done?'✓ 已学透':it.status)+' ›</span>':''));
+      +((it.xprereqs&&it.xprereqs.length)?'<div class="pre xpre"><b>⚠ 跨类前置：</b>'+it.xprereqs.map(x=>x.title+'（在「'+x.category+'」大类，未完成）').join(' · ')+'</div>':'')+'</div>'
+      +(it.title===R.current&&!hasDoc?'<span class="tag">▶ 你在这里 / 下一个</span>':(hasDoc?'<span class="tag ok">'+(done?'✓ 已完成':it.status)+(it.track?' · '+it.track:'')+' ›</span>':''));
     tl.appendChild(card);
   });
   const nx=document.getElementById('next');
-  if(!R.next3.length)nx.innerHTML='<div class="why">本领域已全部学透 →</div>';
+  if(!R.next3.length){const ip=R.order.find(o=>o.status==='学习中');
+    const cur=R.order.find(o=>o.title===R.current&&o.status!=='已完成');
+    nx.innerHTML='<div class="why">'+(ip?'先续学习中断点：'+ip.title+' →':(cur?'继续学当前概念：'+cur.title+' →':'本领域已全部完成 →'))+'</div>';}
   else nx.innerHTML=R.next3.map(t=>{const it=R.order.find(o=>o.title===t);
     const sh=it.prereqs.length?('衔接 '+it.prereqs.join('、')):'关联当前知识';
     return '<div class="item"><b>'+t+'</b> <span style="color:var(--yellow);font-size:12px">'+stars(it.importance)+'</span>'
@@ -763,19 +766,19 @@ function bindToc(){
   window.__tio=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(a=>a.classList.toggle('active',a.dataset.id===e.target.id));}});},{rootMargin:'-8% 0px -82% 0px'});
   document.querySelectorAll('#docview h2[id],#docview h3[id]').forEach(h=>window.__tio.observe(h));
 }
-function gIsDone(){if(!R||(R.learned||0)===0)return false;/*防呆：一个概念都没学透，目标不可能完成——拦住 AI 误写 status:已完成 / 空要求被当 100%*/var ls=false;try{ls=localStorage.getItem('goal_done_'+CAT)==='1';}catch(e){}return ls||(GOAL&&GOAL.status==='已完成');}
+function gIsDone(){if(!R||(R.learned||0)===0)return false;/*防呆：一个概念都没完成，目标不可能完成——拦住 AI 误写 status:已完成 / 空要求被当 100%*/var ls=false;try{ls=localStorage.getItem('goal_done_'+CAT)==='1';}catch(e){}return ls||(GOAL&&GOAL.status==='已完成');}
 function gHasGoal(){return !!(GOAL&&GOAL.goal);}
-// 解锁：本大类已设目标(goals.json 有该大类)即点亮；或已有概念学透。两者皆无才灰显。
+// 解锁：本大类已设目标(goals.json 有该大类)即点亮；或已有概念完成。两者皆无才灰显。
 function gUnlocked(){return gHasGoal()||R.learned>0;}
 function gReqOk(r){return r&&(r.have===true||r.status==='✓'||r.status==='ok'||r.status===true);}
 function gReqVia(r){return (r&&(r.via||r.refs||r.by))||[];}
 function gReqName(r){return (typeof r==='string')?r:(r.name||r.req||'');}
 function gReqKind(r){return (r&&r.kind&&(r.kind==='实践型'||r.kind==='practice'))?'实践型':'知识型';}
 function gAttr(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
-function gLearnedSet(){var s={};(R.order||[]).forEach(function(o){if(o.status==='已学透'||o.status==='浅学')s[o.title]=1;});return s;}
-// 知识型覆盖度：via 概念里有多少已学透 / via 总数；via 空时回退 have 兜底
+function gLearnedSet(){var s={};(R.order||[]).forEach(function(o){if(o.status==='已完成')s[o.title]=1;});return s;}
+// 知识型覆盖度：via 概念里有多少已完成 / via 总数；via 空时回退 have 兜底
 function gCov(r,LRN){var via=gReqVia(r);if(!via.length){var ok=gReqOk(r);return {pct:ok?100:0,n:0,tot:0,done:ok};}var n=0;via.forEach(function(c){if(LRN[c])n++;});return {pct:Math.round(n/via.length*100),n:n,tot:via.length,done:n>=via.length};}
-function gCircle(c){if(c.done)return '<span class="gck ok">✓</span>';if(c.pct<=0)return '<span class="gck no">○</span>';return '<span class="gck part" title="'+c.n+'/'+c.tot+' 概念已学透" style="background:conic-gradient(var(--green) 0% '+c.pct+'%, color-mix(in srgb,var(--muted) 14%,transparent) '+c.pct+'% 100%)"></span>';}
+function gCircle(c){if(c.done)return '<span class="gck ok">✓</span>';if(c.pct<=0)return '<span class="gck no">○</span>';return '<span class="gck part" title="'+c.n+'/'+c.tot+' 概念已完成" style="background:conic-gradient(var(--green) 0% '+c.pct+'%, color-mix(in srgb,var(--muted) 14%,transparent) '+c.pct+'% 100%)"></span>';}
 // via 概念链接：单个直接可点；多个收成「{ N个概念 ⌄」点击展开
 function gVia(via){if(!via.length)return '';if(via.length===1)return ' <a class="gvia1" data-go="'+gAttr(via[0])+'">'+via[0]+'</a>';var items=via.map(function(c){return '<a class="gviac" data-go="'+gAttr(c)+'">'+c+'</a>';}).join('<span class="gvsep">·</span>');return ' <span class="gexp"><span class="gexpb">{ '+via.length+'个概念 ⌄</span><span class="gexpbody">'+items+'</span></span>';}
 function gPractOn(i){try{return localStorage.getItem('goal_pract_'+CAT+'_'+i)==='1';}catch(e){return false;}}
@@ -811,7 +814,7 @@ function renderGoal(){
   if(reqs.length){
     if(kreqs.length){
       h+='<div class="gh3">目标要求对照 · 知识覆盖</div>';
-      h+='<div class="gcap">真实世界对该目标的要求清单，用来查你的<b>学习覆盖度</b>；与左侧概念<b>非一一对应</b>——一条要求可能由多个概念覆盖，✓＝其覆盖概念已学透（部分学透按比例填充）。</div>';
+      h+='<div class="gcap">真实世界对该目标的要求清单，用来查你的<b>学习覆盖度</b>；与左侧概念<b>非一一对应</b>——一条要求可能由多个概念覆盖，✓＝其覆盖概念已完成（部分完成按比例填充）。</div>';
       h+='<div class="greqs">'+kreqs.map(function(r){var c=gCov(r,LRN);return '<div class="greq">'+gCircle(c)+'<span class="greqn">'+gReqName(r)+gVia(gReqVia(r))+'</span></div>';}).join('')+'</div>';
     }
     if(preqs.length){
