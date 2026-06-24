@@ -133,6 +133,12 @@ def collect(vault):
             viz = fm.get('viz') or ''
             if isinstance(viz, list):
                 viz = viz[0] if viz else ''
+            viz_source = fm.get('viz_source') or ''
+            if isinstance(viz_source, list):
+                viz_source = viz_source[0] if viz_source else ''
+            viz_chart = fm.get('viz_chart') or ''
+            if isinstance(viz_chart, list):
+                viz_chart = viz_chart[0] if viz_chart else ''
             groups = fm.get('groups') or []
             if isinstance(groups, str):
                 groups = [groups]
@@ -140,10 +146,12 @@ def collect(vault):
             links += [str(r).strip() for r in related]
             notes[title] = {
                 'title': title, 'category': str(cat).strip(), 'status': str(status).strip(),
-                'track': track,
-                'importance': max(1, min(5, importance)),
-                'viz': str(viz).strip(),
-                'groups': [str(g).strip() for g in groups],
+                      'track': track,
+                      'importance': max(1, min(5, importance)),
+                      'viz': str(viz).strip(),
+                      'viz_source': str(viz_source).strip(),
+                      'viz_chart': str(viz_chart).strip(),
+                      'groups': [str(g).strip() for g in groups],
                 'prereqs': [str(p).strip() for p in prereqs],
                 'aliases': [str(a).strip() for a in aliases],
                 'links': links, 'body': body.strip(),
@@ -186,7 +194,9 @@ def build_graph(notes):
                       'track': n.get('track', ''),
                       'ready': is_ready(n),
                       'aliases': n['aliases'], 'body': n['body'], 'rel': n['rel'],
-                      'viz': n.get('viz', '')})
+                      'viz': n.get('viz', ''),
+                      'viz_source': n.get('viz_source', ''),
+                      'viz_chart': n.get('viz_chart', '')})
         links.append({'source': t, 'target': 'cat::' + n['category'], 'kind': 'belong'})
     # 依赖有向边：prereq -> concept（前置解锁后续）
     for t, n in notes.items():
@@ -487,7 +497,7 @@ function openNode(n){
       <div class="badge" style="border-color:${catColor[n.category]};color:${catColor[n.category]}">${n.category}</div>
       <div class="badge">${n.status||''}${n.track?' · '+n.track:''}</div>
       ${(n.aliases&&n.aliases.length)?'<div class="badge">'+n.aliases.join(' / ')+'</div>':''}
-      ${n.viz?'<div style="margin:8px 0 12px"><a href="'+((DATA.prefix||'')+n.viz)+'" target="_blank" style="display:inline-block;color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:5px 12px;text-decoration:none;font-weight:600">▶ 动态画面 / Dynamic View</a></div>':''}
+      ${(n.viz||n.viz_source)?'<div style="margin:8px 0 12px"><a href="'+((DATA.prefix||'')+(n.viz||n.viz_source))+'" target="_blank" style="display:inline-block;color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:5px 12px;text-decoration:none;font-weight:600">▶ 知识图解 / Knowledge Diagram</a></div>':''}
       ${window.self!==window.top?'<div style="margin:0 0 12px"><a data-open="'+n.label+'" style="display:inline-block;cursor:pointer;color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:5px 12px;text-decoration:none;font-weight:600">📖 在知识站打开</a></div>':''}
       <div class="md">${mdToHtml(n.body)}</div>`;
   }
