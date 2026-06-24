@@ -223,37 +223,10 @@ def build_graph(notes):
             'categories': sorted(categories.keys()),
             'generated': datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}
 
-def _goal_alive(notes, sysdir):
-    """返回 (potential, baked)：potential=有目标的领域里"将会呼吸"的节点(前端按需点亮)；baked=目标已完成、生成时即点亮。"""
-    gp = os.path.join(sysdir, 'goals.json'); potential = {}; baked = {}
-    if not os.path.isfile(gp):
-        return potential, baked
-    try:
-        goals = json.load(open(gp, encoding='utf-8'))
-    except Exception:
-        return potential, baked
-    def fill(target, gc, related):
-        for t, n in notes.items():
-            if n['category'] == gc and is_done(n):
-                target.setdefault(t, 'full')
-        for rd in (related or []):
-            for t, n in notes.items():
-                if n['category'] == rd and is_done(n) and t not in target:
-                    target[t] = 'weak'
-    for gc, go in goals.items():
-        if not isinstance(go, dict):
-            continue
-        rel = go.get('related_domains') or []
-        fill(potential, gc, rel)
-        if go.get('status') == '已完成':
-            fill(baked, gc, rel)
-    return potential, baked
-
-def _apply_alive(graph, potential, baked):
+def _apply_alive(graph):
     for nd in graph['nodes']:
         if nd.get('type') == 'concept':
-            nd['alivep'] = potential.get(nd['label'], '')
-            nd['alive'] = baked.get(nd['label'], '')
+            nd['alive'] = 'full' if nd.get('status') == DONE_STATUS else ''
 
 # ---------- HTML 模板（单文件、离线、自带力导向模拟）----------
 HTML = r"""<!DOCTYPE html>
@@ -312,7 +285,6 @@ background:none}
 #arrow path{fill:var(--accent)}
 @keyframes nodeBreath{0%,100%{filter:drop-shadow(0 0 1px var(--alive))}50%{filter:drop-shadow(0 0 8px var(--alive))}}
 .node.alive-full circle{animation:nodeBreath 3s ease-in-out infinite}
-.node.alive-weak circle{animation:nodeBreath 4.8s ease-in-out infinite;opacity:.92}
 /* —— 水墨主题质感（宣纸纹理 / 墨晕 / 楷书标题）—— */
 :root[data-theme="ink"] body,:root[data-theme="inkdark"] body{
 background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
@@ -537,9 +509,6 @@ document.getElementById('themebtn').onclick=function(){
   var cur=document.documentElement.dataset.theme||'dark';
   applyTheme(THEMES[(themeIdx(cur)+1)%THEMES.length][0]);};
 applyTheme(document.documentElement.dataset.theme||'dark');
-function setGoalDone(on){nodeEls.forEach(function(g){var n=g._node;if(!n||n.type!=='concept')return;g.classList.remove('alive-full','alive-weak');var lv=on?(n.alivep||''):(n.alive||'');if(lv)g.classList.add('alive-'+lv);});}
-(function(){var gd=new URLSearchParams(location.search).get('goaldone');if(gd==='1')setGoalDone(true);})();
-window.addEventListener('message',function(e){if(e&&e.data&&('goalDone' in e.data))setGoalDone(!!e.data.goalDone);});
 </script></body></html>"""
 
 
@@ -576,11 +545,10 @@ def main():
     sysdir = os.path.join(vault, '_system')
     os.makedirs(sysdir, exist_ok=True)
     notes = collect(vault)
-    _potential, _baked = _goal_alive(notes, sysdir)
     cats = sorted({n['category'] for n in notes.values()})
     # 全局数据仍写入 _system/graph_data.json（供路线图/呼吸态等读取），
     # 但不再在根目录输出 知识图谱.html（累赘；各大类页用各自的分类图谱即可）。
-    g = build_graph(notes); g['prefix'] = ''; _apply_alive(g, _potential, _baked)
+    g = build_graph(notes); g['prefix'] = ''; _apply_alive(g)
     with open(os.path.join(sysdir, 'graph_data.json'), 'w', encoding='utf-8') as f:
         json.dump(g, f, ensure_ascii=False, indent=2)
     # 清理历史遗留的根目录全局图谱
@@ -593,7 +561,7 @@ def main():
     for c in cats:
         if c in ('fragment', '碎片'): continue  # 碎片暂存区：纯 .md 存储，不出图谱
         sub = {t: n for t, n in notes.items() if n['category'] == c}
-        gc = build_graph(sub); gc['prefix'] = '../'; _apply_alive(gc, _potential, _baked)
+        gc = build_graph(sub); gc['prefix'] = '../'; _apply_alive(gc)
         cdir = os.path.join(vault, c)
         if not os.path.isdir(cdir):
             continue
