@@ -333,7 +333,7 @@ def _mentor_tags(vault, here):
 def _mech_cards(items):
     """从已完成笔记结构【零 token】派生兜底自测题（定位/边界/双链），
     供前期概念少、AI 卡池小时补足，避免抽卡 3 张就见底。质量不如 AI 整合题，故标 kind=自测。"""
-    out = []
+    loc, bnd, rel_cards = [], [], []   # 分三类，覆盖优先：定位卡每概念 1 张先行，截断时不丢概念
     for t, n in items.items():
         if not is_done(n):
             continue
@@ -342,17 +342,18 @@ def _mech_cards(items):
         if m:
             a = m.group(1).strip().lstrip('>').strip()
             if a:
-                out.append({"q": "用一句话说清「%s」是什么、解决什么问题？" % t, "kind": "自测", "answer": a[:240]})
+                loc.append({"q": "用一句话说清「%s」是什么、解决什么问题？" % t, "kind": "自测", "answer": a[:240]})
         m2 = re.search(r'#+\s*[^\n]*(?:失效边界|边界)[^\n]*\n+(.+?)(?:\n#+\s|\Z)', body, re.S)
         if m2:
             a = m2.group(1).strip()
             if a:
-                out.append({"q": "说出「%s」的失效边界——它什么时候不适用 / 会踩什么坑？" % t, "kind": "自测", "answer": a[:300]})
+                bnd.append({"q": "说出「%s」的失效边界——它什么时候不适用 / 会踩什么坑？" % t, "kind": "自测", "answer": a[:300]})
         rels = [x for x in (n.get('links') or []) if x and x != t]
         if rels:
-            out.append({"q": "「%s」和「%s」是什么关系？先自己说，再翻两篇笔记对照。" % (t, rels[0]),
+            rel_cards.append({"q": "「%s」和「%s」是什么关系？先自己说，再翻两篇笔记对照。" % (t, rels[0]),
                         "kind": "自测", "answer": "（开放·对照两篇笔记的双链/前置关系自检，无标准答案）"})
-    return out
+    # 先所有"定位"(保证每个已完成概念至少 1 张)，再边界，再双链 → cap 截断时覆盖优先
+    return loc + bnd + rel_cards
 
 
 def main():
@@ -422,6 +423,9 @@ def main():
             _seen_q = {x.get('q') for x in _ai_cards}
             _mech = [m for m in _mech_cards(items) if m['q'] not in _seen_q]
             _flash_obj['cards'] = (_ai_cards + _mech)[:12]
+        # 运行期注入(不写回 flashcards.json)：页面据此按 domain_type 换题型外壳 + 展示 AI 刷新模式
+        _flash_obj['domain_type'] = (goals_all.get(c) or {}).get('domain_type', '')
+        _flash_obj['ai_refresh'] = ((cfg or {}).get('flashcard_ai_refresh') or 'auto')
         html = (HTML.replace('__CAT__', H.escape(c))
                     .replace('__DATA__', json.dumps(data, ensure_ascii=False))
                     .replace('__DOCS__', json.dumps(docs, ensure_ascii=False))
@@ -859,6 +863,27 @@ function fesc(x){return (x==null?'':String(x)).replace(/&/g,'&amp;').replace(/</
 function kindLabel(k){return k==='实践型'?'参考方案 · 方案与计划':(k==='自测'?'参考（笔记原文 / 自己先说再对照）':'参考答案 · 答案与分析');}
 function updateFlashNav(){var fl=document.getElementById('flashlink');if(!fl)return;fl.style.display=FLASH_ON?'':'none';}
 function histHtml(){var hist=flashHist();return '<details class="fhist"><summary>📋 已答记录（'+hist.length+'）</summary>'+(hist.length?hist.map(function(r){return '<div class="fhrec"><div class="fhq">'+fesc(r.q)+' <span class="fkind">'+fesc(r.kind)+'</span></div><div class="fha"><b>你的回答：</b>'+fesc(r.user||'（未填）')+'</div><div class="fha"><b>'+fesc(kindLabel(r.kind))+'：</b>'+fesc(r.answer)+'</div><div class="fhts">'+fesc(r.ts)+'</div></div>';}).join(''):'<div class="fmuted">还没有已答记录。</div>')+'</details>';}
+function flashDT(){return (FLASH&&FLASH.domain_type)||'';}
+// 按 domain_type + kind 换输入框外壳（同一 schema，只改提示，不做自定义控件）
+function flashPlaceholder(kind,dt){
+  if(kind==='实践型')return '写你的方案/计划：目标 → 步骤 → 验收标准…';
+  if(dt==='记忆型应试')return '默写关键词 / 填空作答…';
+  if(dt==='工具操作型')return '按步骤回忆：1. … 2. … 3. …（或默写快捷键）';
+  if(dt==='创意开放型')return '先产出一版，再对照范例找差距…';
+  if(dt==='强实践')return '目标 / 步骤 / 验收标准…';
+  return '在此作答…';
+}
+// AI 刷新模式：只展示，控制权在 config/对话（页面静态、控制不了 AI）
+function flashModeNote(){var m=(FLASH&&FLASH.ai_refresh)||'auto';
+  return '<div style="font-size:12px;color:var(--muted);margin:2px 0 10px">AI 出题：<b>'+(m==='manual'?'手动':'自动')+'</b> · 想要新整合题，对我说「刷新题库」</div>';}
+// based_on diff：有已完成概念还没进 AI 整合题池 → 诚实提示（机械卡已即时补题）
+function flashCoverNote(){
+  var bo=(FLASH&&FLASH.based_on)||null;if(!bo||!bo.length)return '';
+  var done=((R&&R.order)||[]).filter(function(o){return o.status==='已完成';}).map(function(o){return o.title;});
+  var miss=done.filter(function(t){return bo.indexOf(t)<0;});
+  if(!miss.length)return '';
+  return '<div style="font-size:13px;margin:8px 0 12px;padding:8px 12px;border-radius:8px;background:color-mix(in srgb,var(--yellow) 12%,transparent);border:1px solid color-mix(in srgb,var(--yellow) 35%,var(--line))">📌 有 '+miss.length+' 个新概念（'+miss.slice(0,3).map(fesc).join('、')+(miss.length>3?' 等':'')+'）还没编进 AI 整合题——已用机械卡即时补题；想把它们也编进整合题，刷完当前池后对我说「刷新题库」。</div>';
+}
 function renderFlash(){
   var b=document.getElementById('flashbody');var learned=(R&&R.learned)||0;
   if(learned<2){
@@ -871,7 +896,7 @@ function renderFlash(){
   if(!cards.length){b.innerHTML='<h1 class="ttl">🎴 抽卡复习</h1><div class="fbuild">本次构建尚未生成卡池。下次刷新视图时会基于已学知识点生成卡池。</div>'+histHtml();return;}
   var rounds=Math.ceil(cards.length/3);
   var st=flashState(); if(st.round>rounds-1)st.round=rounds-1; if(st.round<0)st.round=0; var round=st.round;
-  var head='<h1 class="ttl">🎴 抽卡复习 <span style="color:var(--muted);font-weight:400;font-size:14px">卡池 '+cards.length+' 张 · 第 '+(round+1)+'/'+rounds+' 批 · 每批翻 1 张'+(rounds>1?'（可刷新 '+(rounds-1)+' 次）':'')+'</span></h1>';
+  var head='<h1 class="ttl">🎴 抽卡复习 <span style="color:var(--muted);font-weight:400;font-size:14px">卡池 '+cards.length+' 张 · 第 '+(round+1)+'/'+rounds+' 批 · 每批翻 1 张'+(rounds>1?'（可刷新 '+(rounds-1)+' 次）':'')+'</span></h1>'+flashModeNote()+flashCoverNote();
   var batch=cards.slice(round*3,round*3+3);
   function refreshBtn(){return round<rounds-1?'<div style="margin:12px 0"><button class="gbtn" id="frefresh">🔄 再抽一批（还剩 '+(rounds-1-round)+' 批）</button></div>':'<div class="fmuted">本卡池已抽完。下次构建刷新出新卡池，已答的进下方“已答记录”。</div>';}
   function bindRefresh(){var rb=document.getElementById('frefresh');if(rb)rb.onclick=function(){st.round=round+1;setFlashState(st);renderFlash();};}
@@ -896,7 +921,7 @@ function renderFlash(){
       document.querySelectorAll('#fdeck .fcard').forEach(function(x){if(x!==el)x.remove();});
       el.classList.remove('back');el.classList.add('flip');el.innerHTML='<div class="fqonly">'+fesc(c.q)+' <span class="fkind">'+fesc(c.kind)+'</span></div>';
       var qb=document.getElementById('fqbox');qb.classList.add('show');qb.innerHTML='<b>问题：</b>'+fesc(c.q);
-      var inp=document.getElementById('finput');inp.disabled=false;inp.focus();document.getElementById('fsubmit').disabled=false;
+      var inp=document.getElementById('finput');inp.disabled=false;inp.placeholder=flashPlaceholder(c.kind,flashDT());inp.focus();document.getElementById('fsubmit').disabled=false;
     };
   });
   document.getElementById('fsubmit').onclick=function(){
