@@ -271,90 +271,6 @@ def _apply_config(html, cfg):
         html = html.replace('--accent:#0a84ff', '--accent:' + str(ac['dark']))
     return html
 
-
-def _read_profile(here, mid):
-    """读 mentors/<id>/profile.md 的 frontmatter（name_en/color/voice_mode 等）。"""
-    p = os.path.join(here, '..', 'mentors', mid, 'profile.md')
-    if not os.path.isfile(p):
-        return None
-    m = re.match(r'^---\s*\n(.*?)\n---', open(p, encoding='utf-8').read(), re.S)
-    fm = {}
-    if m:
-        for line in m.group(1).splitlines():
-            mm = re.match(r'^(\w+):\s*(.*)$', line)
-            if mm:
-                v = mm.group(2).strip()
-                if v[:1] in ('"', "'"):
-                    q = v[0]; e = v.find(q, 1)
-                    v = v[1:e] if e > 0 else v[1:]
-                else:
-                    h = v.find(' #')
-                    if h >= 0:
-                        v = v[:h]
-                    v = v.strip()
-                fm[mm.group(1)] = v
-    return fm
-
-def _mentor_tags(vault, here):
-    """返回 {大类: 标签HTML}。_system/mentors.json enabled=false 或无绑定 → 空 dict。"""
-    p = os.path.join(vault, '_system', 'mentors.json')
-    if not os.path.isfile(p):
-        return {}
-    try:
-        m = json.load(open(p, encoding='utf-8'))
-    except Exception:
-        return {}
-    if not m.get('enabled'):
-        return {}
-    out = {}
-    for cat, b in (m.get('bindings') or {}).items():
-        if not b or not b.get('mentor'):
-            continue
-        prof = _read_profile(here, b['mentor'])
-        if not prof:
-            continue
-        name = prof.get('name_en') or prof.get('name') or b['mentor']
-        color = prof.get('color') or 'var(--accent)'
-        traits = [t for t in (b.get('traits') or []) if t]
-        if prof.get('voice_mode') == 'style_reference':
-            disc = '导师风格 · 风格参照（非第一人称扮演）· 基于公开信息演绎'
-        else:
-            disc = '导师风格 · 基于公开信息的教学风格演绎，非本人'
-        nameseg = '<span class="mt-name">%s</span>' % H.escape(name)
-        if traits:
-            tag = ('<span class="mentortag" title="%s"><span class="mt-trait" style="background:%s">%s</span>%s</span>'
-                   % (H.escape(disc), color, H.escape('·'.join(traits)), nameseg))
-        else:
-            tag = '<span class="mentortag" title="%s">%s</span>' % (H.escape(disc), nameseg)
-        out[cat] = tag
-    return out
-
-
-def _mech_cards(items):
-    """从已完成笔记结构【零 token】派生兜底自测题（定位/边界/双链），
-    供前期概念少、AI 卡池小时补足，避免抽卡 3 张就见底。质量不如 AI 整合题，故标 kind=自测。"""
-    out = []
-    for t, n in items.items():
-        if not is_done(n):
-            continue
-        body = n.get('body', '') or ''
-        m = re.search(r'#+\s*一句话定位\s*\n+>?\s*(.+)', body)
-        if m:
-            a = m.group(1).strip().lstrip('>').strip()
-            if a:
-                out.append({"q": "用一句话说清「%s」是什么、解决什么问题？" % t, "kind": "自测", "answer": a[:240]})
-        m2 = re.search(r'#+\s*[^\n]*(?:失效边界|边界)[^\n]*\n+(.+?)(?:\n#+\s|\Z)', body, re.S)
-        if m2:
-            a = m2.group(1).strip()
-            if a:
-                out.append({"q": "说出「%s」的失效边界——它什么时候不适用 / 会踩什么坑？" % t, "kind": "自测", "answer": a[:300]})
-        rels = [x for x in (n.get('links') or []) if x and x != t]
-        if rels:
-            out.append({"q": "「%s」和「%s」是什么关系？先自己说，再翻两篇笔记对照。" % (t, rels[0]),
-                        "kind": "自测", "answer": "（开放·对照两篇笔记的双链/前置关系自检，无标准答案）"})
-    return out
-
-
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
     # 知识库根目录 = 主题名文件夹本身（不再套一层「知识库/」）
@@ -366,7 +282,6 @@ def main():
     vault = args.vault
     notes = collect(vault)
     cfg = _load_config(vault)
-    mtags = _mentor_tags(vault, here)
     sysdir = os.path.join(vault, '_system'); os.makedirs(sysdir, exist_ok=True)
     cats = {}
     for t, n in notes.items():
@@ -381,26 +296,6 @@ def main():
     if os.path.isfile(_gp):
         try: goals_all = json.load(open(_gp, encoding='utf-8'))
         except Exception: goals_all = {}
-    flash_all = {}
-    _fp = os.path.join(sysdir, 'flashcards.json')
-    if os.path.isfile(_fp):
-        try: flash_all = json.load(open(_fp, encoding='utf-8'))
-        except Exception: flash_all = {}
-    flash_on = bool(cfg.get('flashcard_review')) if cfg else False
-    # 抽卡卡背：按主题不撞色匹配（浅→obsidian / 深→cinnabar / 宣纸→pine / 夜墨→indigo），内联为 data-URI 保证离线自包含
-    import base64 as _b64
-    _card_map = {'light': 'card-back-obsidian.svg', 'dark': 'card-back-cinnabar.svg',
-                 'ink': 'card-back-pine.svg', 'inkdark': 'card-back-indigo.svg'}
-    _assets = os.path.join(here, '..', 'assets')
-    _card_rules = []
-    for _th, _fn in _card_map.items():
-        _fp2 = os.path.join(_assets, _fn)
-        if os.path.isfile(_fp2):
-            try:
-                _b = _b64.b64encode(open(_fp2, 'rb').read()).decode('ascii')
-                _card_rules.append(':root[data-theme="%s"] .fcard.back{background-image:url("data:image/svg+xml;base64,%s")}' % (_th, _b))
-            except Exception: pass
-    card_css = '\n'.join(_card_rules)
     gen = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
     full = {'generated': gen, 'goal': args.goal or '', 'categories': {}, 'expansions': expansions}
     for c in sorted(cats.keys()):
@@ -415,21 +310,10 @@ def main():
         docs = build_docs(c, items, r, vault)
         data = {'generated': gen, 'goal': args.goal or '',
                 'categories': {c: r}, 'expansions': {c: expansions.get(c, [])}}
-        # 卡池 = AI 卡 + 机械兜底卡（零 token，从已完成笔记派生；去重、上限 12）
-        _flash_obj = dict(flash_all.get(c) or {})
-        _ai_cards = list(_flash_obj.get('cards') or [])
-        if flash_on:
-            _seen_q = {x.get('q') for x in _ai_cards}
-            _mech = [m for m in _mech_cards(items) if m['q'] not in _seen_q]
-            _flash_obj['cards'] = (_ai_cards + _mech)[:12]
         html = (HTML.replace('__CAT__', H.escape(c))
                     .replace('__DATA__', json.dumps(data, ensure_ascii=False))
                     .replace('__DOCS__', json.dumps(docs, ensure_ascii=False))
-                    .replace('__GOAL__', json.dumps(goals_all.get(c, {}), ensure_ascii=False))
-                    .replace('__FLASH__', json.dumps(_flash_obj, ensure_ascii=False))
-                    .replace('__FLASH_ON__', 'true' if flash_on else 'false')
-                    .replace('__CARDCSS__', card_css)
-                    .replace('__MENTORTAG__', mtags.get(c, '')))
+                    .replace('__GOAL__', json.dumps(goals_all.get(c, {}), ensure_ascii=False)))
         html = _apply_config(html, cfg)
         # 边触发门：该类存在概念间边(prereq/双链)才出路线图；否则只留 .md，清理旧文件
         _has_edge = any(o.get('prereqs') or o.get('related') for o in r.get('order', []))
@@ -475,9 +359,6 @@ background:var(--panel);border-bottom:1px solid var(--line);backdrop-filter:blur
 .topbar .crumb b{color:var(--text)}
 .topbar .crumb .cl{color:var(--accent);cursor:pointer}
 .topbar .sp{flex:1}
-.mentortag{display:inline-flex;align-items:center;font-size:11px;line-height:1;border-radius:3px;overflow:hidden;margin-left:4px;font-weight:600;vertical-align:middle;box-shadow:0 1px 2px rgba(0,0,0,.14);cursor:default}
-.mentortag .mt-trait{padding:4px 7px;color:#fff;white-space:nowrap}
-.mentortag .mt-name{padding:4px 7px;background:#e7e7ea;color:#333;white-space:nowrap}
 .themebtn{background:var(--solid);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:13px;cursor:pointer}
 .shell{display:grid;grid-template-columns:252px minmax(0,1fr)}
 #sidenav{position:sticky;top:49px;align-self:start;height:calc(100vh - 49px);overflow-y:auto;padding:16px 12px;border-right:1px solid var(--line)}
@@ -628,13 +509,13 @@ font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spaci
 :root[data-theme="ink"] .md blockquote,:root[data-theme="inkdark"] .md blockquote{border-left-width:4px;font-style:italic}
 </style></head><body>
 <div class="topbar">
-  <span class="brand">__CAT__ 学习站</span>__MENTORTAG__
+  <span class="brand">__CAT__ 学习站</span>
   <span class="crumb" id="crumb"></span>
   <span class="sp"></span>
   <button class="themebtn" id="themebtn">◑ 深</button>
 </div>
 <div class="shell">
-  <nav id="sidenav"><a class="navlink home" id="homelink">📋 学习路线图</a><a class="navlink home" id="graphlink">🕸 知识图谱</a><a class="navlink home" id="goallink">🎯 目标规划</a><a class="navlink home" id="flashlink" style="display:none">🎴 抽卡复习</a><div id="navbody"></div></nav>
+  <nav id="sidenav"><a class="navlink home" id="homelink">📋 学习路线图</a><a class="navlink home" id="graphlink">🕸 知识图谱</a><a class="navlink home" id="goallink">🎯 目标规划</a><div id="navbody"></div></nav>
   <main>
     <section id="overview">
       <h1 class="ttl">学习路线图 <span style="color:var(--muted);font-weight:400;font-size:15px">Learning Roadmap</span></h1>
@@ -657,38 +538,10 @@ font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spaci
     <section id="docwrap" style="display:none"><div id="docview"></div><aside id="toc"></aside></section>
     <section id="graphwrap" style="display:none"><iframe id="graphframe" data-src="__CAT__-知识图谱.html"></iframe></section>
     <section id="goalwrap" style="display:none"><div id="goalbody"></div></section>
-    <section id="flashwrap" style="display:none"><div id="flashbody"></div></section>
   </main>
 </div>
-<style>
-#flashwrap{padding:26px 32px 80px;max-width:1060px}
-#flashwrap .ttl{font-size:26px;font-weight:700;margin:0 0 16px}
-.fbuild{background:var(--panel);border:1px dashed var(--line);border-radius:12px;padding:14px 16px;color:var(--muted);margin-bottom:16px}
-.fdeck{display:flex;gap:16px;margin:8px 0 18px;flex-wrap:wrap}
-.fcard{flex:0 1 190px;max-width:200px;aspect-ratio:360/504;border-radius:16px;border:1px solid var(--line);background:var(--panel);backdrop-filter:blur(18px) saturate(180%);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:transform .18s,box-shadow .18s;font-size:12px;color:var(--muted);overflow:hidden}
-.fcard.back:hover{transform:translateY(-4px);box-shadow:0 10px 26px rgba(0,0,0,.18);border-color:var(--accent)}
-.fcard.back{background-size:contain;background-position:center;background-repeat:no-repeat}
-.fcard.flip{cursor:default;flex:1 1 100%;max-width:none;aspect-ratio:auto;align-items:flex-start;justify-content:flex-start;padding:16px;color:var(--text);background:color-mix(in srgb,var(--accent) 8%,var(--panel))}
-.fqonly{font-size:15px;font-weight:600;line-height:1.5}
-.fkind{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:10px;background:color-mix(in srgb,var(--accent) 18%,transparent);color:var(--accent);margin-left:6px}
-.fqbox,.fabox{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;color:var(--muted);margin:10px 0;line-height:1.65}
-.fqbox.show,.fabox.show,.fauser{color:var(--text)}
-.fauser{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:10px 0;line-height:1.65}
-.finput{width:100%;min-height:90px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);padding:12px 14px;font:inherit;resize:vertical;box-sizing:border-box}
-.finput:disabled{opacity:.7}
-.dim{opacity:.45;pointer-events:none;filter:grayscale(.4)}
-.fmuted{color:var(--muted);font-size:13px;margin:8px 0}
-.fhist{margin-top:22px;border-top:1px solid var(--line);padding-top:12px}
-.fhist summary{cursor:pointer;font-weight:600;color:var(--text)}
-.fhrec{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;line-height:1.6}
-.fhq{font-weight:600;margin-bottom:4px}
-.fha{font-size:13px;color:var(--muted);margin-top:3px}
-.fhts{font-size:11px;color:var(--muted);margin-top:6px}
-__CARDCSS__
-</style>
 <script>
 const DATA=__DATA__, DOCS=__DOCS__, GOAL=__GOAL__;
-const FLASH=__FLASH__, FLASH_ON=__FLASH_ON__;
 const CAT=Object.keys(DATA.categories)[0], R=DATA.categories[CAT];
 const DOTC={"已完成":"var(--green)","学习中":"var(--grad)","待学":"var(--gray)"};
 const cardEls={};
@@ -753,7 +606,7 @@ function buildNav(){
   });
 }
 function setActive(v){document.querySelectorAll('#sidenav .navlink').forEach(x=>x.classList.toggle('active',x.dataset.k===v));
-  document.getElementById('homelink').classList.toggle('active',v==='__overview__');document.getElementById('graphlink').classList.toggle('active',v==='__graph__');document.getElementById('goallink').classList.toggle('active',v==='__goal__');var _fl=document.getElementById('flashlink');if(_fl)_fl.classList.toggle('active',v==='__flash__');}
+  document.getElementById('homelink').classList.toggle('active',v==='__overview__');document.getElementById('graphlink').classList.toggle('active',v==='__graph__');document.getElementById('goallink').classList.toggle('active',v==='__goal__');}
 function bindXref(){document.querySelectorAll('#docview a.xref').forEach(a=>a.onclick=()=>go(a.dataset.go));}
 function bindToc(){
   const links=[...document.querySelectorAll('#toc .tl')];
@@ -849,72 +702,14 @@ function renderGoal(){
   var db=document.getElementById('gdone');
   if(db)db.onclick=function(){try{localStorage.setItem('goal_done_'+CAT,'1');var fb=document.getElementById('gfbtext');if(fb&&fb.value)localStorage.setItem('goal_fb_'+CAT,fb.value);}catch(e){}updateGoalNav();renderGoal();try{var gf=document.getElementById('graphframe');if(gf&&gf.src&&gf.src!=='about:blank')gf.contentWindow.postMessage({goalDone:true},'*');}catch(e){}window.scrollTo(0,0);};
 }
-function flashKey(s){return 'flash_'+s+'_'+CAT;}
-function flashHist(){try{return JSON.parse(localStorage.getItem(flashKey('hist'))||'[]');}catch(e){return [];}}
-function flashBuildId(){return (FLASH&&FLASH.generated)||'0';}
-function flashState(){try{return JSON.parse(localStorage.getItem(flashKey('st')+'_'+flashBuildId())||'{"round":0,"answers":{}}');}catch(e){return {round:0,answers:{}};}}
-function setFlashState(st){try{localStorage.setItem(flashKey('st')+'_'+flashBuildId(),JSON.stringify(st));}catch(e){}}
-function pushHist(rec){var h=flashHist();h.unshift(rec);try{localStorage.setItem(flashKey('hist'),JSON.stringify(h));}catch(e){}}
 function fesc(x){return (x==null?'':String(x)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
-function kindLabel(k){return k==='实践型'?'参考方案 · 方案与计划':(k==='自测'?'参考（笔记原文 / 自己先说再对照）':'参考答案 · 答案与分析');}
-function updateFlashNav(){var fl=document.getElementById('flashlink');if(!fl)return;fl.style.display=FLASH_ON?'':'none';}
-function histHtml(){var hist=flashHist();return '<details class="fhist"><summary>📋 已答记录（'+hist.length+'）</summary>'+(hist.length?hist.map(function(r){return '<div class="fhrec"><div class="fhq">'+fesc(r.q)+' <span class="fkind">'+fesc(r.kind)+'</span></div><div class="fha"><b>你的回答：</b>'+fesc(r.user||'（未填）')+'</div><div class="fha"><b>'+fesc(kindLabel(r.kind))+'：</b>'+fesc(r.answer)+'</div><div class="fhts">'+fesc(r.ts)+'</div></div>';}).join(''):'<div class="fmuted">还没有已答记录。</div>')+'</details>';}
-function renderFlash(){
-  var b=document.getElementById('flashbody');var learned=(R&&R.learned)||0;
-  if(learned<2){
-    b.innerHTML='<h1 class="ttl">🎴 抽卡复习</h1><div class="fbuild">建设中…　学满 2 个知识点后开启（当前 '+learned+'/2）</div>'+
-      '<div class="fdeck dim">'+[0,1,2].map(function(i){return '<div class="fcard back"></div>';}).join('')+'</div>'+
-      '<div class="fqbox dim">问题显示框</div><textarea class="finput dim" disabled placeholder="用户输入框（学满 2 个知识点后激活）"></textarea><div class="fabox dim">答案显示框</div>'+histHtml();
-    return;
-  }
-  var cards=(FLASH&&FLASH.cards)||[];
-  if(!cards.length){b.innerHTML='<h1 class="ttl">🎴 抽卡复习</h1><div class="fbuild">本次构建尚未生成卡池。下次刷新视图时会基于已学知识点生成卡池。</div>'+histHtml();return;}
-  var rounds=Math.ceil(cards.length/3);
-  var st=flashState(); if(st.round>rounds-1)st.round=rounds-1; if(st.round<0)st.round=0; var round=st.round;
-  var head='<h1 class="ttl">🎴 抽卡复习 <span style="color:var(--muted);font-weight:400;font-size:14px">卡池 '+cards.length+' 张 · 第 '+(round+1)+'/'+rounds+' 批 · 每批翻 1 张'+(rounds>1?'（可刷新 '+(rounds-1)+' 次）':'')+'</span></h1>';
-  var batch=cards.slice(round*3,round*3+3);
-  function refreshBtn(){return round<rounds-1?'<div style="margin:12px 0"><button class="gbtn" id="frefresh">🔄 再抽一批（还剩 '+(rounds-1-round)+' 批）</button></div>':'<div class="fmuted">本卡池已抽完。下次构建刷新出新卡池，已答的进下方“已答记录”。</div>';}
-  function bindRefresh(){var rb=document.getElementById('frefresh');if(rb)rb.onclick=function(){st.round=round+1;setFlashState(st);renderFlash();};}
-  var ans=st.answers&&st.answers[round];
-  if(ans){
-    b.innerHTML=head+'<div class="fdeck"><div class="fcard flip"><div class="fqonly">'+fesc(ans.q)+' <span class="fkind">'+fesc(ans.kind)+'</span></div></div></div>'+
-      '<div class="fqbox show"><b>问题：</b>'+fesc(ans.q)+'</div>'+
-      '<div class="fauser"><b>你的回答：</b>'+fesc(ans.user||'（未填）')+'</div>'+
-      '<div class="fabox show"><b>'+fesc(kindLabel(ans.kind))+'：</b><br>'+fesc(ans.answer)+'</div>'+
-      refreshBtn()+histHtml();
-    bindRefresh();return;
-  }
-  b.innerHTML=head+'<div class="fdeck" id="fdeck">'+batch.map(function(c,i){return '<div class="fcard back" data-i="'+i+'"></div>';}).join('')+'</div>'+
-    '<div class="fqbox" id="fqbox">翻开一张卡，这里显示问题。</div>'+
-    '<textarea class="finput" id="finput" disabled placeholder="翻牌后在此作答…"></textarea>'+
-    '<div style="margin:8px 0"><button class="gbtn" id="fsubmit" disabled>提交答案</button></div>'+
-    '<div class="fabox" id="fabox">提交后显示参考答案。</div>'+histHtml();
-  var picked=null;
-  document.querySelectorAll('#fdeck .fcard').forEach(function(el){
-    el.onclick=function(){
-      if(picked!==null)return;picked=parseInt(el.dataset.i,10);var c=batch[picked];
-      document.querySelectorAll('#fdeck .fcard').forEach(function(x){if(x!==el)x.remove();});
-      el.classList.remove('back');el.classList.add('flip');el.innerHTML='<div class="fqonly">'+fesc(c.q)+' <span class="fkind">'+fesc(c.kind)+'</span></div>';
-      var qb=document.getElementById('fqbox');qb.classList.add('show');qb.innerHTML='<b>问题：</b>'+fesc(c.q);
-      var inp=document.getElementById('finput');inp.disabled=false;inp.focus();document.getElementById('fsubmit').disabled=false;
-    };
-  });
-  document.getElementById('fsubmit').onclick=function(){
-    if(picked===null)return;var c=batch[picked];var user=document.getElementById('finput').value;
-    var ab=document.getElementById('fabox');ab.classList.add('show');ab.innerHTML='<b>'+fesc(kindLabel(c.kind))+'：</b><br>'+fesc(c.answer);
-    document.getElementById('finput').disabled=true;this.disabled=true;
-    var rec={q:c.q,kind:c.kind,answer:c.answer,user:user,ts:new Date().toLocaleString()};
-    if(!st.answers)st.answers={};st.answers[round]=rec;setFlashState(st);pushHist(rec);renderFlash();
-  };
-}
 function go(v){
-  const ov=document.getElementById('overview'),dw=document.getElementById('docwrap'),gw=document.getElementById('graphwrap'),goalw=document.getElementById('goalwrap'),flashw=document.getElementById('flashwrap');
-  gw.style.display='none';goalw.style.display='none';flashw.style.display='none';
+  const ov=document.getElementById('overview'),dw=document.getElementById('docwrap'),gw=document.getElementById('graphwrap'),goalw=document.getElementById('goalwrap');
+  gw.style.display='none';goalw.style.display='none';
   if(v==='__goal__'){if(!gUnlocked()){go('__overview__');return;}ov.style.display='none';dw.style.display='none';goalw.style.display='block';renderGoal();setActive('__goal__');document.getElementById('crumb').innerHTML='/ <b>'+(gIsDone()?'目标完成 ✅':'目标规划')+'</b>';location.hash=encodeURIComponent('__goal__');window.scrollTo(0,0);return;}
   if(v==='__graph__'){ov.style.display='none';dw.style.display='none';gw.style.display='block';
     const gf=document.getElementById('graphframe');if(!gf.src||gf.src==='about:blank'){gf.src=gf.dataset.src+'?theme='+theme()+'&goaldone='+(gIsDone()?1:0);}else{try{gf.contentWindow.postMessage({theme:theme()},'*');gf.contentWindow.postMessage({goalDone:gIsDone()},'*');}catch(e){}}
     setActive('__graph__');document.getElementById('crumb').innerHTML='/ <b>知识图谱</b>';location.hash=encodeURIComponent('__graph__');window.scrollTo(0,0);return;}
-  if(v==='__flash__'){if(!FLASH_ON){go('__overview__');return;}ov.style.display='none';dw.style.display='none';flashw.style.display='block';renderFlash();setActive('__flash__');document.getElementById('crumb').innerHTML='/ <b>抽卡复习</b>';location.hash=encodeURIComponent('__flash__');window.scrollTo(0,0);return;}
   if(v==='__overview__'||!DOCS[v]){ov.style.display='';dw.style.display='none';setActive('__overview__');
     document.getElementById('crumb').innerHTML='/ <b>学习路线图</b>';location.hash='';window.scrollTo(0,0);return;}
   ov.style.display='none';dw.style.display='grid';
@@ -936,9 +731,8 @@ setTheme(document.documentElement.dataset.theme||'light');
 document.getElementById('homelink').onclick=()=>go('__overview__');
 document.getElementById('graphlink').onclick=()=>go('__graph__');
 document.getElementById('goallink').onclick=()=>{if(gUnlocked())go('__goal__');};
-document.getElementById('flashlink').onclick=()=>{if(FLASH_ON)go('__flash__');};
 window.addEventListener('message',function(e){if(e&&e.data&&e.data.goto){var g=e.data.goto;if(DOCS[g])go(g);else{go('__overview__');setTimeout(function(){var el=cardEls[g];if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},80);}}});
-renderOverview();buildNav();updateGoalNav();updateFlashNav();
+renderOverview();buildNav();updateGoalNav();
 go(location.hash?decodeURIComponent(location.hash.slice(1)):'__overview__');
 window.addEventListener('hashchange',()=>{go(location.hash?decodeURIComponent(location.hash.slice(1)):'__overview__');});
 </script></body></html>"""
