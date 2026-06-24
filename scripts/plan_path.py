@@ -145,14 +145,14 @@ def _nested_list(items):
         html.append('</li></ul>'); stack.pop()
     return ''.join(html)
 
-def md_render(body, linkset, viz_block=''):
+def md_render(body, linkset):
     # 去掉首个 # 标题（与 dochead 重复）
     lines = body.split('\n')
     while lines and not lines[0].strip():
         lines.pop(0)
     if lines and re.match(r'^#\s+', lines[0].strip()):
         lines = lines[1:]
-    out, toc, i, n, para, hid, fold, vizdone = [], [], 0, len(lines), [], [0], [0], [False]
+    out, toc, i, n, para, hid, fold, ref_fold = [], [], 0, len(lines), [], [0], [0], [False]
     def flush():
         if para:
             out.append('<p>' + '<br>'.join(_inline(x, linkset) for x in para) + '</p>'); para.clear()
@@ -173,14 +173,23 @@ def md_render(body, linkset, viz_block=''):
         m = re.match(r'^(#{1,6})\s+(.*)$', st)
         if m:
             flush(); lv = len(m.group(1)); txt = m.group(2)
+            if lv == 2 and ref_fold[0]:
+                out.append('</details>'); ref_fold[0] = False; fold[0] = max(0, fold[0] - 1)
+            open_ref_fold = False
+            if lv == 2 and '参考资料' in txt and not ref_fold[0]:
+                j = i + 1
+                while j < n and not lines[j].strip():
+                    j += 1
+                if j >= n or not lines[j].strip().startswith('<details'):
+                    open_ref_fold = True
             if lv in (2, 3):
                 hid[0] += 1; sid = 'sec-%d' % hid[0]
                 out.append('<h%d id="%s">%s</h%d>' % (lv, sid, _inline(txt, linkset), lv))
                 if not fold[0]:  # 折叠区内的标题不进"本文导读"
                     toc.append({'lvl': lv, 'text': re.sub(r'<[^>]+>', '', _inline(txt, linkset)), 'id': sid})
-                # 把动态画面 iframe 放到「动态画面」标题下，而不是落到全文末尾
-                if viz_block and not vizdone[0] and ('动态画面' in txt or 'Dynamic View' in txt):
-                    out.append(viz_block); vizdone[0] = True
+                if open_ref_fold:
+                    out.append('<details class="lp-fold"><summary>📚 参考资料（点开查看本轮引用来源）</summary>')
+                    ref_fold[0] = True; fold[0] += 1
             else:
                 out.append('<h%d>%s</h%d>' % (lv, _inline(txt, linkset), lv))
             i += 1; continue
@@ -203,8 +212,8 @@ def md_render(body, linkset, viz_block=''):
             out.append('<ol>' + ''.join('<li>%s</li>' % _inline(x, linkset) for x in buf) + '</ol>'); continue
         para.append(st); i += 1
     flush()
-    if viz_block and not vizdone[0]:  # 笔记没有「动态画面」标题时兜底追加
-        out.append(viz_block)
+    if ref_fold[0]:
+        out.append('</details>')
     return '\n'.join(out), toc
 
 def stars(k):
@@ -224,15 +233,7 @@ def build_docs(cat, items, plan, vault):
     docs = {}
     for o in studied:
         t = o['title']; note = items[t]; st = (note.get('status') or '').strip()
-        viz = note.get('viz', '')
-        viz_block = ''
-        if viz:
-            rel = os.path.relpath(os.path.join(vault, viz), cdir).replace('\\', '/')
-            href = rel.replace(' ', '%20')
-            viz_block = ('<div class="vizwrap"><div class="vizbar"><span>动态画面</span>'
-                         '<a href="%s" target="_blank" rel="noopener">新标签打开 ↗</a></div>'
-                         '<iframe class="vizframe" data-src="%s" loading="lazy"></iframe></div>') % (href, href)
-        body_html, toc = md_render(note['body'], linkset, viz_block)
+        body_html, toc = md_render(note['body'], linkset)
         _bc, _bt = _BADGE.get(st, ('ok', st))
         if note.get('track'):
             _bt += ' · ' + note.get('track')
@@ -561,10 +562,6 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 .md code{background:var(--code);padding:1px 6px;border-radius:5px;font-size:.92em;font-family:ui-monospace,Menlo,Consolas,monospace}
 .md a{color:var(--accent);text-decoration:none}.md a:hover{text-decoration:underline}.md a.xref{cursor:pointer}
 .md strong{font-weight:600}.md hr{border:none;border-top:1px solid var(--line);margin:1.1em 0}
-.vizwrap{margin:20px 0 4px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
-.vizbar{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--line)}
-.vizbar a{color:var(--accent);text-decoration:none;font-size:12px}
-.vizwrap iframe{width:100%;height:560px;border:0;display:block;background:var(--bg)}
 #toc{position:sticky;top:69px;align-self:start;height:fit-content}
 #toc .tochd{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 #toc .tl{display:block;color:var(--muted);text-decoration:none;font-size:13px;padding:5px 0 5px 12px;border-left:2px solid var(--line);cursor:pointer;line-height:1.4}
@@ -757,7 +754,6 @@ function buildNav(){
 }
 function setActive(v){document.querySelectorAll('#sidenav .navlink').forEach(x=>x.classList.toggle('active',x.dataset.k===v));
   document.getElementById('homelink').classList.toggle('active',v==='__overview__');document.getElementById('graphlink').classList.toggle('active',v==='__graph__');document.getElementById('goallink').classList.toggle('active',v==='__goal__');var _fl=document.getElementById('flashlink');if(_fl)_fl.classList.toggle('active',v==='__flash__');}
-function applyVizTheme(){document.querySelectorAll('#docview .vizframe').forEach(f=>{if(!f.src||f.src==='about:blank'){f.src=f.dataset.src+'?theme='+theme();}});}
 function bindXref(){document.querySelectorAll('#docview a.xref').forEach(a=>a.onclick=()=>go(a.dataset.go));}
 function bindToc(){
   const links=[...document.querySelectorAll('#toc .tl')];
@@ -924,7 +920,7 @@ function go(v){
   ov.style.display='none';dw.style.display='grid';
   document.getElementById('docview').innerHTML=DOCS[v].doc;
   document.getElementById('toc').innerHTML=DOCS[v].toc;
-  applyVizTheme();bindXref();bindToc();setActive(v);
+  bindXref();bindToc();setActive(v);
   document.getElementById('crumb').innerHTML='/ <span class="cl" id="crmhome">学习路线图</span> / <b>'+v+'</b>';
   const ch=document.getElementById('crmhome');if(ch)ch.onclick=()=>go('__overview__');
   location.hash=encodeURIComponent(v);window.scrollTo(0,0);
@@ -933,7 +929,6 @@ const THEMES=[["light","◐ 浅"],["dark","◑ 深"],["ink","❖ 宣纸"],["inkd
 function themeIdx(name){for(var i=0;i<THEMES.length;i++)if(THEMES[i][0]===name)return i;return 1;}
 function setTheme(t){var r=document.documentElement;r.dataset.theme=t;
   document.getElementById('themebtn').textContent=THEMES[themeIdx(t)][1];
-  document.querySelectorAll('#docview .vizframe').forEach(f=>{try{f.contentWindow.postMessage({theme:t},'*');}catch(e){}});
   var gf=document.getElementById('graphframe');if(gf&&gf.src&&gf.src!=='about:blank'){try{gf.contentWindow.postMessage({theme:t},'*');}catch(e){}}}
 document.getElementById('themebtn').onclick=function(){var cur=document.documentElement.dataset.theme||'dark';
   setTheme(THEMES[(themeIdx(cur)+1)%THEMES.length][0]);};
