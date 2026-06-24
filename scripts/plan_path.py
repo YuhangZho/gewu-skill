@@ -20,6 +20,32 @@ def desc_of(note):
             return s.lstrip('> ').strip()
     return ''
 
+MILESTONES = [(25, '地基初建'), (50, '脉络贯通'), (75, '收束聚拢'), (100, '图谱闭合')]
+
+def progress_hint(learned, total):
+    if total <= 0:
+        cur_pct = next_pct = 0
+    else:
+        cur_pct = int(learned / total * 100 + 0.5)
+        next_pct = int(min(total, learned + 1) / total * 100 + 0.5)
+    cur_seg = cur_pct // 10
+    next_seg = next_pct // 10
+    if next_pct > cur_pct and next_seg <= cur_seg:
+        next_seg = min(10, cur_seg + 1)
+    bar = '[' + ('█' * cur_seg) + ('▒' * max(0, next_seg - cur_seg)) + ('░' * max(0, 10 - next_seg)) + ']'
+    milestone = ''
+    for pct, label in MILESTONES:
+        if cur_pct < pct <= next_pct:
+            milestone = label
+            break
+    return {
+        'current_pct': cur_pct,
+        'next_pct': next_pct,
+        'bar': bar,
+        'milestone': milestone,
+        'line': '当前知识图谱覆盖率%d%%，下一站完成可达%d%%。' % (cur_pct, next_pct),
+    }
+
 def plan_category(items, goal=None, all_notes=None):
     index = {t.lower(): t for t in items}
     for t, n in items.items():
@@ -102,6 +128,7 @@ def plan_category(items, goal=None, all_notes=None):
                       'track': n.get('track', ''),
                       'groups': n.get('groups', []), 'related': sorted(neighbors[t])})
     return {'order': order, 'current': current, 'next3': next3,
+            'progress_hint': progress_hint(len(learned), len(items)),
             'learned': len(learned), 'total': len(items),
             'max_stage': max(stage.values()) if stage else 0}
 
@@ -481,6 +508,11 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 .next,.exp{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:18px;backdrop-filter:blur(18px) saturate(180%)}
 .next .item{padding:8px 0;border-bottom:1px solid var(--line)}.next .item:last-child{border:none}
 .next .item b{color:var(--accent);font-size:15px;font-weight:600}.next .why{font-size:12px;color:var(--muted);margin-top:2px}
+.learnprog{background:linear-gradient(180deg,color-mix(in srgb,var(--green) 10%,var(--panel)),var(--panel));border:1px solid color-mix(in srgb,var(--green) 32%,var(--line));border-radius:14px;padding:14px;margin-bottom:18px;backdrop-filter:blur(18px) saturate(180%)}
+.learnprog .lh{font-size:12px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px}
+.learnprog .ll{font-size:14px;color:var(--text);line-height:1.5}
+.learnprog .lb{margin-top:8px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--green);font-size:13px;white-space:nowrap}
+.learnprog .lm{margin-top:7px;font-size:13px;color:var(--accent);font-weight:700}
 .exp .e{padding:7px 0;border-bottom:1px solid var(--line)}.exp .e:last-child{border:none}
 .exp .e .nm{color:var(--text);font-size:15px;font-weight:600}.exp .e .why{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.5}
 .stars .se{color:var(--starempty)}
@@ -648,10 +680,12 @@ function renderOverview(){
     tl.appendChild(card);
   });
   const nx=document.getElementById('next');
+  const ph=R.progress_hint||{current_pct:pct,next_pct:pct,bar:'[░░░░░░░░░░]',line:'当前知识图谱覆盖率'+pct+'%，下一站完成可达'+pct+'%。',milestone:''};
+  nx.innerHTML='<div class="learnprog"><div class="lh">学习进度</div><div class="ll">'+ph.line+'</div><div class="lb">'+ph.bar+' '+ph.current_pct+'% → '+ph.next_pct+'%</div>'+(ph.milestone?'<div class="lm">里程碑：'+ph.milestone+'</div>':'')+'</div>';
   if(!R.next3.length){const ip=R.order.find(o=>o.status==='学习中');
     const cur=R.order.find(o=>o.title===R.current&&o.status!=='已完成');
-    nx.innerHTML='<div class="why">'+(ip?'先续学习中断点：'+ip.title+' →':(cur?'继续学当前概念：'+cur.title+' →':'本领域已全部完成 →'))+'</div>';}
-  else nx.innerHTML=R.next3.map(t=>{const it=R.order.find(o=>o.title===t);
+    nx.innerHTML+='<div class="why">'+(ip?'先续学习中断点：'+ip.title+' →':(cur?'继续学当前概念：'+cur.title+' →':'本领域已全部完成 →'))+'</div>';}
+  else nx.innerHTML+=R.next3.map(t=>{const it=R.order.find(o=>o.title===t);
     const sh=it.prereqs.length?('衔接 '+it.prereqs.join('、')):'关联当前知识';
     return '<div class="item"><b>'+t+'</b> <span style="color:var(--yellow);font-size:12px">'+stars(it.importance)+'</span>'
       +'<div class="why">'+(it.desc||'')+'</div><div class="why">'+sh+'</div></div>';}).join('');
