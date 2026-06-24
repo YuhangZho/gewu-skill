@@ -243,7 +243,7 @@ HTML = r"""<!DOCTYPE html>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
 font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden}
 #wrap{display:flex;height:100%}
-#graph{flex:1;position:relative}
+#graph{flex:1;min-width:220px;position:relative}
 svg{width:100%;height:100%;display:block;cursor:grab}
 svg.dragging{cursor:grabbing}
 .link{stroke:var(--linkw);stroke-width:1}
@@ -265,9 +265,14 @@ padding:6px 10px;border-radius:8px;font-size:12px;color:var(--muted)}
 #legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
 #meta{margin-left:auto;font-size:12px;color:var(--muted);background:var(--hudbg);
 padding:6px 10px;border-radius:8px;pointer-events:auto}
-#panel{width:380px;max-width:42%;background:var(--panel);border-left:1px solid var(--line);
+#panel{position:relative;flex:0 0 var(--panel-width,420px);width:var(--panel-width,420px);
+min-width:320px;max-width:min(70vw,900px);background:var(--panel);border-left:1px solid var(--line);
 padding:22px;overflow:auto;display:none}
 #panel.open{display:block}
+#panelresizer{position:absolute;left:-6px;top:0;width:12px;height:100%;cursor:col-resize;
+z-index:3;background:transparent;touch-action:none}
+#panelresizer::after{content:"";position:absolute;left:5px;top:0;width:1px;height:100%;background:var(--line)}
+#panelresizer:hover::after,#panelresizer.dragging::after{left:4px;width:3px;background:var(--accent)}
 #panel h1{font-size:20px;margin:.1em 0 .2em}
 #panel .badge{display:inline-block;font-size:12px;color:var(--muted);border:1px solid var(--line);
 border-radius:20px;padding:2px 10px;margin:0 6px 10px 0}
@@ -310,7 +315,7 @@ font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spaci
     </defs><g id="scene"><g id="links"></g><g id="nodes"></g></g></svg>
     <div id="hint">滚轮缩放 · 拖动空白平移 · 拖动节点定位 · 点击节点看笔记</div>
   </div>
-  <div id="panel"><button id="close">×</button><div id="panelbody"></div></div>
+  <div id="panel"><div id="panelresizer" role="separator" aria-label="拖动调整信息栏宽度" title="拖动调整宽度"></div><button id="close">×</button><div id="panelbody"></div></div>
 </div>
 <script>
 (function(){var p=new URLSearchParams(location.search).get('theme');if(p)document.documentElement.dataset.theme=p;window.addEventListener('message',function(e){if(e&&e.data&&e.data.theme){if(typeof applyTheme==='function')applyTheme(e.data.theme);else document.documentElement.dataset.theme=e.data.theme;}});})();
@@ -438,6 +443,34 @@ function focus(id){
 // 笔记面板
 const panel=document.getElementById('panel'), pbody=document.getElementById('panelbody');
 document.getElementById('close').onclick=()=>{panel.classList.remove('open');focus(null);};
+const panelResizer=document.getElementById('panelresizer');
+function panelBounds(){
+  const vw=window.innerWidth||document.documentElement.clientWidth||1200;
+  return {min:320,max:Math.min(900,Math.max(360,Math.floor(vw*.7)))};
+}
+function setPanelWidth(px){
+  const b=panelBounds();
+  const w=Math.max(b.min,Math.min(b.max,Math.round(px)));
+  panel.style.setProperty('--panel-width',w+'px');
+  try{localStorage.setItem('graph_panel_width',String(w));}catch(e){}
+  W=svg.clientWidth;H=svg.clientHeight;alpha=Math.max(alpha,60);
+}
+try{const saved=parseInt(localStorage.getItem('graph_panel_width')||'',10);if(saved)setPanelWidth(saved);}catch(e){}
+panelResizer.addEventListener('mousedown',function(e){
+  e.preventDefault();e.stopPropagation();
+  panelResizer.classList.add('dragging');
+  const move=function(ev){setPanelWidth((window.innerWidth||document.documentElement.clientWidth)-ev.clientX);};
+  const up=function(){panelResizer.classList.remove('dragging');window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};
+  window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);
+});
+panelResizer.addEventListener('touchstart',function(e){
+  if(!e.touches||!e.touches.length)return;
+  e.preventDefault();e.stopPropagation();
+  panelResizer.classList.add('dragging');
+  const move=function(ev){if(ev.touches&&ev.touches.length)setPanelWidth((window.innerWidth||document.documentElement.clientWidth)-ev.touches[0].clientX);};
+  const up=function(){panelResizer.classList.remove('dragging');window.removeEventListener('touchmove',move);window.removeEventListener('touchend',up);window.removeEventListener('touchcancel',up);};
+  window.addEventListener('touchmove',move,{passive:false});window.addEventListener('touchend',up);window.addEventListener('touchcancel',up);
+},{passive:false});
 function mdToHtml(md){
   if(!md) return '<p style="color:var(--muted)">（这个概念还没完成——用费曼引导器学一遍吧）</p>';
   const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
