@@ -133,6 +133,12 @@ def collect(vault):
             viz = fm.get('viz') or ''
             if isinstance(viz, list):
                 viz = viz[0] if viz else ''
+            viz_source = fm.get('viz_source') or ''
+            if isinstance(viz_source, list):
+                viz_source = viz_source[0] if viz_source else ''
+            viz_chart = fm.get('viz_chart') or ''
+            if isinstance(viz_chart, list):
+                viz_chart = viz_chart[0] if viz_chart else ''
             groups = fm.get('groups') or []
             if isinstance(groups, str):
                 groups = [groups]
@@ -140,10 +146,12 @@ def collect(vault):
             links += [str(r).strip() for r in related]
             notes[title] = {
                 'title': title, 'category': str(cat).strip(), 'status': str(status).strip(),
-                'track': track,
-                'importance': max(1, min(5, importance)),
-                'viz': str(viz).strip(),
-                'groups': [str(g).strip() for g in groups],
+                      'track': track,
+                      'importance': max(1, min(5, importance)),
+                      'viz': str(viz).strip(),
+                      'viz_source': str(viz_source).strip(),
+                      'viz_chart': str(viz_chart).strip(),
+                      'groups': [str(g).strip() for g in groups],
                 'prereqs': [str(p).strip() for p in prereqs],
                 'aliases': [str(a).strip() for a in aliases],
                 'links': links, 'body': body.strip(),
@@ -186,7 +194,9 @@ def build_graph(notes):
                       'track': n.get('track', ''),
                       'ready': is_ready(n),
                       'aliases': n['aliases'], 'body': n['body'], 'rel': n['rel'],
-                      'viz': n.get('viz', '')})
+                      'viz': n.get('viz', ''),
+                      'viz_source': n.get('viz_source', ''),
+                      'viz_chart': n.get('viz_chart', '')})
         links.append({'source': t, 'target': 'cat::' + n['category'], 'kind': 'belong'})
     # 依赖有向边：prereq -> concept（前置解锁后续）
     for t, n in notes.items():
@@ -213,37 +223,10 @@ def build_graph(notes):
             'categories': sorted(categories.keys()),
             'generated': datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}
 
-def _goal_alive(notes, sysdir):
-    """返回 (potential, baked)：potential=有目标的领域里"将会呼吸"的节点(前端按需点亮)；baked=目标已完成、生成时即点亮。"""
-    gp = os.path.join(sysdir, 'goals.json'); potential = {}; baked = {}
-    if not os.path.isfile(gp):
-        return potential, baked
-    try:
-        goals = json.load(open(gp, encoding='utf-8'))
-    except Exception:
-        return potential, baked
-    def fill(target, gc, related):
-        for t, n in notes.items():
-            if n['category'] == gc and is_done(n):
-                target.setdefault(t, 'full')
-        for rd in (related or []):
-            for t, n in notes.items():
-                if n['category'] == rd and is_done(n) and t not in target:
-                    target[t] = 'weak'
-    for gc, go in goals.items():
-        if not isinstance(go, dict):
-            continue
-        rel = go.get('related_domains') or []
-        fill(potential, gc, rel)
-        if go.get('status') == '已完成':
-            fill(baked, gc, rel)
-    return potential, baked
-
-def _apply_alive(graph, potential, baked):
+def _apply_alive(graph):
     for nd in graph['nodes']:
         if nd.get('type') == 'concept':
-            nd['alivep'] = potential.get(nd['label'], '')
-            nd['alive'] = baked.get(nd['label'], '')
+            nd['alive'] = 'full' if nd.get('status') == DONE_STATUS else ''
 
 # ---------- HTML 模板（单文件、离线、自带力导向模拟）----------
 HTML = r"""<!DOCTYPE html>
@@ -260,7 +243,7 @@ HTML = r"""<!DOCTYPE html>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
 font-family:-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;overflow:hidden}
 #wrap{display:flex;height:100%}
-#graph{flex:1;position:relative}
+#graph{flex:1;min-width:220px;position:relative}
 svg{width:100%;height:100%;display:block;cursor:grab}
 svg.dragging{cursor:grabbing}
 .link{stroke:var(--linkw);stroke-width:1}
@@ -282,9 +265,14 @@ padding:6px 10px;border-radius:8px;font-size:12px;color:var(--muted)}
 #legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
 #meta{margin-left:auto;font-size:12px;color:var(--muted);background:var(--hudbg);
 padding:6px 10px;border-radius:8px;pointer-events:auto}
-#panel{width:380px;max-width:42%;background:var(--panel);border-left:1px solid var(--line);
+#panel{position:relative;flex:0 0 var(--panel-width,420px);width:var(--panel-width,420px);
+min-width:320px;max-width:min(70vw,900px);background:var(--panel);border-left:1px solid var(--line);
 padding:22px;overflow:auto;display:none}
 #panel.open{display:block}
+#panelresizer{position:absolute;left:-6px;top:0;width:12px;height:100%;cursor:col-resize;
+z-index:3;background:transparent;touch-action:none}
+#panelresizer::after{content:"";position:absolute;left:5px;top:0;width:1px;height:100%;background:var(--line)}
+#panelresizer:hover::after,#panelresizer.dragging::after{left:4px;width:3px;background:var(--accent)}
 #panel h1{font-size:20px;margin:.1em 0 .2em}
 #panel .badge{display:inline-block;font-size:12px;color:var(--muted);border:1px solid var(--line);
 border-radius:20px;padding:2px 10px;margin:0 6px 10px 0}
@@ -302,7 +290,6 @@ background:none}
 #arrow path{fill:var(--accent)}
 @keyframes nodeBreath{0%,100%{filter:drop-shadow(0 0 1px var(--alive))}50%{filter:drop-shadow(0 0 8px var(--alive))}}
 .node.alive-full circle{animation:nodeBreath 3s ease-in-out infinite}
-.node.alive-weak circle{animation:nodeBreath 4.8s ease-in-out infinite;opacity:.92}
 /* —— 水墨主题质感（宣纸纹理 / 墨晕 / 楷书标题）—— */
 :root[data-theme="ink"] body,:root[data-theme="inkdark"] body{
 background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.045'/%3E%3C/svg%3E");
@@ -328,7 +315,7 @@ font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spaci
     </defs><g id="scene"><g id="links"></g><g id="nodes"></g></g></svg>
     <div id="hint">滚轮缩放 · 拖动空白平移 · 拖动节点定位 · 点击节点看笔记</div>
   </div>
-  <div id="panel"><button id="close">×</button><div id="panelbody"></div></div>
+  <div id="panel"><div id="panelresizer" role="separator" aria-label="拖动调整信息栏宽度" title="拖动调整宽度"></div><button id="close">×</button><div id="panelbody"></div></div>
 </div>
 <script>
 (function(){var p=new URLSearchParams(location.search).get('theme');if(p)document.documentElement.dataset.theme=p;window.addEventListener('message',function(e){if(e&&e.data&&e.data.theme){if(typeof applyTheme==='function')applyTheme(e.data.theme);else document.documentElement.dataset.theme=e.data.theme;}});})();
@@ -456,6 +443,34 @@ function focus(id){
 // 笔记面板
 const panel=document.getElementById('panel'), pbody=document.getElementById('panelbody');
 document.getElementById('close').onclick=()=>{panel.classList.remove('open');focus(null);};
+const panelResizer=document.getElementById('panelresizer');
+function panelBounds(){
+  const vw=window.innerWidth||document.documentElement.clientWidth||1200;
+  return {min:320,max:Math.min(900,Math.max(360,Math.floor(vw*.7)))};
+}
+function setPanelWidth(px){
+  const b=panelBounds();
+  const w=Math.max(b.min,Math.min(b.max,Math.round(px)));
+  panel.style.setProperty('--panel-width',w+'px');
+  try{localStorage.setItem('graph_panel_width',String(w));}catch(e){}
+  W=svg.clientWidth;H=svg.clientHeight;alpha=Math.max(alpha,60);
+}
+try{const saved=parseInt(localStorage.getItem('graph_panel_width')||'',10);if(saved)setPanelWidth(saved);}catch(e){}
+panelResizer.addEventListener('mousedown',function(e){
+  e.preventDefault();e.stopPropagation();
+  panelResizer.classList.add('dragging');
+  const move=function(ev){setPanelWidth((window.innerWidth||document.documentElement.clientWidth)-ev.clientX);};
+  const up=function(){panelResizer.classList.remove('dragging');window.removeEventListener('mousemove',move);window.removeEventListener('mouseup',up);};
+  window.addEventListener('mousemove',move);window.addEventListener('mouseup',up);
+});
+panelResizer.addEventListener('touchstart',function(e){
+  if(!e.touches||!e.touches.length)return;
+  e.preventDefault();e.stopPropagation();
+  panelResizer.classList.add('dragging');
+  const move=function(ev){if(ev.touches&&ev.touches.length)setPanelWidth((window.innerWidth||document.documentElement.clientWidth)-ev.touches[0].clientX);};
+  const up=function(){panelResizer.classList.remove('dragging');window.removeEventListener('touchmove',move);window.removeEventListener('touchend',up);window.removeEventListener('touchcancel',up);};
+  window.addEventListener('touchmove',move,{passive:false});window.addEventListener('touchend',up);window.addEventListener('touchcancel',up);
+},{passive:false});
 function mdToHtml(md){
   if(!md) return '<p style="color:var(--muted)">（这个概念还没完成——用费曼引导器学一遍吧）</p>';
   const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -487,7 +502,7 @@ function openNode(n){
       <div class="badge" style="border-color:${catColor[n.category]};color:${catColor[n.category]}">${n.category}</div>
       <div class="badge">${n.status||''}${n.track?' · '+n.track:''}</div>
       ${(n.aliases&&n.aliases.length)?'<div class="badge">'+n.aliases.join(' / ')+'</div>':''}
-      ${n.viz?'<div style="margin:8px 0 12px"><a href="'+((DATA.prefix||'')+n.viz)+'" target="_blank" style="display:inline-block;color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:5px 12px;text-decoration:none;font-weight:600">▶ 动态画面 / Dynamic View</a></div>':''}
+      ${(n.viz||n.viz_source)?'<div style="margin:8px 0 12px"><a href="'+((DATA.prefix||'')+(n.viz||n.viz_source))+'" target="_blank" style="display:inline-block;color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:5px 12px;text-decoration:none;font-weight:600">▶ 知识图解 / Knowledge Diagram</a></div>':''}
       ${window.self!==window.top?'<div style="margin:0 0 12px"><a data-open="'+n.label+'" style="display:inline-block;cursor:pointer;color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:5px 12px;text-decoration:none;font-weight:600">📖 在知识站打开</a></div>':''}
       <div class="md">${mdToHtml(n.body)}</div>`;
   }
@@ -527,9 +542,6 @@ document.getElementById('themebtn').onclick=function(){
   var cur=document.documentElement.dataset.theme||'dark';
   applyTheme(THEMES[(themeIdx(cur)+1)%THEMES.length][0]);};
 applyTheme(document.documentElement.dataset.theme||'dark');
-function setGoalDone(on){nodeEls.forEach(function(g){var n=g._node;if(!n||n.type!=='concept')return;g.classList.remove('alive-full','alive-weak');var lv=on?(n.alivep||''):(n.alive||'');if(lv)g.classList.add('alive-'+lv);});}
-(function(){var gd=new URLSearchParams(location.search).get('goaldone');if(gd==='1')setGoalDone(true);})();
-window.addEventListener('message',function(e){if(e&&e.data&&('goalDone' in e.data))setGoalDone(!!e.data.goalDone);});
 </script></body></html>"""
 
 
@@ -566,11 +578,10 @@ def main():
     sysdir = os.path.join(vault, '_system')
     os.makedirs(sysdir, exist_ok=True)
     notes = collect(vault)
-    _potential, _baked = _goal_alive(notes, sysdir)
     cats = sorted({n['category'] for n in notes.values()})
     # 全局数据仍写入 _system/graph_data.json（供路线图/呼吸态等读取），
     # 但不再在根目录输出 知识图谱.html（累赘；各大类页用各自的分类图谱即可）。
-    g = build_graph(notes); g['prefix'] = ''; _apply_alive(g, _potential, _baked)
+    g = build_graph(notes); g['prefix'] = ''; _apply_alive(g)
     with open(os.path.join(sysdir, 'graph_data.json'), 'w', encoding='utf-8') as f:
         json.dump(g, f, ensure_ascii=False, indent=2)
     # 清理历史遗留的根目录全局图谱
@@ -583,7 +594,7 @@ def main():
     for c in cats:
         if c in ('fragment', '碎片'): continue  # 碎片暂存区：纯 .md 存储，不出图谱
         sub = {t: n for t, n in notes.items() if n['category'] == c}
-        gc = build_graph(sub); gc['prefix'] = '../'; _apply_alive(gc, _potential, _baked)
+        gc = build_graph(sub); gc['prefix'] = '../'; _apply_alive(gc)
         cdir = os.path.join(vault, c)
         if not os.path.isdir(cdir):
             continue

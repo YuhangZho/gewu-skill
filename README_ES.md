@@ -47,8 +47,8 @@ Obtén automáticamente un grafo de conocimiento + ruta de aprendizaje + planifi
 **Gewu te guía a "decir un concepto en voz alta" — no para tomar notas que acumulan polvo, sino para entenderlo de verdad y hacer crecer todo lo aprendido hasta convertirlo en un sitio de conocimiento que «respira».**
 
 - **Capa de dominio**: al empezar un dominio nuevo, primero da una visión general, construye un mapa de conocimiento, te pregunta tu **objetivo de aprendizaje concreto** y planifica una ruta por "dependencias primero + importancia".
-- **Capa de concepto (7 pasos Feynman)**: `fijar el objetivo → encender (preguntar → traer fuentes autorizadas de la web → primer borrador) → modelado visual (boceto) → explicar a un lego → retroceder donde te atascas → simplificar e iterar → triple verificación → guardar`.
-- **Lo que se guarda**: cada concepto que dominas = una nota Markdown + una imagen final animada (HTML) + entrada en el grafo de conocimiento / hoja de ruta / sitio de documentos.
+- **Capa de concepto (5 pasos Feynman)**: `fijar el objetivo → encender (preguntar → traer fuentes autorizadas de la web → primer borrador) → modelado visual (la IA elige el tipo de gráfico + diagrama estructural) → explicar a un lego → retroceder donde te atascas → triple verificación → guardar`.
+- **Lo que se guarda**: cada concepto que dominas = una nota Markdown + un diagrama visual estructurado (Mermaid/SVG) + entrada en el grafo de conocimiento / hoja de ruta / sitio de documentos.
 - **Ciclo de objetivos**: define un objetivo concreto (p. ej. "postular a ingeniero de aplicaciones de IA", "CET-4"), y el agente de IA calcula tu coincidencia y tus brechas frente a los requisitos reales y planifica el siguiente paso; al cumplir un objetivo, el conocimiento correspondiente empieza a "respirar".
 
 Creencia central: **la salida fuerza la entrada — solo lo entiendes si puedes explicarlo con claridad.**
@@ -65,7 +65,7 @@ Dile a tu asistente de IA (cualquiera de estas frases lo activa):
 - "¿Qué debería aprender ahora / dónde voy?"
 - "Mi objetivo es **conseguir trabajo como ingeniero de IA** — analiza la brecha entre yo y ese objetivo"
 
-El asistente conduce tu aprendizaje con los 7 pasos de `SKILL.md` y actualiza el sitio de conocimiento cada vez que dominas un concepto. Para actualizar manualmente:
+El asistente conduce tu aprendizaje con los 5 pasos de `SKILL.md` y actualiza el sitio de conocimiento cada vez que dominas un concepto. Para actualizar manualmente:
 
 ```bash
 python scripts/build_graph.py                   # actualiza el grafo de conocimiento
@@ -154,6 +154,7 @@ gewu-skill/
   SKILL.md                      archivo principal del skill (flujo + disparadores + spec visual)
   README.md                     este archivo
   templates/concept-template.md plantilla de nota de concepto
+  scripts/render_viz.py         model.json → diagrama estructural Mermaid/SVG
   scripts/build_graph.py        escanea notas → grafo de conocimiento HTML (dirigido por fuerzas, flechas de dependencia, "respiración" de objetivos)
   scripts/plan_path.py          → sitio de conocimiento de una página (hoja de ruta / docs de conceptos / planificación de objetivos / grafo embebido)
   assets/hero.svg               animación promocional
@@ -166,7 +167,9 @@ Generado en tu directorio de aprendizaje tras una ejecución (ejemplo):
   知识图谱.html               visión general global
   AI/                         una categoría
     概念.md                   una nota por concepto
-    _viz/概念.html            imagen final animada
+    _viz/概念.model.json      modelo visual estructurado escrito por la IA
+    _viz/概念.mmd             fuente Mermaid generada por el script
+    _viz/概念.svg             diagrama estructural opcional
     AI-知识图谱.html          grafo de esta categoría
     AI-路线图.html            sitio de conocimiento de una página (entrada; hoja de ruta / grafo / objetivos / docs)
   _system/                    datos de máquina (graph_data / roadmap_data / domains / goals.json)

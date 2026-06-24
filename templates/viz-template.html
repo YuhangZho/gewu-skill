@@ -1,7 +1,12 @@
 <!DOCTYPE html>
 <!--
-  格物 · 动态画面脚手架 viz-template.html
-  用法：复制本文件到 〔大类〕/_viz/〔概念名〕.html（草稿可放 _viz/_draft/）。
+  DEPRECATED · 旧动态画面脚手架 viz-template.html
+  新流程禁止复制本文件生成新概念图。请改用：
+    1) AI 写 〔大类〕/_viz/〔概念名〕.model.json
+    2) python scripts/render_viz.py --vault 〔库〕 --cat 〔大类〕 --concept 〔概念名〕
+  本文件仅用于打开旧 _viz/*.html。
+
+  旧用法：复制本文件到 〔大类〕/_viz/〔概念名〕.html（已废弃）。
   你只需做 3 件事：
    1) 改 <title> 和 .vt-title 里的「概念名」；
    2) 把画面主体填进下面标着「★ 画面主体」的 <div id="stage"> / <svg>（用 SVG / CSS / 原生 JS，纯自包含离线）；

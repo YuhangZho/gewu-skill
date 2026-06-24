@@ -5,11 +5,11 @@
 plan_path.py — 为每个大类生成「知识站」单页 <大类>/<大类>-路线图.html：
   · 顶栏固定 + 左侧目录固定 + 内容区内切换（单页，不跳独立页）
   · 起始视图=学习路线图（依赖分层/当前位置/下一步Top3/扩展）
-  · 点击已完成/学习中概念 → 同页切换到该概念文档（md 总结 + _viz 动效 + 右侧"本文导读"锚点）
+  · 点击已完成/学习中概念 → 同页切换到该概念文档（md 总结 + 视觉模型图 + 右侧"本文导读"锚点）
   · 全局统一主题，默认浅色
 全量路线数据写入 _system/roadmap_data.json。
 """
-import os, sys, re, json, html as H, argparse, datetime
+import os, sys, re, json, html as H, argparse, datetime, shutil
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from build_graph import collect, global_vault_path, DONE_STATUS, IN_PROGRESS_STATUS, is_done
 
@@ -131,6 +131,57 @@ def _inline(s, linkset):
     s = _CODE.sub(r'<code>\1</code>', s)
     return s
 
+def _asset_href(cat, rel):
+    rel = str(rel or '').strip().replace('\\', '/')
+    prefix = cat.strip('/') + '/'
+    if rel.startswith(prefix):
+        rel = rel[len(prefix):]
+    return _href(rel)
+
+def _read_asset(vault, rel):
+    rel = str(rel or '').strip().replace('/', os.sep)
+    if not rel:
+        return ''
+    path = os.path.normpath(os.path.join(vault, rel))
+    root = os.path.abspath(vault)
+    ap = os.path.abspath(path)
+    if not (ap == root or ap.startswith(root + os.sep)):
+        return ''
+    if not os.path.isfile(ap):
+        return ''
+    try:
+        return open(ap, encoding='utf-8').read()
+    except Exception:
+        return ''
+
+def _viz_block(cat, note, vault):
+    viz = str(note.get('viz') or '').strip().replace('\\', '/')
+    viz_source = str(note.get('viz_source') or '').strip().replace('\\', '/')
+    viz_chart = str(note.get('viz_chart') or '').strip()
+    if not viz and not viz_source:
+        return ''
+    parts = ['<section class="vizbox" id="知识图解">',
+             '<div class="vizhd"><span>知识图解</span>%s</div>' %
+             (('<b>%s</b>' % H.escape(viz_chart)) if viz_chart else '')]
+    if viz and viz.lower().endswith('.svg'):
+        href = _asset_href(cat, viz)
+        parts.append('<img src="%s" class="vizsvg" alt="知识图解">' % H.escape(href))
+        parts.append('<div class="vizlinks"><a href="%s" target="_blank">打开文件</a></div>' % H.escape(href))
+        if viz_source:
+            shref = _asset_href(cat, viz_source)
+            parts.append('<div class="vizlinks"><a href="%s" target="_blank">打开源文件</a></div>' % H.escape(shref))
+    elif viz_source:
+        mmd = _read_asset(vault, viz_source)
+        if mmd:
+            parts.append('<pre class="mermaid">%s</pre>' % H.escape(mmd))
+        href = _asset_href(cat, viz_source)
+        parts.append('<div class="vizlinks"><a href="%s" target="_blank">打开源文件</a></div>' % H.escape(href))
+    if viz and viz.lower().endswith('.html'):
+        href = _asset_href(cat, viz)
+        parts.append('<div class="vizlinks legacy"><a href="%s" target="_blank">旧动态画面</a></div>' % H.escape(href))
+    parts.append('</section>')
+    return ''.join(parts)
+
 def _nested_list(items):
     """items: [(缩进空格数, 已转义内联HTML)] → 嵌套 <ul> 树（脑图/大纲效果）。"""
     html, stack = [], []
@@ -234,12 +285,13 @@ def build_docs(cat, items, plan, vault):
     for o in studied:
         t = o['title']; note = items[t]; st = (note.get('status') or '').strip()
         body_html, toc = md_render(note['body'], linkset)
+        viz_html = _viz_block(cat, note, vault)
         _bc, _bt = _BADGE.get(st, ('ok', st))
         if note.get('track'):
             _bt += ' · ' + note.get('track')
         doc = ('<div class="dochead"><h1>%s <span class="stars">%s</span></h1>'
-               '<span class="badge %s">%s</span></div><div class="md">%s</div>'
-               % (H.escape(t), stars(o['importance']), _bc, _bt, body_html))
+               '<span class="badge %s">%s</span></div>%s<div class="md">%s</div>'
+               % (H.escape(t), stars(o['importance']), _bc, _bt, viz_html, body_html))
         toc_html = '<div class="tochd">本文导读</div>' + (''.join(
             '<a class="tl lv%d" data-id="%s">%s</a>' % (x['lvl'], x['id'], x['text']) for x in toc)
             or '<div class="tnote">（无小节）</div>')
@@ -270,6 +322,20 @@ def _apply_config(html, cfg):
     if ac.get('dark'):
         html = html.replace('--accent:#0a84ff', '--accent:' + str(ac['dark']))
     return html
+
+def _ensure_mermaid_asset(vault):
+    src = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                       'assets', 'mermaid.min.js')
+    if not os.path.isfile(src):
+        return
+    outdir = os.path.join(vault, 'assets')
+    os.makedirs(outdir, exist_ok=True)
+    dst = os.path.join(outdir, 'mermaid.min.js')
+    try:
+        if not os.path.isfile(dst) or os.path.getsize(dst) != os.path.getsize(src):
+            shutil.copyfile(src, dst)
+    except OSError:
+        pass
 
 def main():
     here = os.path.dirname(os.path.abspath(__file__))
@@ -308,6 +374,8 @@ def main():
         if not os.path.isdir(cdir): continue
         r = full['categories'][c]
         docs = build_docs(c, items, r, vault)
+        if any((n.get('viz_source') or '').strip() for n in items.values()):
+            _ensure_mermaid_asset(vault)
         data = {'generated': gen, 'goal': args.goal or '',
                 'categories': {c: r}, 'expansions': {c: expansions.get(c, [])}}
         html = (HTML.replace('__CAT__', H.escape(c))
@@ -315,10 +383,11 @@ def main():
                     .replace('__DOCS__', json.dumps(docs, ensure_ascii=False))
                     .replace('__GOAL__', json.dumps(goals_all.get(c, {}), ensure_ascii=False)))
         html = _apply_config(html, cfg)
-        # 边触发门：该类存在概念间边(prereq/双链)才出路线图；否则只留 .md，清理旧文件
+        # 生成门：有概念间边或已有学习文档时出路线图；否则只留 .md，清理旧文件
         _has_edge = any(o.get('prereqs') or o.get('related') for o in r.get('order', []))
+        _has_docs = bool(docs)
         _rp = os.path.join(cdir, c + '-路线图.html')
-        if _has_edge:
+        if _has_edge or _has_docs:
             open(_rp, 'w', encoding='utf-8').write(html)
         elif os.path.isfile(_rp):
             try: os.remove(_rp)
@@ -443,6 +512,14 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 .md code{background:var(--code);padding:1px 6px;border-radius:5px;font-size:.92em;font-family:ui-monospace,Menlo,Consolas,monospace}
 .md a{color:var(--accent);text-decoration:none}.md a:hover{text-decoration:underline}.md a.xref{cursor:pointer}
 .md strong{font-weight:600}.md hr{border:none;border-top:1px solid var(--line);margin:1.1em 0}
+.vizbox{margin:18px 0 18px;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 16px;overflow:hidden}
+.vizhd{display:flex;align-items:center;gap:10px;justify-content:space-between;font-size:14px;font-weight:700;margin-bottom:10px}
+.vizhd b{font-size:11px;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 38%,var(--line));border-radius:999px;padding:2px 8px}
+.vizsvg{display:block;max-width:100%;height:auto;margin:8px auto;border-radius:8px;background:var(--solid)}
+.vizlinks{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:13px}
+.vizlinks a{color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 42%,var(--line));border-radius:8px;padding:5px 10px;text-decoration:none}
+.vizlinks a:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.vizlinks.legacy{margin-top:6px}.mermaid{background:var(--solid);border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto}
 #toc{position:sticky;top:69px;align-self:start;height:fit-content}
 #toc .tochd{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 #toc .tl{display:block;color:var(--muted);text-decoration:none;font-size:13px;padding:5px 0 5px 12px;border-left:2px solid var(--line);cursor:pointer;line-height:1.4}
@@ -700,22 +777,33 @@ function renderGoal(){
     };
   });
   var db=document.getElementById('gdone');
-  if(db)db.onclick=function(){try{localStorage.setItem('goal_done_'+CAT,'1');var fb=document.getElementById('gfbtext');if(fb&&fb.value)localStorage.setItem('goal_fb_'+CAT,fb.value);}catch(e){}updateGoalNav();renderGoal();try{var gf=document.getElementById('graphframe');if(gf&&gf.src&&gf.src!=='about:blank')gf.contentWindow.postMessage({goalDone:true},'*');}catch(e){}window.scrollTo(0,0);};
+  if(db)db.onclick=function(){try{localStorage.setItem('goal_done_'+CAT,'1');var fb=document.getElementById('gfbtext');if(fb&&fb.value)localStorage.setItem('goal_fb_'+CAT,fb.value);}catch(e){}updateGoalNav();renderGoal();window.scrollTo(0,0);};
 }
 function fesc(x){return (x==null?'':String(x)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function initMermaid(){
+  const blocks=[...document.querySelectorAll('#docview .mermaid')];
+  if(!blocks.length)return;
+  function run(){try{mermaid.initialize({startOnLoad:false,theme:document.documentElement.dataset.theme==='dark'||document.documentElement.dataset.theme==='inkdark'?'dark':'default'});if(mermaid.run)mermaid.run({nodes:blocks});else mermaid.init(undefined,blocks);}catch(e){}}
+  if(window.mermaid){run();return;}
+  if(window.__mermaidLoading)return;
+  window.__mermaidLoading=true;
+  const sources=['../assets/mermaid.min.js','assets/mermaid.min.js','https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js'];
+  function load(i){if(i>=sources.length)return;var s=document.createElement('script');s.src=sources[i];s.onload=function(){window.__mermaidLoading=false;run();};s.onerror=function(){load(i+1);};document.head.appendChild(s);}
+  load(0);
+}
 function go(v){
   const ov=document.getElementById('overview'),dw=document.getElementById('docwrap'),gw=document.getElementById('graphwrap'),goalw=document.getElementById('goalwrap');
   gw.style.display='none';goalw.style.display='none';
   if(v==='__goal__'){if(!gUnlocked()){go('__overview__');return;}ov.style.display='none';dw.style.display='none';goalw.style.display='block';renderGoal();setActive('__goal__');document.getElementById('crumb').innerHTML='/ <b>'+(gIsDone()?'目标完成 ✅':'目标规划')+'</b>';location.hash=encodeURIComponent('__goal__');window.scrollTo(0,0);return;}
   if(v==='__graph__'){ov.style.display='none';dw.style.display='none';gw.style.display='block';
-    const gf=document.getElementById('graphframe');if(!gf.src||gf.src==='about:blank'){gf.src=gf.dataset.src+'?theme='+theme()+'&goaldone='+(gIsDone()?1:0);}else{try{gf.contentWindow.postMessage({theme:theme()},'*');gf.contentWindow.postMessage({goalDone:gIsDone()},'*');}catch(e){}}
+    const gf=document.getElementById('graphframe');if(!gf.src||gf.src==='about:blank'){gf.src=gf.dataset.src+'?theme='+theme();}else{try{gf.contentWindow.postMessage({theme:theme()},'*');}catch(e){}}
     setActive('__graph__');document.getElementById('crumb').innerHTML='/ <b>知识图谱</b>';location.hash=encodeURIComponent('__graph__');window.scrollTo(0,0);return;}
   if(v==='__overview__'||!DOCS[v]){ov.style.display='';dw.style.display='none';setActive('__overview__');
     document.getElementById('crumb').innerHTML='/ <b>学习路线图</b>';location.hash='';window.scrollTo(0,0);return;}
   ov.style.display='none';dw.style.display='grid';
   document.getElementById('docview').innerHTML=DOCS[v].doc;
   document.getElementById('toc').innerHTML=DOCS[v].toc;
-  bindXref();bindToc();setActive(v);
+  bindXref();bindToc();initMermaid();setActive(v);
   document.getElementById('crumb').innerHTML='/ <span class="cl" id="crmhome">学习路线图</span> / <b>'+v+'</b>';
   const ch=document.getElementById('crmhome');if(ch)ch.onclick=()=>go('__overview__');
   location.hash=encodeURIComponent(v);window.scrollTo(0,0);
