@@ -266,7 +266,7 @@ padding:6px 10px;border-radius:8px;font-size:12px;color:var(--muted)}
 #meta{margin-left:auto;font-size:12px;color:var(--muted);background:var(--hudbg);
 padding:6px 10px;border-radius:8px;pointer-events:auto}
 #panel{position:relative;flex:0 0 var(--panel-width,420px);width:var(--panel-width,420px);
-min-width:320px;max-width:min(70vw,900px);background:var(--panel);border-left:1px solid var(--line);
+min-width:320px;max-width:calc(100vw - 220px);background:var(--panel);border-left:1px solid var(--line);
 padding:22px;overflow:auto;display:none}
 #panel.open{display:block}
 #panelresizer{position:absolute;left:-6px;top:0;width:12px;height:100%;cursor:col-resize;
@@ -446,7 +446,8 @@ document.getElementById('close').onclick=()=>{panel.classList.remove('open');foc
 const panelResizer=document.getElementById('panelresizer');
 function panelBounds(){
   const vw=window.innerWidth||document.documentElement.clientWidth||1200;
-  return {min:320,max:Math.min(900,Math.max(360,Math.floor(vw*.7)))};
+  const minGraph=220;
+  return {min:320,max:Math.max(360,vw-minGraph)};
 }
 function setPanelWidth(px){
   const b=panelBounds();

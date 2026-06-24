@@ -177,7 +177,8 @@ def _read_asset(vault, rel):
     if not os.path.isfile(ap):
         return ''
     try:
-        return open(ap, encoding='utf-8').read()
+        with open(ap, encoding='utf-8') as f:
+            return f.read()
     except Exception:
         return ''
 
@@ -223,8 +224,41 @@ def _nested_list(items):
         html.append('</li></ul>'); stack.pop()
     return ''.join(html)
 
-def md_render(body, linkset):
+_VIZ_MARKER = '[[__GEWU_VIZ_BLOCK__]]'
+
+def _inject_viz_block(body, viz_html):
+    """把知识图解插进「## 视觉模型图」小节，优先放在 Mermaid 源之后。"""
+    if not viz_html:
+        return body, False
+    lines = body.split('\n')
+    head = None
+    for i, line in enumerate(lines):
+        if re.match(r'^##\s+.*视觉模型图', line.strip()):
+            head = i
+            break
+    if head is None:
+        return body, False
+    end = len(lines)
+    for i in range(head + 1, len(lines)):
+        if re.match(r'^##\s+', lines[i].strip()):
+            end = i
+            break
+    insert_at = head + 1
+    for i in range(head + 1, end):
+        if 'Mermaid 源' in lines[i] or 'Mermaid源' in lines[i]:
+            insert_at = i + 1
+            break
+    else:
+        for i in range(head + 1, end):
+            if 'SVG：' in lines[i] or 'SVG:' in lines[i]:
+                insert_at = i
+                break
+    lines.insert(insert_at, _VIZ_MARKER)
+    return '\n'.join(lines), True
+
+def md_render(body, linkset, raw_blocks=None):
     # 去掉首个 # 标题（与 dochead 重复）
+    raw_blocks = raw_blocks or {}
     lines = body.split('\n')
     while lines and not lines[0].strip():
         lines.pop(0)
@@ -238,6 +272,8 @@ def md_render(body, linkset):
         st = lines[i].strip()
         if not st:
             flush(); i += 1; continue
+        if st in raw_blocks:
+            flush(); out.append(raw_blocks[st]); i += 1; continue
         # 折叠块：<details> / <summary> 透传（不转义），并记录折叠深度
         if st.startswith('<details'):
             flush(); out.append('<details class="lp-fold">'); fold[0] += 1; i += 1; continue
@@ -311,14 +347,15 @@ def build_docs(cat, items, plan, vault):
     docs = {}
     for o in studied:
         t = o['title']; note = items[t]; st = (note.get('status') or '').strip()
-        body_html, toc = md_render(note['body'], linkset)
         viz_html = _viz_block(cat, note, vault)
+        body, viz_in_body = _inject_viz_block(note['body'], viz_html)
+        body_html, toc = md_render(body, linkset, {_VIZ_MARKER: viz_html} if viz_in_body else None)
         _bc, _bt = _BADGE.get(st, ('ok', st))
         if note.get('track'):
             _bt += ' · ' + note.get('track')
         doc = ('<div class="dochead"><h1>%s <span class="stars">%s</span></h1>'
                '<span class="badge %s">%s</span></div>%s<div class="md">%s</div>'
-               % (H.escape(t), stars(o['importance']), _bc, _bt, viz_html, body_html))
+               % (H.escape(t), stars(o['importance']), _bc, _bt, '' if viz_in_body else viz_html, body_html))
         toc_html = '<div class="tochd">本文导读</div>' + (''.join(
             '<a class="tl lv%d" data-id="%s">%s</a>' % (x['lvl'], x['id'], x['text']) for x in toc)
             or '<div class="tnote">（无小节）</div>')
@@ -817,12 +854,17 @@ function fesc(x){return (x==null?'':String(x)).replace(/&/g,'&amp;').replace(/</
 function initMermaid(){
   const blocks=[...document.querySelectorAll('#docview .mermaid')];
   if(!blocks.length)return;
-  function run(){try{mermaid.initialize({startOnLoad:false,theme:document.documentElement.dataset.theme==='dark'||document.documentElement.dataset.theme==='inkdark'?'dark':'default'});if(mermaid.run)mermaid.run({nodes:blocks});else mermaid.init(undefined,blocks);}catch(e){}}
+  function run(attempt){try{
+    mermaid.initialize({startOnLoad:false,theme:document.documentElement.dataset.theme==='dark'||document.documentElement.dataset.theme==='inkdark'?'dark':'default'});
+    blocks.forEach(function(b){b.removeAttribute('data-processed');});
+    var r=mermaid.run?mermaid.run({nodes:blocks}):mermaid.init(undefined,blocks);
+    Promise.resolve(r).catch(function(){if((attempt||0)<1)setTimeout(function(){run((attempt||0)+1);},160);});
+  }catch(e){if((attempt||0)<1)setTimeout(function(){run((attempt||0)+1);},160);}}
   if(window.mermaid){run();return;}
-  if(window.__mermaidLoading)return;
+  if(window.__mermaidLoading){setTimeout(initMermaid,160);return;}
   window.__mermaidLoading=true;
   const sources=['../assets/mermaid.min.js','assets/mermaid.min.js','https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js'];
-  function load(i){if(i>=sources.length)return;var s=document.createElement('script');s.src=sources[i];s.onload=function(){window.__mermaidLoading=false;run();};s.onerror=function(){load(i+1);};document.head.appendChild(s);}
+  function load(i){if(i>=sources.length){window.__mermaidLoading=false;return;}var s=document.createElement('script');s.src=sources[i];s.onload=function(){window.__mermaidLoading=false;run();};s.onerror=function(){load(i+1);};document.head.appendChild(s);}
   load(0);
 }
 function go(v){
