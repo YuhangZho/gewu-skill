@@ -106,7 +106,8 @@ def collect(vault):
                 continue
             path = os.path.join(root, fn)
             try:
-                text = open(path, encoding='utf-8').read()
+                with open(path, encoding='utf-8') as f:
+                    text = f.read()
             except Exception:
                 continue
             fm, body = parse_frontmatter(text)
@@ -558,7 +559,8 @@ def global_vault_path():
     try:
         gp = os.path.join(os.path.expanduser('~'), '.gewu', 'glb_vault_path.json')
         if os.path.isfile(gp):
-            vp = (json.load(open(gp, encoding='utf-8')) or {}).get('vault_path')
+            with open(gp, encoding='utf-8-sig') as f:
+                vp = (json.load(f) or {}).get('vault_path')
             if vp and os.path.isdir(vp):
                 return vp
     except Exception:

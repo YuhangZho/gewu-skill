@@ -70,6 +70,7 @@
 ```bash
 python scripts/build_graph.py            # 刷新知识图谱
 python scripts/plan_path.py --goal 面试  # 刷新知识站(--goal 可选)
+python scripts/audit_learning_order.py   # 审计笔记是否显式提到路线后置概念
 ```
 
 用浏览器打开 `知识库/<大类>/<大类>-路线图.html` 即可浏览(默认浅色；右上角可在 **浅 / 深 / 宣纸 / 夜墨** 四套主题间循环切换，后两套为中国水墨风)。
