@@ -4,7 +4,7 @@
 
 > Estudia una cosa a fondo para alcanzar el verdadero conocimiento: si puedes explicarla con claridad, de verdad la entiendes.
 
-<video src="./assets/merged_output.mp4" controls=""></video>
+<img src="./assets/merged_output_720p.gif" alt="格物演示" width="100%" style="display:block;margin-left:0;margin-right:auto;">
 
 [![License](https://img.shields.io/github/license/YuhangZho/gewu-skill?style=flat-square&color=green)](./LICENSE)
 [![Stars](https://img.shields.io/github/stars/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/stargazers)
@@ -60,7 +60,7 @@ Lo que has aprendido se convierte en páginas locales abribles:
 - **Planificación de objetivos**: ve a qué distancia está tu conocimiento actual del objetivo.
 - **Documentos de conceptos**: cada concepto que has aprendido se puede repasar.
 
-<video src="./assets/学习站示例.mp4" controls=""></video>
+<img src="./assets/学习站示例.gif" alt="学习站示例" width="100%" style="display:block;margin-left:0;margin-right:auto;">
 
 ### Puedes retomar donde lo dejaste, incluso a medias
 
