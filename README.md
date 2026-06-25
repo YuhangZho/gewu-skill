@@ -4,7 +4,7 @@
 
 > 格一物，致真知：能讲清楚，才算真懂。
 
-<video src="./assets/merged_output.mp4" controls=""></video>
+<img src="./assets/merged_output_720p.gif" alt="格物演示" width="100%" style="display:block;margin-left:0;margin-right:auto;">
 
 [![License](https://img.shields.io/github/license/YuhangZho/gewu-skill?style=flat-square&color=green)](./LICENSE)
 [![Stars](https://img.shields.io/github/stars/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/stargazers)
@@ -60,7 +60,7 @@
 - **目标规划**：看当前知识离目标还差什么。
 - **概念文档**：每个学过的概念都能回看。
 
-<video src="./assets/学习站示例.mp4" controls=""></video>
+<img src="./assets/学习站示例.gif" alt="学习站示例" width="100%" style="display:block;margin-left:0;margin-right:auto;">
 
 ### 学到一半也能回来接着学
 
