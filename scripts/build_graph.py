@@ -143,6 +143,9 @@ def collect(vault):
             groups = fm.get('groups') or []
             if isinstance(groups, str):
                 groups = [groups]
+            sources = fm.get('sources') or []
+            if isinstance(sources, str):
+                sources = [sources]
             links = [m.strip() for m in WIKILINK.findall(body)]
             links += [str(r).strip() for r in related]
             notes[title] = {
@@ -153,6 +156,7 @@ def collect(vault):
                       'viz_source': str(viz_source).strip(),
                       'viz_chart': str(viz_chart).strip(),
                       'groups': [str(g).strip() for g in groups],
+                      'sources': [str(s).strip() for s in sources if str(s).strip()],
                 'prereqs': [str(p).strip() for p in prereqs],
                 'aliases': [str(a).strip() for a in aliases],
                 'links': links, 'body': body.strip(),

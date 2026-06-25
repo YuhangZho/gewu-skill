@@ -10,6 +10,7 @@ plan_path.py — 为每个大类生成「知识站」单页 <大类>/<大类>-�
 全量路线数据写入 _system/roadmap_data.json。
 """
 import os, sys, re, json, html as H, argparse, datetime, shutil
+from urllib.parse import urlsplit, urlunsplit
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from build_graph import collect, global_vault_path, DONE_STATUS, IN_PROGRESS_STATUS, is_done
 
@@ -139,6 +140,7 @@ _BARE = re.compile(r'&lt;(https?://[^&]+)&gt;')
 _BOLD = re.compile(r'\*\*([^*]+)\*\*')
 _CODE = re.compile(r'`([^`]+)`')
 _WIKI = re.compile(r'\[\[([^\]|]+?)(?:\|[^\]]+)?\]\]')
+_URL = re.compile(r'https?://[^\s<>)\]"\']+')
 
 def _href(u):
     return u.strip().replace(' ', '%20')   # 路径里的空格转义，保证相对链接可点
@@ -256,6 +258,172 @@ def _inject_viz_block(body, viz_html):
     lines.insert(insert_at, _VIZ_MARKER)
     return '\n'.join(lines), True
 
+def _clean_url(u):
+    return str(u or '').strip().rstrip('.,;，。；、）)]}>')
+
+def _norm_url(u):
+    u = _clean_url(u)
+    if not u:
+        return ''
+    try:
+        p = urlsplit(u)
+        scheme = (p.scheme or 'https').lower()
+        netloc = p.netloc.lower()
+        path = p.path.rstrip('/') or '/'
+        return urlunsplit((scheme, netloc, path, p.query, ''))
+    except Exception:
+        return u.rstrip('/').lower()
+
+def _urls(text):
+    return [_clean_url(x) for x in _URL.findall(text or '') if _clean_url(x)]
+
+def _h2_bounds(lines, needle):
+    start = None
+    for i, line in enumerate(lines):
+        if re.match(r'^##\s+', line.strip()) and needle in line:
+            start = i
+            break
+    if start is None:
+        return None
+    end = len(lines)
+    for i in range(start + 1, len(lines)):
+        if re.match(r'^##\s+', lines[i].strip()):
+            end = i
+            break
+    return start, end
+
+def _remove_h2_section(body, needle):
+    lines = body.split('\n')
+    b = _h2_bounds(lines, needle)
+    if not b:
+        return body
+    start, end = b
+    return '\n'.join(lines[:start] + lines[end:]).strip()
+
+def _ref_label(block, url, concept):
+    for line in block:
+        s = re.sub(r'^\s*[-*]\s+', '', line).strip()
+        if not s or s.startswith('<') or '参考资料' in s:
+            continue
+        s = re.sub(r'链接\s*[:：]\s*', '', s)
+        s = _URL.sub('', s).replace('<>', '').strip(' -—:：，,')
+        s = re.sub(r'\[([^\]]+)\]\(\s*\)', r'\1', s).strip()
+        if s:
+            return s[:90]
+    host = urlsplit(url).netloc or url
+    return '%s · %s' % (concept, host)
+
+def _ref_excerpt(block):
+    kept = []
+    for line in block:
+        s = _URL.sub('', line).replace('<>', '').rstrip()
+        if s.strip():
+            kept.append(s)
+    return '\n'.join(kept[:6]).strip()
+
+def _reference_blocks(body):
+    lines = body.split('\n')
+    b = _h2_bounds(lines, '参考资料')
+    if not b:
+        return []
+    start, end = b
+    section = lines[start + 1:end]
+    blocks, cur = [], []
+    for line in section:
+        st = line.strip()
+        if st.startswith('<details') or st.startswith('<summary') or st == '</details>':
+            continue
+        if re.match(r'^\s*[-*]\s+', line) and (len(line) - len(line.lstrip(' ')) == 0):
+            if cur:
+                blocks.append(cur)
+            cur = [line]
+        elif cur:
+            cur.append(line)
+        elif _urls(line):
+            blocks.append([line])
+    if cur:
+        blocks.append(cur)
+    return [b for b in blocks if _urls('\n'.join(b))]
+
+def collect_reference_entries(items):
+    seen, refs = set(), []
+    for title in sorted(items.keys()):
+        note = items[title]
+        body = note.get('body') or ''
+        blocks = _reference_blocks(body)
+        for src in (note.get('sources') or []):
+            if _urls(str(src)):
+                blocks.append(['- ' + str(src)])
+        for block in blocks:
+            text = '\n'.join(block)
+            us = _urls(text)
+            if not us:
+                continue
+            url = us[0]
+            key = _norm_url(url)
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            refs.append({
+                'concept': title,
+                'url': url,
+                'key': key,
+                'label': _ref_label(block, url, title),
+                'excerpt': _ref_excerpt(block),
+            })
+    return refs
+
+def _vision_key(block):
+    text = '\n'.join(block)
+    us = [_norm_url(u) for u in _urls(text)]
+    us = [u for u in us if u]
+    if us:
+        return ['url:' + u for u in us]
+    for line in block:
+        m = re.match(r'^###\s+(.*)$', line.strip())
+        if m:
+            t = re.sub(r'^\d+[.、]\s*', '', m.group(1)).strip().lower()
+            t = re.sub(r'\s+', ' ', t)
+            if t:
+                return ['title:' + t]
+    text = re.sub(r'\s+', ' ', text).strip().lower()
+    return ['text:' + text[:80]] if text else []
+
+def _dedupe_vision_section(body, reference_keys, seen_vision):
+    lines = body.split('\n')
+    b = _h2_bounds(lines, '视野拓展')
+    if not b:
+        return body
+    start, end = b
+    section = lines[start:end]
+    h3s = [i for i, line in enumerate(section) if re.match(r'^###\s+', line.strip())]
+    if not h3s:
+        return body
+    prefix = section[:h3s[0]]
+    suffix = []
+    blocks = []
+    for pos, h in enumerate(h3s):
+        nxt = h3s[pos + 1] if pos + 1 < len(h3s) else len(section)
+        blocks.append(section[h:nxt])
+    if blocks:
+        last = blocks[-1]
+        while last and (not last[-1].strip() or last[-1].strip() == '</details>'):
+            suffix.insert(0, last.pop())
+    kept = []
+    for block in blocks:
+        keys = _vision_key(block)
+        url_keys = {k[4:] for k in keys if k.startswith('url:')}
+        if url_keys & reference_keys:
+            continue
+        if any(k in seen_vision for k in keys):
+            continue
+        kept.extend(block)
+        for k in keys:
+            seen_vision.add(k)
+    if not kept:
+        return '\n'.join(lines[:start] + lines[end:]).strip()
+    return '\n'.join(lines[:start] + prefix + kept + suffix + lines[end:]).strip()
+
 def md_render(body, linkset, raw_blocks=None):
     # 去掉首个 # 标题（与 dochead 重复）
     raw_blocks = raw_blocks or {}
@@ -334,6 +502,35 @@ def stars(k):
     k = max(0, min(5, int(k or 0)))
     return '★' * k + '<span class="se">' + '★' * (5 - k) + '</span>'
 
+def build_reference_doc(refs, linkset):
+    if refs:
+        cards = []
+        for r in refs:
+            body = ''
+            if r.get('excerpt'):
+                body = '<div class="refbody">%s</div>' % md_render(r['excerpt'], linkset)[0]
+            cards.append(
+                '<div class="refcard">'
+                '<div class="reft">%s</div>'
+                '<div class="refmeta">来自：<a class="xref" data-go="%s">%s</a></div>'
+                '<a class="refurl" href="%s" target="_blank" rel="noopener">打开来源</a>'
+                '%s</div>' % (
+                    H.escape(r['label']),
+                    H.escape(r['concept']),
+                    H.escape(r['concept']),
+                    H.escape(r['url']),
+                    body,
+                )
+            )
+        inner = ('<blockquote>领域参考资料库汇总所有概念学习中用过的可查链接；相同 URL 只保留一次。</blockquote>'
+                 '<div class="refgrid">%s</div>' % ''.join(cards))
+    else:
+        inner = '<blockquote>暂无带 URL 的参考资料。只有可打开链接会进入这里。</blockquote>'
+    doc = ('<div class="dochead"><h1>参考资料</h1>'
+           '<span class="badge light">领域参考资料库</span></div><div class="md">%s</div>' % inner)
+    toc = '<div class="tochd">本文导读</div><div class="tnote">领域参考资料库</div>'
+    return {'doc': doc, 'toc': toc, 'title': '参考资料'}
+
 def build_docs(cat, items, plan, vault):
     # 出文档页的判据＝已完成/学习中且有正文；待学占位不出页。
     _STUDIED = (DONE_STATUS, IN_PROGRESS_STATUS)
@@ -345,10 +542,15 @@ def build_docs(cat, items, plan, vault):
     cdir = os.path.join(vault, cat)
     _BADGE = {DONE_STATUS: ('ok', '✓ 已完成'), IN_PROGRESS_STATUS: ('light', '◌ 学习中')}
     docs = {}
+    refs = collect_reference_entries(items)
+    reference_keys = {r['key'] for r in refs}
+    seen_vision = set()
     for o in studied:
         t = o['title']; note = items[t]; st = (note.get('status') or '').strip()
         viz_html = _viz_block(cat, note, vault)
-        body, viz_in_body = _inject_viz_block(note['body'], viz_html)
+        clean_body = _remove_h2_section(note['body'], '参考资料')
+        clean_body = _dedupe_vision_section(clean_body, reference_keys, seen_vision)
+        body, viz_in_body = _inject_viz_block(clean_body, viz_html)
         body_html, toc = md_render(body, linkset, {_VIZ_MARKER: viz_html} if viz_in_body else None)
         _bc, _bt = _BADGE.get(st, ('ok', st))
         if note.get('track'):
@@ -359,7 +561,8 @@ def build_docs(cat, items, plan, vault):
         toc_html = '<div class="tochd">本文导读</div>' + (''.join(
             '<a class="tl lv%d" data-id="%s">%s</a>' % (x['lvl'], x['id'], x['text']) for x in toc)
             or '<div class="tnote">（无小节）</div>')
-        docs[t] = {'doc': doc, 'toc': toc_html}
+        docs[t] = {'doc': doc, 'toc': toc_html, 'title': t}
+    docs['__refs__'] = build_reference_doc(refs, linkset)
     return docs
 
 def _load_config(vault):
@@ -449,7 +652,7 @@ def main():
         html = _apply_config(html, cfg)
         # 生成门：有概念间边或已有学习文档时出路线图；否则只留 .md，清理旧文件
         _has_edge = any(o.get('prereqs') or o.get('related') for o in r.get('order', []))
-        _has_docs = bool(docs)
+        _has_docs = any(k != '__refs__' for k in docs)
         _rp = os.path.join(cdir, c + '-路线图.html')
         if _has_edge or _has_docs:
             open(_rp, 'w', encoding='utf-8').write(html)
@@ -489,7 +692,7 @@ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI","PingFa
 background:var(--panel);border-bottom:1px solid var(--line);backdrop-filter:blur(18px) saturate(180%)}
 .topbar .brand{font-weight:700;font-size:15px;letter-spacing:-.01em}
 .topbar .crumb{color:var(--muted);font-size:13px}
-.topbar .crumb b{color:var(--text)}
+.topbar .crumb b{color:var(--muted);font-weight:400}
 .topbar .crumb .cl{color:var(--accent);cursor:pointer}
 .topbar .sp{flex:1}
 .themebtn{background:var(--solid);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:13px;cursor:pointer}
@@ -516,6 +719,8 @@ background:var(--panel);border-bottom:1px solid var(--line);backdrop-filter:blur
 #sidenav .navhd2 .gc{margin-left:auto;font-size:11px;font-weight:500;color:var(--muted);background:color-mix(in srgb,var(--muted) 14%,transparent);border-radius:10px;padding:1px 7px}
 #sidenav .navgbody{overflow:hidden;padding-left:8px}
 #sidenav .navgrp.collapsed .navgbody{display:none}
+#sidenav .navlink.refnav{margin-top:8px;border-top:1px solid var(--line);border-radius:0;padding-top:12px}
+#sidenav .navlink.refnav .nd{background:var(--accent)}
 main{min-width:0}
 #overview{padding:26px 32px 80px;max-width:1060px}
 h1.ttl{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0 0 6px}
@@ -567,6 +772,13 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 .dochead .stars{color:var(--yellow);font-size:15px}
 .badge.ok{font-size:12px;font-weight:600;border-radius:12px;padding:3px 10px;color:var(--green);background:color-mix(in srgb,var(--green) 14%,transparent);border:1px solid color-mix(in srgb,var(--green) 40%,var(--line))}
 .badge.light{font-size:12px;font-weight:600;border-radius:12px;padding:3px 10px;color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line))}
+.refgrid{display:grid;gap:12px;margin-top:14px}
+.refcard{border:1px solid var(--line);border-radius:10px;background:var(--solid);padding:13px 14px}
+.reft{font-weight:700;font-size:15px;margin-bottom:5px}
+.refmeta{color:var(--muted);font-size:12.5px;margin-bottom:8px}
+.refurl{display:inline-flex;align-items:center;color:var(--accent);font-weight:600;text-decoration:none;border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);border-radius:8px;padding:5px 10px;margin-bottom:8px}
+.refbody{color:var(--muted);font-size:13px}
+.refbody ul{margin-top:4px;margin-bottom:0}
 .md{font-size:15px;line-height:1.78;margin-top:14px}
 .md h2{font-size:18px;margin:1.5em 0 .4em;scroll-margin-top:64px}.md h3{font-size:15px;margin:1.2em 0 .3em;color:var(--muted);scroll-margin-top:64px}
 .md p{margin:.6em 0}.md ul,.md ol{margin:.5em 0;padding-left:1.4em}.md li{margin:.25em 0}
@@ -775,6 +987,12 @@ function buildNav(){
     hd.onclick=function(){wrap.classList.toggle('collapsed');};
     wrap.appendChild(hd);wrap.appendChild(body);nb.appendChild(wrap);
   });
+  if(DOCS.__refs__){
+    const a=document.createElement('a');a.className='navlink refnav';a.dataset.k='__refs__';
+    a.innerHTML='<span class="nd refs"></span>参考资料';
+    a.onclick=function(e){e.stopPropagation();go('__refs__');};
+    nb.appendChild(a);
+  }
 }
 function setActive(v){document.querySelectorAll('#sidenav .navlink').forEach(x=>x.classList.toggle('active',x.dataset.k===v));
   document.getElementById('homelink').classList.toggle('active',v==='__overview__');document.getElementById('graphlink').classList.toggle('active',v==='__graph__');document.getElementById('goallink').classList.toggle('active',v==='__goal__');}
@@ -900,11 +1118,11 @@ function go(v){
   if(v==='__overview__'||!DOCS[v]){ov.style.display='';dw.style.display='none';setActive('__overview__');
     document.getElementById('crumb').innerHTML='/ <b>学习路线</b>';location.hash='';window.scrollTo(0,0);return;}
   ov.style.display='none';dw.style.display='grid';
+  const dt=(DOCS[v]&&DOCS[v].title)||v;
   document.getElementById('docview').innerHTML=DOCS[v].doc;
   document.getElementById('toc').innerHTML=DOCS[v].toc;
   bindXref();bindToc();initMermaid();setActive(v);
-  document.getElementById('crumb').innerHTML='/ <span class="cl" id="crmhome">学习路线</span> / <b>'+v+'</b>';
-  const ch=document.getElementById('crmhome');if(ch)ch.onclick=()=>go('__overview__');
+  document.getElementById('crumb').innerHTML='/ <span>学习笔记</span> / <b>'+dt+'</b>';
   location.hash=encodeURIComponent(v);window.scrollTo(0,0);
 }
 const THEMES=[["light","◐ 浅"],["dark","◑ 深"],["ink","❖ 宣纸"],["inkdark","❖ 夜墨"]];
