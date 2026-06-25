@@ -1127,12 +1127,15 @@ function go(v){
 }
 const THEMES=[["light","◐ 浅"],["dark","◑ 深"],["ink","❖ 宣纸"],["inkdark","❖ 夜墨"]];
 function themeIdx(name){for(var i=0;i<THEMES.length;i++)if(THEMES[i][0]===name)return i;return 1;}
-function setTheme(t){var r=document.documentElement;r.dataset.theme=t;
+function hasTheme(name){return THEMES.some(function(x){return x[0]===name;});}
+function setTheme(t,persist){var r=document.documentElement;r.dataset.theme=t;
   document.getElementById('themebtn').textContent=THEMES[themeIdx(t)][1];
-  var gf=document.getElementById('graphframe');if(gf&&gf.src&&gf.src!=='about:blank'){try{gf.contentWindow.postMessage({theme:t},'*');}catch(e){}}}
+  var gf=document.getElementById('graphframe');if(gf&&gf.src&&gf.src!=='about:blank'){try{gf.contentWindow.postMessage({theme:t},'*');}catch(e){}}
+  if(persist!==false){try{localStorage.setItem('gewu_theme',t);}catch(e){}}}
 document.getElementById('themebtn').onclick=function(){var cur=document.documentElement.dataset.theme||'dark';
   setTheme(THEMES[(themeIdx(cur)+1)%THEMES.length][0]);};
-setTheme(document.documentElement.dataset.theme||'light');
+var savedTheme=null;try{savedTheme=localStorage.getItem('gewu_theme');}catch(e){}
+setTheme(hasTheme(savedTheme)?savedTheme:(document.documentElement.dataset.theme||'light'),false);
 document.getElementById('homelink').onclick=()=>go('__overview__');
 document.getElementById('graphlink').onclick=()=>go('__graph__');
 document.getElementById('goallink').onclick=()=>{if(gUnlocked())go('__goal__');};

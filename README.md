@@ -120,8 +120,8 @@ npx skills add YuhangZho/gewu-skill
 | Codex | `~/.codex/skills/gewu/` |
 | Cursor | `~/.cursor/skills/gewu/` |
 | OpenClaw | `~/.openclaw/skills/gewu/` |
-| Qoder | `~/.qoder/skills/gewu/`  // 如果是Qoder CN 就是 `~/.qoder-cn/skills/gewu/` |
-| Kimi Code CLI | `~/.config/agents/skills/gewu/` |
+| Qoder | `~/.qoder-cn/skills/gewu/`  // 对应Qoder CN |
+| Trae | `~/.trae-cn/skills/gewu/`    //对应 Trae CN |
 | Kimi Work | `~/AppData/Roaming/kimi-desktop/daimon-share/daimon/skills`  // 复制后需要重启 |
 | 其他 50+ agent | 路径各异，见 [vercel-labs/skills 支持表](https://github.com/vercel-labs/skills#supported-agents) |
 
