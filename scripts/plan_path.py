@@ -4,7 +4,7 @@
 """
 plan_path.py — 为每个大类生成「知识站」单页 <大类>/<大类>-路线图.html：
   · 顶栏固定 + 左侧目录固定 + 内容区内切换（单页，不跳独立页）
-  · 起始视图=学习路线图（依赖分层/当前位置/下一步Top3/扩展）
+  · 起始视图=学习路线（依赖分层/当前位置/下一步Top3/扩展）
   · 点击已完成/学习中概念 → 同页切换到该概念文档（md 总结 + 视觉模型图 + 右侧"本文导读"锚点）
   · 全局统一主题，默认浅色
 全量路线数据写入 _system/roadmap_data.json。
@@ -496,10 +496,16 @@ background:var(--panel);border-bottom:1px solid var(--line);backdrop-filter:blur
 .shell{display:grid;grid-template-columns:252px minmax(0,1fr)}
 #sidenav{position:sticky;top:49px;align-self:start;height:calc(100vh - 49px);overflow-y:auto;padding:16px 12px;border-right:1px solid var(--line)}
 #sidenav .navlink{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;color:var(--text);text-decoration:none;font-size:13.5px;cursor:pointer;transition:background .2s,color .2s}
+#sidenav .navico{width:20px;flex:0 0 20px;text-align:center;font-size:16px;line-height:1}
+#sidenav .navtxt{min-width:0}
 #sidenav .navlink:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
 #sidenav .navlink.active{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent);font-weight:600}
 #sidenav .navlink.todo{color:var(--muted)}
 #sidenav .navlink.home{font-weight:600;margin-bottom:6px}
+#noteslink{margin-top:6px}
+#noteslink.collapsed{color:var(--muted)}
+#notesbody{margin:0 0 6px 20px;padding:2px 0 2px 12px;border-left:1px solid var(--line)}
+#notesbody.collapsed{display:none}
 #sidenav .nd{width:8px;height:8px;border-radius:50%;flex:none}
 #sidenav .navgroup{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:12px 8px 4px}
 #sidenav .navgrp{margin-bottom:2px}
@@ -508,7 +514,7 @@ background:var(--panel);border-bottom:1px solid var(--line);backdrop-filter:blur
 #sidenav .navhd2 .chev{font-size:10px;color:var(--muted);transition:transform .2s;flex:none}
 #sidenav .navgrp:not(.collapsed) .navhd2 .chev{transform:rotate(90deg)}
 #sidenav .navhd2 .gc{margin-left:auto;font-size:11px;font-weight:500;color:var(--muted);background:color-mix(in srgb,var(--muted) 14%,transparent);border-radius:10px;padding:1px 7px}
-#sidenav .navgbody{overflow:hidden;padding-left:6px}
+#sidenav .navgbody{overflow:hidden;padding-left:8px}
 #sidenav .navgrp.collapsed .navgbody{display:none}
 main{min-width:0}
 #overview{padding:26px 32px 80px;max-width:1060px}
@@ -661,10 +667,10 @@ font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spaci
   <button class="themebtn" id="themebtn">◑ 深</button>
 </div>
 <div class="shell">
-  <nav id="sidenav"><a class="navlink home" id="homelink">📋 学习路线图</a><a class="navlink home" id="graphlink">🕸 知识图谱</a><a class="navlink home" id="goallink">🎯 目标规划</a><div id="navbody"></div></nav>
+  <nav id="sidenav"><a class="navlink home" id="homelink"><span class="navico">📋</span><span class="navtxt">学习路线</span></a><a class="navlink home" id="graphlink"><span class="navico">🕸</span><span class="navtxt">知识图谱</span></a><a class="navlink home" id="goallink"><span class="navico">🎯</span><span class="navtxt">目标规划</span></a><a class="navlink home" id="noteslink" aria-expanded="true"><span class="navico">📝</span><span class="navtxt">学习笔记</span></a><div id="notesbody"><div id="navbody"></div></div></nav>
   <main>
     <section id="overview">
-      <h1 class="ttl">学习路线图 <span style="color:var(--muted);font-weight:400;font-size:15px">Learning Roadmap</span></h1>
+      <h1 class="ttl">学习路线 <span style="color:var(--muted);font-weight:400;font-size:15px">Learning Roadmap</span></h1>
       <div class="sub" id="sub"></div>
       <div class="bar">
         <span class="goal" id="goal" style="display:none"></span>
@@ -731,6 +737,23 @@ function renderOverview(){
     '<div class="e"><div class="nm">'+e.name+' <span style="color:var(--yellow);font-size:12px">'+stars(e.importance)+'</span></div>'
     +'<div class="why">'+(e.why||'')+'</div></div>').join(''):'<div class="why">（暂未配置扩展方向）</div>';
 }
+function toggleNotesNav(){
+  const body=document.getElementById('notesbody'),link=document.getElementById('noteslink');
+  if(!body||!link)return;
+  const collapsed=body.classList.toggle('collapsed');
+  link.classList.toggle('collapsed',collapsed);
+  link.setAttribute('aria-expanded',collapsed?'false':'true');
+  try{localStorage.setItem('notes_coll_'+CAT,collapsed?'1':'0');}catch(e){}
+}
+function initNotesNav(){
+  const body=document.getElementById('notesbody'),link=document.getElementById('noteslink');
+  if(!body||!link)return;
+  let collapsed=false;
+  try{collapsed=localStorage.getItem('notes_coll_'+CAT)==='1';}catch(e){}
+  body.classList.toggle('collapsed',collapsed);
+  link.classList.toggle('collapsed',collapsed);
+  link.setAttribute('aria-expanded',collapsed?'false':'true');
+}
 function buildNav(){
   const nb=document.getElementById('navbody');nb.innerHTML='';
   const groups=[],gmap={};
@@ -792,7 +815,7 @@ function gProgress(){
   return {prog:prog,ptier:ptier,tc:gTierColor(ptier)};
 }
 function gTierColor(t){return t==='高'?'var(--green)':(t==='中'?'var(--yellow)':'var(--red)');}
-function updateGoalNav(){var gl=document.getElementById('goallink');if(!gl)return;gl.classList.toggle('disabled',!gUnlocked());gl.textContent=gIsDone()?'🎯 目标完成 ✅':'🎯 目标规划';}
+function updateGoalNav(){var gl=document.getElementById('goallink');if(!gl)return;gl.classList.toggle('disabled',!gUnlocked());var txt=gl.querySelector('.navtxt');if(txt)txt.textContent=gIsDone()?'目标完成 ✅':'目标规划';}
 function renderGoal(){
   var b=document.getElementById('goalbody');
   if(!gHasGoal()){var _nx=(R&&R.next3)||[],_sg=(GOAL&&GOAL.suggested_goals)||[],_n=(R&&R.order)?R.order.length:0,_has=(_nx.length||_sg.length);var _h='<div class="gempty"><h1>🎯 目标规划</h1><p>这个领域你已攒了 <b>'+_n+'</b> 个知识点。'+(_has?'<b>定个目标</b>我就能联网对照真实要求、按优先级帮你规划；<b>不定也行</b>——下面有通用下一步。':'')+'</p>';if(_sg.length)_h+='<div class="gh3">💡 你可能想要的目标（说一个，或自己定）</div><div class="grecs">'+_sg.map(function(s){return '<div class="grec"><span class="gp">🎯</span><div class="grn">'+fesc(s)+'</div></div>';}).join('')+'</div>';if(_nx.length)_h+='<div class="gh3">👉 不定目标也能继续 · 下一步建议</div><div class="grecs">'+_nx.map(function(t,i){return '<div class="grec"><span class="gp">'+(i+1)+'</span><div class="grn">'+fesc(t)+'</div></div>';}).join('')+'</div>';if(!_has)_h+='<div class="grec" style="border-color:var(--accent)"><span class="gp">👉</span><div class="grn">你已学的点都点亮了，<b>但还没有"待学"的下一站</b>。想继续学这个领域，跟我说<b>「接着学」</b>或<b>定个目标</b>，我就把下一段路线铺出来（先补几个"待学"节点，再给你下一站）。</div></div>';_h+='<p class="gref">想定目标直接告诉我（参考分类：应试 · 求职 · 分享 · 知识变现 · 自主学习 · 无目标(AI自主发散)）。</p></div>';b.innerHTML=_h;return;}
@@ -875,12 +898,12 @@ function go(v){
     const gf=document.getElementById('graphframe');if(!gf.src||gf.src==='about:blank'){gf.src=gf.dataset.src+'?theme='+theme();}else{try{gf.contentWindow.postMessage({theme:theme()},'*');}catch(e){}}
     setActive('__graph__');document.getElementById('crumb').innerHTML='/ <b>知识图谱</b>';location.hash=encodeURIComponent('__graph__');window.scrollTo(0,0);return;}
   if(v==='__overview__'||!DOCS[v]){ov.style.display='';dw.style.display='none';setActive('__overview__');
-    document.getElementById('crumb').innerHTML='/ <b>学习路线图</b>';location.hash='';window.scrollTo(0,0);return;}
+    document.getElementById('crumb').innerHTML='/ <b>学习路线</b>';location.hash='';window.scrollTo(0,0);return;}
   ov.style.display='none';dw.style.display='grid';
   document.getElementById('docview').innerHTML=DOCS[v].doc;
   document.getElementById('toc').innerHTML=DOCS[v].toc;
   bindXref();bindToc();initMermaid();setActive(v);
-  document.getElementById('crumb').innerHTML='/ <span class="cl" id="crmhome">学习路线图</span> / <b>'+v+'</b>';
+  document.getElementById('crumb').innerHTML='/ <span class="cl" id="crmhome">学习路线</span> / <b>'+v+'</b>';
   const ch=document.getElementById('crmhome');if(ch)ch.onclick=()=>go('__overview__');
   location.hash=encodeURIComponent(v);window.scrollTo(0,0);
 }
@@ -895,8 +918,9 @@ setTheme(document.documentElement.dataset.theme||'light');
 document.getElementById('homelink').onclick=()=>go('__overview__');
 document.getElementById('graphlink').onclick=()=>go('__graph__');
 document.getElementById('goallink').onclick=()=>{if(gUnlocked())go('__goal__');};
+document.getElementById('noteslink').onclick=function(e){e.preventDefault();toggleNotesNav();};
 window.addEventListener('message',function(e){if(e&&e.data&&e.data.goto){var g=e.data.goto;if(DOCS[g])go(g);else{go('__overview__');setTimeout(function(){var el=cardEls[g];if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},80);}}});
-renderOverview();buildNav();updateGoalNav();
+renderOverview();buildNav();initNotesNav();updateGoalNav();
 go(location.hash?decodeURIComponent(location.hash.slice(1)):'__overview__');
 window.addEventListener('hashchange',()=>{go(location.hash?decodeURIComponent(location.hash.slice(1)):'__overview__');});
 </script></body></html>"""
