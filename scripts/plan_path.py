@@ -4,12 +4,13 @@
 """
 plan_path.py — 为每个大类生成「知识站」单页 <大类>/<大类>-路线图.html：
   · 顶栏固定 + 左侧目录固定 + 内容区内切换（单页，不跳独立页）
-  · 起始视图=学习路线图（依赖分层/当前位置/下一步Top3/扩展）
+  · 起始视图=学习路线（依赖分层/当前位置/下一步Top3/扩展）
   · 点击已完成/学习中概念 → 同页切换到该概念文档（md 总结 + 视觉模型图 + 右侧"本文导读"锚点）
   · 全局统一主题，默认浅色
 全量路线数据写入 _system/roadmap_data.json。
 """
 import os, sys, re, json, html as H, argparse, datetime, shutil
+from urllib.parse import urlsplit, urlunsplit
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from build_graph import collect, global_vault_path, DONE_STATUS, IN_PROGRESS_STATUS, is_done
 
@@ -19,6 +20,32 @@ def desc_of(note):
         if s.startswith('>'):
             return s.lstrip('> ').strip()
     return ''
+
+MILESTONES = [(25, '地基初建'), (50, '脉络贯通'), (75, '收束聚拢'), (100, '图谱闭合')]
+
+def progress_hint(learned, total):
+    if total <= 0:
+        cur_pct = next_pct = 0
+    else:
+        cur_pct = int(learned / total * 100 + 0.5)
+        next_pct = int(min(total, learned + 1) / total * 100 + 0.5)
+    cur_seg = cur_pct // 10
+    next_seg = next_pct // 10
+    if next_pct > cur_pct and next_seg <= cur_seg:
+        next_seg = min(10, cur_seg + 1)
+    bar = '[' + ('█' * cur_seg) + ('▒' * max(0, next_seg - cur_seg)) + ('░' * max(0, 10 - next_seg)) + ']'
+    milestone = ''
+    for pct, label in MILESTONES:
+        if cur_pct < pct <= next_pct:
+            milestone = label
+            break
+    return {
+        'current_pct': cur_pct,
+        'next_pct': next_pct,
+        'bar': bar,
+        'milestone': milestone,
+        'line': '当前知识图谱覆盖率%d%%，下一站完成可达%d%%。' % (cur_pct, next_pct),
+    }
 
 def plan_category(items, goal=None, all_notes=None):
     index = {t.lower(): t for t in items}
@@ -102,6 +129,7 @@ def plan_category(items, goal=None, all_notes=None):
                       'track': n.get('track', ''),
                       'groups': n.get('groups', []), 'related': sorted(neighbors[t])})
     return {'order': order, 'current': current, 'next3': next3,
+            'progress_hint': progress_hint(len(learned), len(items)),
             'learned': len(learned), 'total': len(items),
             'max_stage': max(stage.values()) if stage else 0}
 
@@ -112,6 +140,7 @@ _BARE = re.compile(r'&lt;(https?://[^&]+)&gt;')
 _BOLD = re.compile(r'\*\*([^*]+)\*\*')
 _CODE = re.compile(r'`([^`]+)`')
 _WIKI = re.compile(r'\[\[([^\]|]+?)(?:\|[^\]]+)?\]\]')
+_URL = re.compile(r'https?://[^\s<>)\]"\']+')
 
 def _href(u):
     return u.strip().replace(' ', '%20')   # 路径里的空格转义，保证相对链接可点
@@ -150,7 +179,8 @@ def _read_asset(vault, rel):
     if not os.path.isfile(ap):
         return ''
     try:
-        return open(ap, encoding='utf-8').read()
+        with open(ap, encoding='utf-8') as f:
+            return f.read()
     except Exception:
         return ''
 
@@ -196,8 +226,207 @@ def _nested_list(items):
         html.append('</li></ul>'); stack.pop()
     return ''.join(html)
 
-def md_render(body, linkset):
+_VIZ_MARKER = '[[__GEWU_VIZ_BLOCK__]]'
+
+def _inject_viz_block(body, viz_html):
+    """把知识图解插进「## 视觉模型图」小节，优先放在 Mermaid 源之后。"""
+    if not viz_html:
+        return body, False
+    lines = body.split('\n')
+    head = None
+    for i, line in enumerate(lines):
+        if re.match(r'^##\s+.*视觉模型图', line.strip()):
+            head = i
+            break
+    if head is None:
+        return body, False
+    end = len(lines)
+    for i in range(head + 1, len(lines)):
+        if re.match(r'^##\s+', lines[i].strip()):
+            end = i
+            break
+    insert_at = head + 1
+    for i in range(head + 1, end):
+        if 'Mermaid 源' in lines[i] or 'Mermaid源' in lines[i]:
+            insert_at = i + 1
+            break
+    else:
+        for i in range(head + 1, end):
+            if 'SVG：' in lines[i] or 'SVG:' in lines[i]:
+                insert_at = i
+                break
+    lines.insert(insert_at, _VIZ_MARKER)
+    return '\n'.join(lines), True
+
+def _clean_url(u):
+    return str(u or '').strip().rstrip('.,;，。；、）)]}>')
+
+def _norm_url(u):
+    u = _clean_url(u)
+    if not u:
+        return ''
+    try:
+        p = urlsplit(u)
+        scheme = (p.scheme or 'https').lower()
+        netloc = p.netloc.lower()
+        path = p.path.rstrip('/') or '/'
+        return urlunsplit((scheme, netloc, path, p.query, ''))
+    except Exception:
+        return u.rstrip('/').lower()
+
+def _urls(text):
+    return [_clean_url(x) for x in _URL.findall(text or '') if _clean_url(x)]
+
+def _h2_bounds(lines, needle):
+    start = None
+    for i, line in enumerate(lines):
+        if re.match(r'^##\s+', line.strip()) and needle in line:
+            start = i
+            break
+    if start is None:
+        return None
+    end = len(lines)
+    for i in range(start + 1, len(lines)):
+        if re.match(r'^##\s+', lines[i].strip()):
+            end = i
+            break
+    return start, end
+
+def _remove_h2_section(body, needle):
+    lines = body.split('\n')
+    b = _h2_bounds(lines, needle)
+    if not b:
+        return body
+    start, end = b
+    return '\n'.join(lines[:start] + lines[end:]).strip()
+
+def _ref_label(block, url, concept):
+    for line in block:
+        s = re.sub(r'^\s*[-*]\s+', '', line).strip()
+        if not s or s.startswith('<') or '参考资料' in s:
+            continue
+        s = re.sub(r'链接\s*[:：]\s*', '', s)
+        s = _URL.sub('', s).replace('<>', '').strip(' -—:：，,')
+        s = re.sub(r'\[([^\]]+)\]\(\s*\)', r'\1', s).strip()
+        if s:
+            return s[:90]
+    host = urlsplit(url).netloc or url
+    return '%s · %s' % (concept, host)
+
+def _ref_excerpt(block):
+    kept = []
+    for line in block:
+        s = _URL.sub('', line).replace('<>', '').rstrip()
+        if s.strip():
+            kept.append(s)
+    return '\n'.join(kept[:6]).strip()
+
+def _reference_blocks(body):
+    lines = body.split('\n')
+    b = _h2_bounds(lines, '参考资料')
+    if not b:
+        return []
+    start, end = b
+    section = lines[start + 1:end]
+    blocks, cur = [], []
+    for line in section:
+        st = line.strip()
+        if st.startswith('<details') or st.startswith('<summary') or st == '</details>':
+            continue
+        if re.match(r'^\s*[-*]\s+', line) and (len(line) - len(line.lstrip(' ')) == 0):
+            if cur:
+                blocks.append(cur)
+            cur = [line]
+        elif cur:
+            cur.append(line)
+        elif _urls(line):
+            blocks.append([line])
+    if cur:
+        blocks.append(cur)
+    return [b for b in blocks if _urls('\n'.join(b))]
+
+def collect_reference_entries(items):
+    seen, refs = set(), []
+    for title in sorted(items.keys()):
+        note = items[title]
+        body = note.get('body') or ''
+        blocks = _reference_blocks(body)
+        for src in (note.get('sources') or []):
+            if _urls(str(src)):
+                blocks.append(['- ' + str(src)])
+        for block in blocks:
+            text = '\n'.join(block)
+            us = _urls(text)
+            if not us:
+                continue
+            url = us[0]
+            key = _norm_url(url)
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            refs.append({
+                'concept': title,
+                'url': url,
+                'key': key,
+                'label': _ref_label(block, url, title),
+                'excerpt': _ref_excerpt(block),
+            })
+    return refs
+
+def _vision_key(block):
+    text = '\n'.join(block)
+    us = [_norm_url(u) for u in _urls(text)]
+    us = [u for u in us if u]
+    if us:
+        return ['url:' + u for u in us]
+    for line in block:
+        m = re.match(r'^###\s+(.*)$', line.strip())
+        if m:
+            t = re.sub(r'^\d+[.、]\s*', '', m.group(1)).strip().lower()
+            t = re.sub(r'\s+', ' ', t)
+            if t:
+                return ['title:' + t]
+    text = re.sub(r'\s+', ' ', text).strip().lower()
+    return ['text:' + text[:80]] if text else []
+
+def _dedupe_vision_section(body, reference_keys, seen_vision):
+    lines = body.split('\n')
+    b = _h2_bounds(lines, '视野拓展')
+    if not b:
+        return body
+    start, end = b
+    section = lines[start:end]
+    h3s = [i for i, line in enumerate(section) if re.match(r'^###\s+', line.strip())]
+    if not h3s:
+        return body
+    prefix = section[:h3s[0]]
+    suffix = []
+    blocks = []
+    for pos, h in enumerate(h3s):
+        nxt = h3s[pos + 1] if pos + 1 < len(h3s) else len(section)
+        blocks.append(section[h:nxt])
+    if blocks:
+        last = blocks[-1]
+        while last and (not last[-1].strip() or last[-1].strip() == '</details>'):
+            suffix.insert(0, last.pop())
+    kept = []
+    for block in blocks:
+        keys = _vision_key(block)
+        url_keys = {k[4:] for k in keys if k.startswith('url:')}
+        if url_keys & reference_keys:
+            continue
+        if any(k in seen_vision for k in keys):
+            continue
+        kept.extend(block)
+        for k in keys:
+            seen_vision.add(k)
+    if not kept:
+        return '\n'.join(lines[:start] + lines[end:]).strip()
+    return '\n'.join(lines[:start] + prefix + kept + suffix + lines[end:]).strip()
+
+def md_render(body, linkset, raw_blocks=None):
     # 去掉首个 # 标题（与 dochead 重复）
+    raw_blocks = raw_blocks or {}
     lines = body.split('\n')
     while lines and not lines[0].strip():
         lines.pop(0)
@@ -211,6 +440,8 @@ def md_render(body, linkset):
         st = lines[i].strip()
         if not st:
             flush(); i += 1; continue
+        if st in raw_blocks:
+            flush(); out.append(raw_blocks[st]); i += 1; continue
         # 折叠块：<details> / <summary> 透传（不转义），并记录折叠深度
         if st.startswith('<details'):
             flush(); out.append('<details class="lp-fold">'); fold[0] += 1; i += 1; continue
@@ -271,6 +502,35 @@ def stars(k):
     k = max(0, min(5, int(k or 0)))
     return '★' * k + '<span class="se">' + '★' * (5 - k) + '</span>'
 
+def build_reference_doc(refs, linkset):
+    if refs:
+        cards = []
+        for r in refs:
+            body = ''
+            if r.get('excerpt'):
+                body = '<div class="refbody">%s</div>' % md_render(r['excerpt'], linkset)[0]
+            cards.append(
+                '<div class="refcard">'
+                '<div class="reft">%s</div>'
+                '<div class="refmeta">来自：<a class="xref" data-go="%s">%s</a></div>'
+                '<a class="refurl" href="%s" target="_blank" rel="noopener">打开来源</a>'
+                '%s</div>' % (
+                    H.escape(r['label']),
+                    H.escape(r['concept']),
+                    H.escape(r['concept']),
+                    H.escape(r['url']),
+                    body,
+                )
+            )
+        inner = ('<blockquote>领域参考资料库汇总所有概念学习中用过的可查链接；相同 URL 只保留一次。</blockquote>'
+                 '<div class="refgrid">%s</div>' % ''.join(cards))
+    else:
+        inner = '<blockquote>暂无带 URL 的参考资料。只有可打开链接会进入这里。</blockquote>'
+    doc = ('<div class="dochead"><h1>参考资料</h1>'
+           '<span class="badge light">领域参考资料库</span></div><div class="md">%s</div>' % inner)
+    toc = '<div class="tochd">本文导读</div><div class="tnote">领域参考资料库</div>'
+    return {'doc': doc, 'toc': toc, 'title': '参考资料'}
+
 def build_docs(cat, items, plan, vault):
     # 出文档页的判据＝已完成/学习中且有正文；待学占位不出页。
     _STUDIED = (DONE_STATUS, IN_PROGRESS_STATUS)
@@ -282,20 +542,27 @@ def build_docs(cat, items, plan, vault):
     cdir = os.path.join(vault, cat)
     _BADGE = {DONE_STATUS: ('ok', '✓ 已完成'), IN_PROGRESS_STATUS: ('light', '◌ 学习中')}
     docs = {}
+    refs = collect_reference_entries(items)
+    reference_keys = {r['key'] for r in refs}
+    seen_vision = set()
     for o in studied:
         t = o['title']; note = items[t]; st = (note.get('status') or '').strip()
-        body_html, toc = md_render(note['body'], linkset)
         viz_html = _viz_block(cat, note, vault)
+        clean_body = _remove_h2_section(note['body'], '参考资料')
+        clean_body = _dedupe_vision_section(clean_body, reference_keys, seen_vision)
+        body, viz_in_body = _inject_viz_block(clean_body, viz_html)
+        body_html, toc = md_render(body, linkset, {_VIZ_MARKER: viz_html} if viz_in_body else None)
         _bc, _bt = _BADGE.get(st, ('ok', st))
         if note.get('track'):
             _bt += ' · ' + note.get('track')
         doc = ('<div class="dochead"><h1>%s <span class="stars">%s</span></h1>'
                '<span class="badge %s">%s</span></div>%s<div class="md">%s</div>'
-               % (H.escape(t), stars(o['importance']), _bc, _bt, viz_html, body_html))
+               % (H.escape(t), stars(o['importance']), _bc, _bt, '' if viz_in_body else viz_html, body_html))
         toc_html = '<div class="tochd">本文导读</div>' + (''.join(
             '<a class="tl lv%d" data-id="%s">%s</a>' % (x['lvl'], x['id'], x['text']) for x in toc)
             or '<div class="tnote">（无小节）</div>')
-        docs[t] = {'doc': doc, 'toc': toc_html}
+        docs[t] = {'doc': doc, 'toc': toc_html, 'title': t}
+    docs['__refs__'] = build_reference_doc(refs, linkset)
     return docs
 
 def _load_config(vault):
@@ -385,7 +652,7 @@ def main():
         html = _apply_config(html, cfg)
         # 生成门：有概念间边或已有学习文档时出路线图；否则只留 .md，清理旧文件
         _has_edge = any(o.get('prereqs') or o.get('related') for o in r.get('order', []))
-        _has_docs = bool(docs)
+        _has_docs = any(k != '__refs__' for k in docs)
         _rp = os.path.join(cdir, c + '-路线图.html')
         if _has_edge or _has_docs:
             open(_rp, 'w', encoding='utf-8').write(html)
@@ -425,17 +692,23 @@ font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI","PingFa
 background:var(--panel);border-bottom:1px solid var(--line);backdrop-filter:blur(18px) saturate(180%)}
 .topbar .brand{font-weight:700;font-size:15px;letter-spacing:-.01em}
 .topbar .crumb{color:var(--muted);font-size:13px}
-.topbar .crumb b{color:var(--text)}
+.topbar .crumb b{color:var(--muted);font-weight:400}
 .topbar .crumb .cl{color:var(--accent);cursor:pointer}
 .topbar .sp{flex:1}
 .themebtn{background:var(--solid);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:13px;cursor:pointer}
 .shell{display:grid;grid-template-columns:252px minmax(0,1fr)}
 #sidenav{position:sticky;top:49px;align-self:start;height:calc(100vh - 49px);overflow-y:auto;padding:16px 12px;border-right:1px solid var(--line)}
 #sidenav .navlink{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;color:var(--text);text-decoration:none;font-size:13.5px;cursor:pointer;transition:background .2s,color .2s}
+#sidenav .navico{width:20px;flex:0 0 20px;text-align:center;font-size:16px;line-height:1}
+#sidenav .navtxt{min-width:0}
 #sidenav .navlink:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
 #sidenav .navlink.active{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent);font-weight:600}
 #sidenav .navlink.todo{color:var(--muted)}
 #sidenav .navlink.home{font-weight:600;margin-bottom:6px}
+#noteslink{margin-top:6px}
+#noteslink.collapsed{color:var(--muted)}
+#notesbody{margin:0 0 6px 20px;padding:2px 0 2px 12px;border-left:1px solid var(--line)}
+#notesbody.collapsed{display:none}
 #sidenav .nd{width:8px;height:8px;border-radius:50%;flex:none}
 #sidenav .navgroup{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:12px 8px 4px}
 #sidenav .navgrp{margin-bottom:2px}
@@ -444,8 +717,10 @@ background:var(--panel);border-bottom:1px solid var(--line);backdrop-filter:blur
 #sidenav .navhd2 .chev{font-size:10px;color:var(--muted);transition:transform .2s;flex:none}
 #sidenav .navgrp:not(.collapsed) .navhd2 .chev{transform:rotate(90deg)}
 #sidenav .navhd2 .gc{margin-left:auto;font-size:11px;font-weight:500;color:var(--muted);background:color-mix(in srgb,var(--muted) 14%,transparent);border-radius:10px;padding:1px 7px}
-#sidenav .navgbody{overflow:hidden;padding-left:6px}
+#sidenav .navgbody{overflow:hidden;padding-left:8px}
 #sidenav .navgrp.collapsed .navgbody{display:none}
+#sidenav .navlink.refnav{margin-top:8px;border-top:1px solid var(--line);border-radius:0;padding-top:12px}
+#sidenav .navlink.refnav .nd{background:var(--accent)}
 main{min-width:0}
 #overview{padding:26px 32px 80px;max-width:1060px}
 h1.ttl{font-size:26px;font-weight:700;letter-spacing:-.02em;margin:0 0 6px}
@@ -481,6 +756,11 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 .next,.exp{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:18px;backdrop-filter:blur(18px) saturate(180%)}
 .next .item{padding:8px 0;border-bottom:1px solid var(--line)}.next .item:last-child{border:none}
 .next .item b{color:var(--accent);font-size:15px;font-weight:600}.next .why{font-size:12px;color:var(--muted);margin-top:2px}
+.learnprog{background:linear-gradient(180deg,color-mix(in srgb,var(--green) 10%,var(--panel)),var(--panel));border:1px solid color-mix(in srgb,var(--green) 32%,var(--line));border-radius:14px;padding:14px;margin-bottom:18px;backdrop-filter:blur(18px) saturate(180%)}
+.learnprog .lh{font-size:12px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:6px}
+.learnprog .ll{font-size:14px;color:var(--text);line-height:1.5}
+.learnprog .lb{margin-top:8px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--green);font-size:13px;white-space:nowrap}
+.learnprog .lm{margin-top:7px;font-size:13px;color:var(--accent);font-weight:700}
 .exp .e{padding:7px 0;border-bottom:1px solid var(--line)}.exp .e:last-child{border:none}
 .exp .e .nm{color:var(--text);font-size:15px;font-weight:600}.exp .e .why{font-size:13px;color:var(--muted);margin-top:3px;line-height:1.5}
 .stars .se{color:var(--starempty)}
@@ -492,6 +772,13 @@ transition:transform .3s cubic-bezier(.4,0,.2,1),box-shadow .3s,border-color .3s
 .dochead .stars{color:var(--yellow);font-size:15px}
 .badge.ok{font-size:12px;font-weight:600;border-radius:12px;padding:3px 10px;color:var(--green);background:color-mix(in srgb,var(--green) 14%,transparent);border:1px solid color-mix(in srgb,var(--green) 40%,var(--line))}
 .badge.light{font-size:12px;font-weight:600;border-radius:12px;padding:3px 10px;color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line))}
+.refgrid{display:grid;gap:12px;margin-top:14px}
+.refcard{border:1px solid var(--line);border-radius:10px;background:var(--solid);padding:13px 14px}
+.reft{font-weight:700;font-size:15px;margin-bottom:5px}
+.refmeta{color:var(--muted);font-size:12.5px;margin-bottom:8px}
+.refurl{display:inline-flex;align-items:center;color:var(--accent);font-weight:600;text-decoration:none;border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);border-radius:8px;padding:5px 10px;margin-bottom:8px}
+.refbody{color:var(--muted);font-size:13px}
+.refbody ul{margin-top:4px;margin-bottom:0}
 .md{font-size:15px;line-height:1.78;margin-top:14px}
 .md h2{font-size:18px;margin:1.5em 0 .4em;scroll-margin-top:64px}.md h3{font-size:15px;margin:1.2em 0 .3em;color:var(--muted);scroll-margin-top:64px}
 .md p{margin:.6em 0}.md ul,.md ol{margin:.5em 0;padding-left:1.4em}.md li{margin:.25em 0}
@@ -592,10 +879,10 @@ font-family:"Kaiti SC","STKaiti","KaiTi","Songti SC","SimSun",serif;letter-spaci
   <button class="themebtn" id="themebtn">◑ 深</button>
 </div>
 <div class="shell">
-  <nav id="sidenav"><a class="navlink home" id="homelink">📋 学习路线图</a><a class="navlink home" id="graphlink">🕸 知识图谱</a><a class="navlink home" id="goallink">🎯 目标规划</a><div id="navbody"></div></nav>
+  <nav id="sidenav"><a class="navlink home" id="homelink"><span class="navico">📋</span><span class="navtxt">学习路线</span></a><a class="navlink home" id="graphlink"><span class="navico">🕸</span><span class="navtxt">知识图谱</span></a><a class="navlink home" id="goallink"><span class="navico">🎯</span><span class="navtxt">目标规划</span></a><a class="navlink home" id="noteslink" aria-expanded="true"><span class="navico">📝</span><span class="navtxt">学习笔记</span></a><div id="notesbody"><div id="navbody"></div></div></nav>
   <main>
     <section id="overview">
-      <h1 class="ttl">学习路线图 <span style="color:var(--muted);font-weight:400;font-size:15px">Learning Roadmap</span></h1>
+      <h1 class="ttl">学习路线 <span style="color:var(--muted);font-weight:400;font-size:15px">Learning Roadmap</span></h1>
       <div class="sub" id="sub"></div>
       <div class="bar">
         <span class="goal" id="goal" style="display:none"></span>
@@ -648,10 +935,12 @@ function renderOverview(){
     tl.appendChild(card);
   });
   const nx=document.getElementById('next');
+  const ph=R.progress_hint||{current_pct:pct,next_pct:pct,bar:'[░░░░░░░░░░]',line:'当前知识图谱覆盖率'+pct+'%，下一站完成可达'+pct+'%。',milestone:''};
+  nx.innerHTML='<div class="learnprog"><div class="lh">学习进度</div><div class="ll">'+ph.line+'</div><div class="lb">'+ph.bar+' '+ph.current_pct+'% → '+ph.next_pct+'%</div>'+(ph.milestone?'<div class="lm">里程碑：'+ph.milestone+'</div>':'')+'</div>';
   if(!R.next3.length){const ip=R.order.find(o=>o.status==='学习中');
     const cur=R.order.find(o=>o.title===R.current&&o.status!=='已完成');
-    nx.innerHTML='<div class="why">'+(ip?'先续学习中断点：'+ip.title+' →':(cur?'继续学当前概念：'+cur.title+' →':'本领域已全部完成 →'))+'</div>';}
-  else nx.innerHTML=R.next3.map(t=>{const it=R.order.find(o=>o.title===t);
+    nx.innerHTML+='<div class="why">'+(ip?'先续学习中断点：'+ip.title+' →':(cur?'继续学当前概念：'+cur.title+' →':'本领域已全部完成 →'))+'</div>';}
+  else nx.innerHTML+=R.next3.map(t=>{const it=R.order.find(o=>o.title===t);
     const sh=it.prereqs.length?('衔接 '+it.prereqs.join('、')):'关联当前知识';
     return '<div class="item"><b>'+t+'</b> <span style="color:var(--yellow);font-size:12px">'+stars(it.importance)+'</span>'
       +'<div class="why">'+(it.desc||'')+'</div><div class="why">'+sh+'</div></div>';}).join('');
@@ -659,6 +948,23 @@ function renderOverview(){
   ex.innerHTML=list.length?list.slice().sort((a,b)=>b.importance-a.importance).map(e=>
     '<div class="e"><div class="nm">'+e.name+' <span style="color:var(--yellow);font-size:12px">'+stars(e.importance)+'</span></div>'
     +'<div class="why">'+(e.why||'')+'</div></div>').join(''):'<div class="why">（暂未配置扩展方向）</div>';
+}
+function toggleNotesNav(){
+  const body=document.getElementById('notesbody'),link=document.getElementById('noteslink');
+  if(!body||!link)return;
+  const collapsed=body.classList.toggle('collapsed');
+  link.classList.toggle('collapsed',collapsed);
+  link.setAttribute('aria-expanded',collapsed?'false':'true');
+  try{localStorage.setItem('notes_coll_'+CAT,collapsed?'1':'0');}catch(e){}
+}
+function initNotesNav(){
+  const body=document.getElementById('notesbody'),link=document.getElementById('noteslink');
+  if(!body||!link)return;
+  let collapsed=false;
+  try{collapsed=localStorage.getItem('notes_coll_'+CAT)==='1';}catch(e){}
+  body.classList.toggle('collapsed',collapsed);
+  link.classList.toggle('collapsed',collapsed);
+  link.setAttribute('aria-expanded',collapsed?'false':'true');
 }
 function buildNav(){
   const nb=document.getElementById('navbody');nb.innerHTML='';
@@ -681,6 +987,12 @@ function buildNav(){
     hd.onclick=function(){wrap.classList.toggle('collapsed');};
     wrap.appendChild(hd);wrap.appendChild(body);nb.appendChild(wrap);
   });
+  if(DOCS.__refs__){
+    const a=document.createElement('a');a.className='navlink refnav';a.dataset.k='__refs__';
+    a.innerHTML='<span class="nd refs"></span>参考资料';
+    a.onclick=function(e){e.stopPropagation();go('__refs__');};
+    nb.appendChild(a);
+  }
 }
 function setActive(v){document.querySelectorAll('#sidenav .navlink').forEach(x=>x.classList.toggle('active',x.dataset.k===v));
   document.getElementById('homelink').classList.toggle('active',v==='__overview__');document.getElementById('graphlink').classList.toggle('active',v==='__graph__');document.getElementById('goallink').classList.toggle('active',v==='__goal__');}
@@ -721,7 +1033,7 @@ function gProgress(){
   return {prog:prog,ptier:ptier,tc:gTierColor(ptier)};
 }
 function gTierColor(t){return t==='高'?'var(--green)':(t==='中'?'var(--yellow)':'var(--red)');}
-function updateGoalNav(){var gl=document.getElementById('goallink');if(!gl)return;gl.classList.toggle('disabled',!gUnlocked());gl.textContent=gIsDone()?'🎯 目标完成 ✅':'🎯 目标规划';}
+function updateGoalNav(){var gl=document.getElementById('goallink');if(!gl)return;gl.classList.toggle('disabled',!gUnlocked());var txt=gl.querySelector('.navtxt');if(txt)txt.textContent=gIsDone()?'目标完成 ✅':'目标规划';}
 function renderGoal(){
   var b=document.getElementById('goalbody');
   if(!gHasGoal()){var _nx=(R&&R.next3)||[],_sg=(GOAL&&GOAL.suggested_goals)||[],_n=(R&&R.order)?R.order.length:0,_has=(_nx.length||_sg.length);var _h='<div class="gempty"><h1>🎯 目标规划</h1><p>这个领域你已攒了 <b>'+_n+'</b> 个知识点。'+(_has?'<b>定个目标</b>我就能联网对照真实要求、按优先级帮你规划；<b>不定也行</b>——下面有通用下一步。':'')+'</p>';if(_sg.length)_h+='<div class="gh3">💡 你可能想要的目标（说一个，或自己定）</div><div class="grecs">'+_sg.map(function(s){return '<div class="grec"><span class="gp">🎯</span><div class="grn">'+fesc(s)+'</div></div>';}).join('')+'</div>';if(_nx.length)_h+='<div class="gh3">👉 不定目标也能继续 · 下一步建议</div><div class="grecs">'+_nx.map(function(t,i){return '<div class="grec"><span class="gp">'+(i+1)+'</span><div class="grn">'+fesc(t)+'</div></div>';}).join('')+'</div>';if(!_has)_h+='<div class="grec" style="border-color:var(--accent)"><span class="gp">👉</span><div class="grn">你已学的点都点亮了，<b>但还没有"待学"的下一站</b>。想继续学这个领域，跟我说<b>「接着学」</b>或<b>定个目标</b>，我就把下一段路线铺出来（先补几个"待学"节点，再给你下一站）。</div></div>';_h+='<p class="gref">想定目标直接告诉我（参考分类：应试 · 求职 · 分享 · 知识变现 · 自主学习 · 无目标(AI自主发散)）。</p></div>';b.innerHTML=_h;return;}
@@ -783,12 +1095,17 @@ function fesc(x){return (x==null?'':String(x)).replace(/&/g,'&amp;').replace(/</
 function initMermaid(){
   const blocks=[...document.querySelectorAll('#docview .mermaid')];
   if(!blocks.length)return;
-  function run(){try{mermaid.initialize({startOnLoad:false,theme:document.documentElement.dataset.theme==='dark'||document.documentElement.dataset.theme==='inkdark'?'dark':'default'});if(mermaid.run)mermaid.run({nodes:blocks});else mermaid.init(undefined,blocks);}catch(e){}}
+  function run(attempt){try{
+    mermaid.initialize({startOnLoad:false,theme:document.documentElement.dataset.theme==='dark'||document.documentElement.dataset.theme==='inkdark'?'dark':'default'});
+    blocks.forEach(function(b){b.removeAttribute('data-processed');});
+    var r=mermaid.run?mermaid.run({nodes:blocks}):mermaid.init(undefined,blocks);
+    Promise.resolve(r).catch(function(){if((attempt||0)<1)setTimeout(function(){run((attempt||0)+1);},160);});
+  }catch(e){if((attempt||0)<1)setTimeout(function(){run((attempt||0)+1);},160);}}
   if(window.mermaid){run();return;}
-  if(window.__mermaidLoading)return;
+  if(window.__mermaidLoading){setTimeout(initMermaid,160);return;}
   window.__mermaidLoading=true;
   const sources=['../assets/mermaid.min.js','assets/mermaid.min.js','https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js'];
-  function load(i){if(i>=sources.length)return;var s=document.createElement('script');s.src=sources[i];s.onload=function(){window.__mermaidLoading=false;run();};s.onerror=function(){load(i+1);};document.head.appendChild(s);}
+  function load(i){if(i>=sources.length){window.__mermaidLoading=false;return;}var s=document.createElement('script');s.src=sources[i];s.onload=function(){window.__mermaidLoading=false;run();};s.onerror=function(){load(i+1);};document.head.appendChild(s);}
   load(0);
 }
 function go(v){
@@ -799,13 +1116,13 @@ function go(v){
     const gf=document.getElementById('graphframe');if(!gf.src||gf.src==='about:blank'){gf.src=gf.dataset.src+'?theme='+theme();}else{try{gf.contentWindow.postMessage({theme:theme()},'*');}catch(e){}}
     setActive('__graph__');document.getElementById('crumb').innerHTML='/ <b>知识图谱</b>';location.hash=encodeURIComponent('__graph__');window.scrollTo(0,0);return;}
   if(v==='__overview__'||!DOCS[v]){ov.style.display='';dw.style.display='none';setActive('__overview__');
-    document.getElementById('crumb').innerHTML='/ <b>学习路线图</b>';location.hash='';window.scrollTo(0,0);return;}
+    document.getElementById('crumb').innerHTML='/ <b>学习路线</b>';location.hash='';window.scrollTo(0,0);return;}
   ov.style.display='none';dw.style.display='grid';
+  const dt=(DOCS[v]&&DOCS[v].title)||v;
   document.getElementById('docview').innerHTML=DOCS[v].doc;
   document.getElementById('toc').innerHTML=DOCS[v].toc;
   bindXref();bindToc();initMermaid();setActive(v);
-  document.getElementById('crumb').innerHTML='/ <span class="cl" id="crmhome">学习路线图</span> / <b>'+v+'</b>';
-  const ch=document.getElementById('crmhome');if(ch)ch.onclick=()=>go('__overview__');
+  document.getElementById('crumb').innerHTML='/ <span>学习笔记</span> / <b>'+dt+'</b>';
   location.hash=encodeURIComponent(v);window.scrollTo(0,0);
 }
 const THEMES=[["light","◐ 浅"],["dark","◑ 深"],["ink","❖ 宣纸"],["inkdark","❖ 夜墨"]];
@@ -819,8 +1136,9 @@ setTheme(document.documentElement.dataset.theme||'light');
 document.getElementById('homelink').onclick=()=>go('__overview__');
 document.getElementById('graphlink').onclick=()=>go('__graph__');
 document.getElementById('goallink').onclick=()=>{if(gUnlocked())go('__goal__');};
+document.getElementById('noteslink').onclick=function(e){e.preventDefault();toggleNotesNav();};
 window.addEventListener('message',function(e){if(e&&e.data&&e.data.goto){var g=e.data.goto;if(DOCS[g])go(g);else{go('__overview__');setTimeout(function(){var el=cardEls[g];if(el)el.scrollIntoView({behavior:'smooth',block:'center'});},80);}}});
-renderOverview();buildNav();updateGoalNav();
+renderOverview();buildNav();initNotesNav();updateGoalNav();
 go(location.hash?decodeURIComponent(location.hash.slice(1)):'__overview__');
 window.addEventListener('hashchange',()=>{go(location.hash?decodeURIComponent(location.hash.slice(1)):'__overview__');});
 </script></body></html>"""

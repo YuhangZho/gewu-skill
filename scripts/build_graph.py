@@ -106,7 +106,8 @@ def collect(vault):
                 continue
             path = os.path.join(root, fn)
             try:
-                text = open(path, encoding='utf-8').read()
+                with open(path, encoding='utf-8') as f:
+                    text = f.read()
             except Exception:
                 continue
             fm, body = parse_frontmatter(text)
@@ -142,6 +143,9 @@ def collect(vault):
             groups = fm.get('groups') or []
             if isinstance(groups, str):
                 groups = [groups]
+            sources = fm.get('sources') or []
+            if isinstance(sources, str):
+                sources = [sources]
             links = [m.strip() for m in WIKILINK.findall(body)]
             links += [str(r).strip() for r in related]
             notes[title] = {
@@ -152,6 +156,7 @@ def collect(vault):
                       'viz_source': str(viz_source).strip(),
                       'viz_chart': str(viz_chart).strip(),
                       'groups': [str(g).strip() for g in groups],
+                      'sources': [str(s).strip() for s in sources if str(s).strip()],
                 'prereqs': [str(p).strip() for p in prereqs],
                 'aliases': [str(a).strip() for a in aliases],
                 'links': links, 'body': body.strip(),
@@ -266,7 +271,7 @@ padding:6px 10px;border-radius:8px;font-size:12px;color:var(--muted)}
 #meta{margin-left:auto;font-size:12px;color:var(--muted);background:var(--hudbg);
 padding:6px 10px;border-radius:8px;pointer-events:auto}
 #panel{position:relative;flex:0 0 var(--panel-width,420px);width:var(--panel-width,420px);
-min-width:320px;max-width:min(70vw,900px);background:var(--panel);border-left:1px solid var(--line);
+min-width:320px;max-width:calc(100vw - 220px);background:var(--panel);border-left:1px solid var(--line);
 padding:22px;overflow:auto;display:none}
 #panel.open{display:block}
 #panelresizer{position:absolute;left:-6px;top:0;width:12px;height:100%;cursor:col-resize;
@@ -446,7 +451,8 @@ document.getElementById('close').onclick=()=>{panel.classList.remove('open');foc
 const panelResizer=document.getElementById('panelresizer');
 function panelBounds(){
   const vw=window.innerWidth||document.documentElement.clientWidth||1200;
-  return {min:320,max:Math.min(900,Math.max(360,Math.floor(vw*.7)))};
+  const minGraph=220;
+  return {min:320,max:Math.max(360,vw-minGraph)};
 }
 function setPanelWidth(px){
   const b=panelBounds();
@@ -557,7 +563,8 @@ def global_vault_path():
     try:
         gp = os.path.join(os.path.expanduser('~'), '.gewu', 'glb_vault_path.json')
         if os.path.isfile(gp):
-            vp = (json.load(open(gp, encoding='utf-8')) or {}).get('vault_path')
+            with open(gp, encoding='utf-8-sig') as f:
+                vp = (json.load(f) or {}).get('vault_path')
             if vp and os.path.isdir(vp):
                 return vp
     except Exception:
