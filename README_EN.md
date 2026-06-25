@@ -1,12 +1,10 @@
-# 格物 · Gewu
+# Gewu · 格物
 
-**a Feynman-method learning system · 费曼学习系统**
+**Turn "asking AI when I have a question" into a learning map with a compass.**
 
-> *"Investigate one thing to reach true knowledge — if you can explain it clearly, you truly understand it."*
+> Study one thing thoroughly to attain true knowledge: if you can explain it clearly, you truly understand it.
 
 <video src="./assets/merged_output.mp4" controls=""></video>
-
-
 
 [![License](https://img.shields.io/github/license/YuhangZho/gewu-skill?style=flat-square&color=green)](./LICENSE)
 [![Stars](https://img.shields.io/github/stars/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/stargazers)
@@ -18,167 +16,254 @@
 [![skills.sh](https://skills.sh/b/YuhangZho/gewu-skill)](https://skills.sh/YuhangZho/gewu-skill)
 ![Runtime](https://img.shields.io/badge/Runtime-Claude_·_ChatGPT_·_Codex_·_Cursor_·_Kimi-8957e5?style=flat-square)
 
-<br>
+[Who it's for](#who-its-for) · [What you'll get](#what-youll-get) · [How to start](#how-to-start) · [Installation](#installation) · [Directory structure](#directory-structure)
 
-**格物 · Gewu — stop bookmarking and streak-chasing; learn things deeply until your knowledge starts to «breathe».**
-
-<br>
-
-Gewu learns *with* you through Feynman-style Q&A, until you truly get it.<br>
-
-Bring your goal, and learn for real use.<br>
-
-Automatically get a knowledge graph + learning path + goal planning.
-
-[What it does](#what-it-does) · [Quick start](#quick-start) · [Install](#install) · [License](#license)
-
-<br>
-
-**Other languages / 其他语言:**
-
-[中文](README.md) · [English](README_EN.md) · [Español](README_ES.md)
-
-<br>
+**Other Languages:** [简体中文](README.md) · [Español](README_ES.md)
 
 ---
 
-## What it does
+## Who it's for
 
-**Gewu guides you to "say a concept out loud" — not to take notes that gather dust, but to truly understand it, and to grow everything you've learned into a "breathing" knowledge site.**
+Gewu fits these learning scenarios:
 
-- **Domain layer**: when you start a new domain, it first gives an overview, builds a knowledge map, asks for your **specific learning goal**, and plans a learning path by "dependencies first + importance".
-- **Concept layer (Feynman 5 steps)**: `set the target → ignite (ask → pull authoritative sources online → first draft) → visual modeling (AI chooses chart type + structure diagram) → explain to a layperson → backtrack where you get stuck → triple verification → save`.
-- **What gets saved**: each concept you master = a Markdown note + a structured visual model diagram (Mermaid/SVG) + entry into the knowledge graph / roadmap / doc site.
-- **Goal loop**: set a concrete goal (e.g. "apply for an AI application engineer role", "CET-4"), and the AI agent computes your match and gaps against real requirements and plans the next step; once a goal is met, the matching knowledge starts to "breathe".
+- **Want to systematically enter a new field**, but don't know what to learn first or next.
+- **Have a clear goal**, such as an exam, role transfer, onboarding to a project, or getting into a business line, and need to know what you're missing.
+- **Fragmented "learning"** — turn the time spent waiting for AI replies into bite-sized learning of interesting things.
+- **Understand it when you ask AI, but forget it a few days later**, never truly mastering it.
 
-Core belief: **output forces input — you only understand it if you can explain it clearly.**
+Gewu acts like a learning host: it helps you set a goal, designs a knowledge map and learning path around that goal, guides you step by step to explain concepts clearly, and finally settles your learning outcomes locally.
 
 ---
 
-## Quick start
+## What you'll get
 
-Say to your AI assistant (any of these triggers it):
+### A learning route you can actually walk
 
-- "Learn **AI** with Gewu"
-- "Teach me **Token** with the Feynman method"
-- "I'm starting **C language** — plan a learning path for me"
-- "What should I learn next / where am I?"
-- "My goal is to **get hired as an AI engineer** — analyze the gap between me and that goal"
+Just say "I want to learn AI / C / Amazon operations / CET-4", and Gewu will first ask you why, then break down a route based on your goal. It's not an encyclopedia table of contents, but "what to learn now, why learn it first, what to learn next".
 
-The assistant hosts your learning through the 5 steps in `SKILL.md`, refreshing the knowledge site every time you master a concept. To refresh manually:
+### A set of truly digested notes
 
-```bash
-python scripts/build_graph.py                  # refresh the knowledge graph
-python scripts/plan_path.py --goal interview   # refresh the knowledge site (--goal optional)
+Each concept isn't just the AI explanation saved — it's the result of what you learned:
+
+- A one-sentence positioning
+- Core takeaways
+- Stuck points and corrections
+- Boundaries, common pitfalls
+- Flowcharts and reference views when needed
+
+### A local knowledge station
+
+What you've learned turns into openable local pages:
+
+- **Learning roadmap**: see where you are now and what the next stop is.
+- **Knowledge graph**: see how concepts connect.
+- **Goal planning**: see how far your current knowledge is from the goal.
+- **Concept documents**: every concept you've learned can be reviewed.
+
+<video src="./assets/学习站示例.mp4" controls=""></video>
+
+### Pick up where you left off, even mid-concept
+
+Gewu records your learning state. If a concept isn't finished, next time you can continue from where you got stuck, without re-explaining the background.
+
+### Fragmented knowledge won't get lost
+
+If today you only want to figure out one small concept, you can still record it. Once similar content accumulates, Gewu will organize them into the corresponding field, growing into routes and graphs.
+
+---
+
+## How to start
+
+Say one sentence to your AI:
+
+```text
+Learn AI with Gewu
 ```
 
-Open `知识库/<category>/<category>-路线图.html` in your browser to explore (light by default; cycle through **light / dark / Xuan-paper / Night-ink** themes at top right — the last two are a Chinese ink-wash style).
+You can also say:
+
+```text
+I'm new to C, help me plan a learning route.
+```
+
+```text
+Help me understand the field of Amazon operations.
+```
+
+```text
+Guide me to learn how to keep my wife happy and smoothly get more pocket money.
+```
+
+On first use, Gewu will ask where your knowledge base is stored. Pick a long-term location, for example:
+
+```text
+D:\gewu-vault
+```
+
+After that, the same knowledge base will keep accumulating — no need to set it up each time (path can be manually adjusted in ~/.gewu/glb_vault_path.json).
 
 ---
 
-## Install
+## How it learns
 
-Gewu follows the open Agent Skills standard (a single `SKILL.md` at the root) and runs in any skills-compatible agent.
+Gewu's core actions are simple:
 
-### Requirements
+1. **Ask the goal first**: learning it for an exam, interview, role transfer, project onboarding, or pure interest.
+2. **Lay out the route**: arrange the learning order by prerequisite dependencies and importance.
+3. **Learn concept by concept**: pose questions, explain, ask you to restate, probe the stuck points.
+4. **Pass validation, then close**: only when you can rephrase it, know when it breaks, is it considered learned.
+5. **Settle immediately**: update notes, roadmap, knowledge graph, and goal progress.
+
+Core belief: **Output drives input. If you can explain it clearly, you truly understand it.**
+
+---
+
+## Installation
+
+Gewu follows the open Agent Skills standard and can be used in agents that support skills.
+
+### Environment check
 
 ```bash
 python --version
 ```
 
-- Shows `Python 3.x` → jump to "Install" below.
-- Command not found → install it:
-  - **Windows** → [python.org/downloads](https://www.python.org/downloads/), check *Add Python to PATH* during setup
-  - **macOS** → `brew install python` or via python.org
-  - **Linux** → `sudo apt install python3`
+- Shows `Python 3.x`: environment is ready, you can continue installing the skill.
+- Command not found: install Python first. (PS: you can use it without Python, but the knowledge base can't be persisted.)
+  - Windows: [python.org/downloads](https://www.python.org/downloads/), check `Add Python to PATH` during installation
+  - macOS: `brew install python`
+  - Linux: `sudo apt install python3`
 
-### Option 1: one-click (recommended, cross-agent)
+### Option 1: One-click install
 
-Just tell the agent you're using:
+Say to the agent you're using:
 
+```text
+Help me install this skill: https://github.com/YuhangZho/gewu-skill
 ```
-Install this skill for me: https://github.com/YuhangZho/gewu-skill
-```
 
-Or run from the command line:
+Or run via command line:
 
 ```bash
 npx skills add YuhangZho/gewu-skill
 ```
 
-### Option 2: manual install (clone into the right directory)
+### Option 2: Manual install
 
-<details><summary>Expand: skills directory per agent</summary>
+Copy the `gewu-skill` folder to the corresponding agent path.
 
-| Agent | skills directory (global) |
+<details>
+<summary>Expand: skills directories for common agents</summary>
+
+| Agent | skills directory |
 |---|---|
-| Claude Code | `~/.claude/skills/gewu/` |
-| Claude desktop / Cowork | **Settings → Capabilities**, add the `gewu-skill` folder, or save the bundled `gewu-skill.skill` |
-| Codex | `~/.codex/skills/gewu/` |
-| Cursor | `~/.cursor/skills/gewu/` |
-| OpenClaw | `~/.openclaw/skills/gewu/` |
-| Qoder | `~/.qoder/skills/gewu/` |
-| Kimi Code CLI | `~/.config/agents/skills/gewu/` |
-| 50+ other agents | paths vary, see the [vercel-labs/skills support table](https://github.com/vercel-labs/skills#supported-agents) |
-
+| Claude Code | `~/.claude/skills/` |
+| Claude Desktop / Cowork | Settings → Capabilities, add the `gewu` folder |
+| Codex | `~/.codex/skills/` |
+| Cursor | `~/.cursor/skills/` |
+| Kimi Work | `~/AppData/Roaming/kimi-desktop/daimon-share/daimon/skills/` |
+| Marvis | `~/AppData/Roaming/Tencent/Marvis/User/xx/skills/custom/` |
+| Trae CN | `~/.trae-cn/skills/` |
+| Qoder CN | `~/.qoder-cn/skills/` |
+| OpenClaw | `~/.openclaw/skills/` |
+| Other 50+ agents | Paths vary, see [vercel-labs/skills support table](https://github.com/vercel-labs/skills#supported-agents) |
 
 </details>
 
 ---
 
-## Customize
+## Customize appearance
 
-### Appearance/behavior switch → `config.json`
+The knowledge station defaults to light, and also supports dark, xuan-paper, and night-ink themes. Copy the template to your knowledge base:
 
-Just want to change the accent color or default light/dark, without touching code? Copy the template to `知识库/_system/config.json`, **set `enabled` to `true`**, then change the parameters (everything falls back to built-in defaults while it's off):
-
-```jsonc
-// 知识库/_system/config.json   (template: templates/config.example.json)
-{
-  "enabled": true,                  // ← master switch, default false
-  "theme_default": "dark",          // light / dark / ink (Xuan paper) / inkdark (Night ink)
-  "accent": { "light": "#34c759", "dark": "#30d158" }  // accent: buttons / links / active card
-}
+```text
+your-knowledge-base/_system/config.json
 ```
 
-Re-run `python scripts/plan_path.py` — the knowledge site now defaults to dark with a green accent.
+Template at:
 
-`enabled: false` (default) ignores the above and uses the built-in light + blue.
+```text
+templates/config.example.json
+```
+
+After editing, regenerate the knowledge station to take effect.
 
 ---
 
-## Structure
+## Directory structure
 
-```
+```text
 gewu-skill/
-  SKILL.md                      main skill file (flow + triggers + visual spec)
-  README.md                     this file
-  templates/concept-template.md concept note template
-  scripts/render_viz.py         model.json → Mermaid/SVG structure diagram
-  scripts/build_graph.py        scan notes → knowledge graph HTML (force-directed, dependency arrows, goal breathing)
-  scripts/plan_path.py          → knowledge-site single page (roadmap / concept docs / goal planning / embedded graph)
-  assets/hero.svg               promo animation
+  SKILL.md                      Skill main file
+  templates/concept-template.md Concept note template
+  scripts/render_viz.py         Generate concept structure diagrams
+  scripts/build_graph.py        Generate knowledge graph
+  scripts/plan_path.py          Generate knowledge station
+  scripts/set_goal.py           Write goals and refresh pages
+  assets/merged_output.mp4      Demo video
 ```
 
-Generated in your learning directory after a run (example):
+After running, your knowledge base looks roughly like this:
 
+```text
+gewu-vault/
+  AI/
+    Token.md
+    Context.md
+    AI-roadmap.html
+    AI-knowledge-graph.html
+    _viz/
+      Token.model.json
+      Token.mmd
+      Token.svg
+    _transcript/
+      Token.jsonl
+  fragment/
+    small-concepts-learned-on-the-fly.md
+  _system/
+    graph_data.json
+    roadmap_data.json
+    goals.json
+    config.json
 ```
-知识库/
-  知识图谱.html               global overview
-  AI/                         one category
-    概念.md                   one note per concept
-    _viz/概念.model.json      structured visual model written by the AI
-    _viz/概念.mmd             Mermaid source generated by the script
-    _viz/概念.svg             optional generated structure diagram
-    AI-知识图谱.html          this category's graph
-    AI-路线图.html            knowledge-site single page (entry; roadmap / graph / goal planning / concept docs)
-  _system/                    machine data (graph_data / roadmap_data / domains / goals.json)
-```
 
+---
 
+## Suitable and not suitable
 
-## Credits
-The promo animation draft was made with the [huashu-design](https://github.com/alchaincyf/huashu-design) skill.
+Suitable for:
+
+- Systematically learning a field
+- Settling AI conversations into reviewable knowledge
+- Filling knowledge gaps around a goal
+- Using the Feynman method to check whether you truly understand
+
+Not suitable for:
+
+- Replacing question banks, Anki, or mass drilling
+- Replacing real project practice
+- Asking about the weather, etc.
+
+---
+
+## Acknowledgements
+
+The promotional animation draft was designed and produced using the [huashu-design](https://github.com/alchaincyf/huashu-design) skill package.
+
+## Author
+
+Yuhang, an embedded coder currently distilling 🧪 himself.
+
+* The fragmented-knowledge fusion effect still needs further testing;
+
+* Although Marvis, Trae, and Qoder are supported, real-world testing shows mediocre results — the models may suffer from attention drift (2026.6.26).
+
+* Cursor (auto) / Codex (5.5) / Claude (opus 4.8) / Kimi (K2.6) generation results have been verified as passing.
+
+<p align="left">
+  <img src="./assets/wechat-search.png" alt="WeChat Search: Zhou Yuhang" width="620" style="display:block;margin-left:0;margin-right:auto;">
+</p>
 
 ## License
-**MIT** © 2026 宇航 ([@YuhangZho](https://github.com/YuhangZho)) — see [`LICENSE`](./LICENSE). Free to use, modify, distribute, and use commercially, as long as the copyright and license notice are retained.
+
+**MIT** © 2026 Yuhang ([@YuhangZho](https://github.com/YuhangZho)). Free to use and modify, just keep the copyright and license notice.

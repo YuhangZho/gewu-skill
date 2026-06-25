@@ -1,12 +1,10 @@
 # 格物 · Gewu
 
-**a Feynman-method learning system · 费曼学习系统**
+**把“有问题问 AI ”，变成一张有罗盘的学习地图。**
 
-> *「格一物，致真知 —— 能讲清楚，才算真懂。」*
+> 格一物，致真知：能讲清楚，才算真懂。
 
 <video src="./assets/merged_output.mp4" controls=""></video>
-
-
 
 [![License](https://img.shields.io/github/license/YuhangZho/gewu-skill?style=flat-square&color=green)](./LICENSE)
 [![Stars](https://img.shields.io/github/stars/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/stargazers)
@@ -18,168 +16,254 @@
 [![skills.sh](https://skills.sh/b/YuhangZho/gewu-skill)](https://skills.sh/YuhangZho/gewu-skill)
 ![Runtime](https://img.shields.io/badge/Runtime-Claude_·_ChatGPT_·_Codex_·_Cursor_·_Kimi-8957e5?style=flat-square)
 
-<br>
+[适合谁](#适合谁) · [你会得到什么](#你会得到什么) · [怎么开始](#怎么开始) · [安装](#安装) · [目录结构](#目录结构)
 
-**格物 · Gewu——不再收藏打卡，学透知识「呼吸」起来。**
-
-<br>
-
-格物 · Gewu 费曼问答的方式，陪你真正学透。<br>
-
-带上你的目标，学以致用。<br>
-
-自动得到 知识图谱 + 学习路线 + 目标规划。
-
-[它做什么](#它做什么--what-it-does) · [怎么用](#怎么用--quick-start) · [安装](#安装--install) · [许可](#许可--license)
-
-<br>
-
-**其他语言 / Other Languages:**
-
-[English](README_EN.md) · [Español](README_ES.md)
-
-<br>
+**其他语言 / Other Languages:** [English](README_EN.md) · [Español](README_ES.md)
 
 ---
 
-## 格物做了什么 · What it does
+## 适合谁
 
-**格物引导你把一个概念“描绘出来”——不是记录收藏，是让你真懂，把知识学「活」。**
+格物适合这些学习场景：
 
-- **领域层**：开始一个新领域时，先总览、建知识地图、问你**学习目标**、按"依赖优先 + 重要度"规划学习路线。
-- **概念层（费曼五步）**：立靶 → 启动·点火(设问→联网取权威源→初稿) → 视觉建模(AI 判型 + 知识图解) → 讲给外行 → 卡壳回溯 → 三重验证(含边界补丁) → 落盘。
-- **落盘产物**：每个学透的概念 = 一篇 Markdown 笔记 + 一张知识图解(Mermaid/SVG，固定 Unicode 图标) + 进入知识图谱/路线图/文档站。
-- **目标闭环**：设定具体目标（如「应聘 AI 应用开发工程师」「CET-4」），AI Agent对照真实要求算出匹配度与缺口、规划下一步；每完成一个概念，节点点亮并进入「呼吸」态。
+- **想系统进入一个新领域**，但不知道先学什么、后学什么。
+- **有明确目标**，比如考试、转岗、项目上手、业务入门，需要知道自己差哪块。
+- **碎片化“学习”，把等AI回复的时间利用起来**，碎花化“学习”些有趣的东西。
+- **问 AI 当下懂了，过几天又忘**，没有真正学懂。
 
-核心信条：**输出倒逼输入 —— 能讲清楚才算懂**。
+格物像一个学习主持人：陪你先定目标，围绕目标设计知识地图和学习路径，引导你一步步把概念讲清楚，最后学习成果自动沉淀本地。
 
 ---
 
-## 使用 · Quick start
+## 你会得到什么
 
-对你的 AI 助手说：
+### 一条能走的学习路线
 
-- 「用格物学 **AI**」
-- 「用费曼法学 **Token**」 / "Teach me **X** with the Feynman method"
-- 「我开始学 **C 语言**，帮我规划学习路线」
-- 「接下来该学什么 / 我走到哪了」
-- 「我的目标是 **应聘 AI 工程师**，分析我和目标的差距」
+你只要说“我想学 AI / C 语言 / 亚马逊运营 / CET-4”，格物会先问你为什么学，再按目标拆出路线。不是百科目录，而是“现在学什么、为什么先学它、下一步学什么”。
 
-助手会按 `SKILL.md` 的五步主持你学习，每学透一个概念就刷新知识站。手动刷新：
+### 一套真正消化过的笔记
 
-```bash
-python scripts/build_graph.py            # 刷新知识图谱
-python scripts/plan_path.py --goal 面试  # 刷新知识站(--goal 可选)
-python scripts/audit_learning_order.py   # 审计笔记是否显式提到路线后置概念
+每个概念不是只保存 AI 的解释，而是保存你学会后的结果：
+
+- 一句话定位
+- 核心收获
+- 卡壳点和修正
+- 边界、易错点
+- 必要时附流程图和视野参考
+
+### 一个本地知识站
+
+学完的内容会变成可打开的本地页面：
+
+- **学习路线图**：看当前走到哪、下一站是什么。
+- **知识图谱**：看概念之间如何连接。
+- **目标规划**：看当前知识离目标还差什么。
+- **概念文档**：每个学过的概念都能回看。
+
+<video src="./assets/学习站示例.mp4" controls=""></video>
+
+### 学到一半也能回来接着学
+
+格物会记录学习状态。一个概念没学完，下次可以从卡住的位置继续，不用重新解释背景。
+
+### 零散知识不会丢
+
+今天只想弄明白一个小概念，也可以先记下。同类内容攒多以后，格物会把它们整理进对应领域，长成路线和图谱。
+
+---
+
+## 怎么开始
+
+对你的 AI 说一句：
+
+```text
+用格物学 AI
 ```
 
-用浏览器打开 `知识库/<大类>/<大类>-路线图.html` 即可浏览(默认浅色；右上角可在 **浅 / 深 / 宣纸 / 夜墨** 四套主题间循环切换，后两套为中国水墨风)。
+也可以这样说：
+
+```text
+我初学 C 语言，帮我规划学习路线。
+```
+
+```text
+帮我弄明白亚马逊运营这个领域。
+```
+
+```text
+带我学习如何哄老婆开心并顺利拿到更多零花钱
+```
+
+首次使用时，格物会先问你知识库存在哪里。选一个长期保存的位置即可，比如：
+
+```text
+D:\gewu-vault
+```
+
+之后同一个知识库会持续积累，不用每次重新设置( 可在 ~/.gewu/glb_vault_path.json 手动调整路径)。
 
 ---
 
-## 安装 · Install
+## 它怎么学
 
-格物遵循开放的 Agent Skills 标准，可在任意 skills 兼容的 agent 里运行。
+格物的核心动作很简单：
 
-### 环境检查 · Requirements
+1. **先问目标**：学它为了考试、面试、转岗、项目上手，还是纯兴趣。
+2. **再铺路线**：按前置依赖和重要度安排学习顺序。
+3. **逐个概念学**：设问、讲解、让你复述、追问卡壳点。
+4. **通过验证再收尾**：能换说法讲清楚，知道什么时候会失效，才算学完。
+5. **立刻沉淀**：更新笔记、路线图、知识图谱和目标进度。
+
+核心信条：**输出倒逼输入。能讲清楚，才算真懂。**
+
+---
+
+## 安装
+
+格物遵循开放的 Agent Skills 标准，可在支持 skills 的 agent 里使用。
+
+### 环境检查
 
 ```bash
 python --version
 ```
 
-- 显示 `Python 3.x` → 跳到下面「安装」。
-- 提示找不到命令 → 装一下：
-  - **Windows** → [python.org/downloads](https://www.python.org/downloads/)，安装时勾选 *Add Python to PATH*
-  - **macOS** → `brew install python` 
-  - **Linux** → `sudo apt install python3`
+- 显示 `Python 3.x`：满足环境，可继续安装skill。
+- 提示找不到命令：先安装 Python。(PS：不装python也可直接用，但无法落盘知识库)
+  - Windows：[python.org/downloads](https://www.python.org/downloads/)，安装时勾选 `Add Python to PATH`
+  - macOS：`brew install python`
+  - Linux：`sudo apt install python3`
 
-### 方式一：一键安装（推荐，跨 agent）
+### 方式一：一键安装
 
-对你正在用的 agent 直接说：
+对你正在用的 agent 说：
 
-```
+```text
 帮我安装这个 skill：https://github.com/YuhangZho/gewu-skill
 ```
 
-或命令行执行
+或命令行执行：
 
 ```bash
 npx skills add YuhangZho/gewu-skill
 ```
 
+### 方式二：手动安装
 
+复制`gewu-skill` 文件夹到对应Agent路径
 
-### 方式二：手动安装（clone 到对应目录）
+<details>
+<summary>展开：常见 agent 的 skills 目录</summary>
 
-<details><summary>展开：各 agent 的 skills 目录</summary>
-
-| Agent | skills 目录（global） |
+| Agent | skills 目录 |
 |---|---|
-| Claude Code | `~/.claude/skills/gewu/` |
-| Claude 桌面端 / Cowork | **设置 → Capabilities** 添加 `gewu-skill` 文件夹，或保存随附的 `gewu-skill.skill` |
-| Codex | `~/.codex/skills/gewu/` |
-| Cursor | `~/.cursor/skills/gewu/` |
-| OpenClaw | `~/.openclaw/skills/gewu/` |
-| Qoder | `~/.qoder-cn/skills/gewu/`  // 对应Qoder CN |
-| Trae | `~/.trae-cn/skills/gewu/`    //对应 Trae CN |
-| Kimi Work | `~/AppData/Roaming/kimi-desktop/daimon-share/daimon/skills`  // 复制后需要重启 |
+| Claude Code | `~/.claude/skills/` |
+| Claude 桌面端 / Cowork | 设置 → Capabilities，添加 `gewu` 文件夹 |
+| Codex | `~/.codex/skills/` |
+| Cursor | `~/.cursor/skills/` |
+| Kimi Work | `~/AppData/Roaming/kimi-desktop/daimon-share/daimon/skills/` |
+| Marvis | `~/AppData/Roaming/Tencent/Marvis/User/xx/skills/custom/` |
+| Trae CN | `~/.trae-cn/skills/` |
+| Qoder CN | `~/.qoder-cn/skills/` |
+| OpenClaw | `~/.openclaw/skills/` |
 | 其他 50+ agent | 路径各异，见 [vercel-labs/skills 支持表](https://github.com/vercel-labs/skills#supported-agents) |
 
 </details>
 
 ---
 
-## 自定义 · Customize
+## 自定义外观
 
-### 外观/行为开关 → `config.json`
+知识站默认浅色，也支持深色、宣纸、夜墨主题。复制模板到你的知识库：
 
-只想换主题色或默认明暗、又不想动代码？把模板复制到 `知识库/_system/config.json`，**`enabled` 改成 `true`** 再改参数（关着时一切走内置默认）：
-
-```jsonc
-// 知识库/_system/config.json   （模板：templates/config.example.json）
-{
-  "enabled": true,                  // ← 总开关，默认 false
-  "theme_default": "dark",          // light(浅) / dark(深) / ink(宣纸) / inkdark(夜墨)
-  "accent": { "light": "#34c759", "dark": "#30d158" }  // 强调色：按钮/链接/当前卡片
-}
+```text
+你的知识库/_system/config.json
 ```
 
-重跑 `python scripts/plan_path.py` —— 知识站默认就变深色、强调色变绿。
+模板见：
 
-`enabled: false`（默认）则忽略以上、用内置浅色 + 蓝。
-
-## 目录结构 · Structure
-
+```text
+templates/config.example.json
 ```
+
+改完后重新生成知识站即可生效。
+
+---
+
+## 目录结构
+
+```text
 gewu-skill/
-  SKILL.md                      技能主文件(流程 + 触发词 + 视觉规范)
-  README.md                     本文件
+  SKILL.md                      技能主文件
   templates/concept-template.md 概念笔记模板
-  scripts/render_viz.py         model.json → Mermaid/SVG 知识图解
-  scripts/build_graph.py        扫描笔记 → 知识图谱 HTML(力导向、依赖箭头、完成节点呼吸)
-  scripts/plan_path.py          → 知识站单页(路线图/概念文档/目标规划/嵌入图谱)
-  assets/merged_output.mp4      宣传动画
+  scripts/render_viz.py         生成概念结构图
+  scripts/build_graph.py        生成知识图谱
+  scripts/plan_path.py          生成知识站
+  scripts/set_goal.py           写入目标并刷新页面
+  assets/merged_output.mp4      演示视频
 ```
 
-运行后在你的学习目录生成(示例)：
+运行后，你的知识库大致长这样：
 
+```text
+gewu-vault/
+  AI/
+    Token.md
+    Context.md
+    AI-路线图.html
+    AI-知识图谱.html
+    _viz/
+      Token.model.json
+      Token.mmd
+      Token.svg
+    _transcript/
+      Token.jsonl
+  fragment/
+    临时学过的小概念.md
+  _system/
+    graph_data.json
+    roadmap_data.json
+    goals.json
+    config.json
 ```
-知识库/
-  知识图谱.html               全局总览
-  AI/                         一个大类
-    概念.md                   每个概念一篇笔记
-    _viz/概念.model.json      AI 填写的结构化视觉模型
-    _viz/概念.mmd             脚本生成的 Mermaid 源
-    _viz/概念.svg             可选生成的知识图解
-    AI-知识图谱.html          该类图谱
-    AI-路线图.html            知识站单页(起始页；含路线图/图谱/目标规划/概念文档)
-  _system/                    机器数据(graph_data/roadmap_data/domains/goals.json)
-```
 
+---
 
+## 适合与不适合
 
-## 致谢 · Credits
+适合：
+
+- 系统学习一个领域
+- 把 AI 对话沉淀成可复习知识
+- 围绕目标补齐知识缺口
+- 用费曼法检查自己是否真懂
+
+不适合：
+
+- 替代题库、Anki 或大量刷题
+- 替代真实项目练习
+- 问天气等
+
+---
+
+## 致谢
+
 宣传动画初稿采用 [huashu-design](https://github.com/alchaincyf/huashu-design) 的技能包设计制作。
 
-## 许可 · License
-**MIT** © 2026 宇航 ([@YuhangZho](https://github.com/YuhangZho)) — 见 [`LICENSE`](./LICENSE)。可自由使用、修改、分发、商用，保留版权与许可声明即可。
+## 作者
+
+宇航，正在蒸馏🧪自己的嵌入式码农。
+
+* 零散知识融合效果还有待进一步测试；
+
+* 虽然支持Marvis,Trae,Qoder 但实测效果一般, 可能模型存在注意力漂移的问题(2026.6.26)。
+
+* Cursor(auto)/Codex(5.5)/Claude(opus4.8)/Kimi(K2.6) 生成效果验证通过。
+
+<p align="left">
+  <img src="./assets/wechat-search.png" alt="微信搜一搜：周宇航" width="620" style="display:block;margin-left:0;margin-right:auto;">
+</p>
+
+## 许可
+
+**MIT** © 2026 宇航 ([@YuhangZho](https://github.com/YuhangZho))。可自由使用、修改，保留版权与许可声明即可。

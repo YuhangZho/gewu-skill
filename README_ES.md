@@ -1,12 +1,10 @@
-# 格物 · Gewu
+# Gewu · 格物
 
-**a Feynman-method learning system · sistema de aprendizaje con el método Feynman**
+**Convierte "preguntarle a la IA cuando tengo una duda" en un mapa de aprendizaje con brújula.**
 
-> *"Investiga una cosa para alcanzar el conocimiento verdadero — si puedes explicarlo con claridad, lo entiendes de verdad."*
+> Estudia una cosa a fondo para alcanzar el verdadero conocimiento: si puedes explicarla con claridad, de verdad la entiendes.
 
 <video src="./assets/merged_output.mp4" controls=""></video>
-
-
 
 [![License](https://img.shields.io/github/license/YuhangZho/gewu-skill?style=flat-square&color=green)](./LICENSE)
 [![Stars](https://img.shields.io/github/stars/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/stargazers)
@@ -18,167 +16,254 @@
 [![skills.sh](https://skills.sh/b/YuhangZho/gewu-skill)](https://skills.sh/YuhangZho/gewu-skill)
 ![Runtime](https://img.shields.io/badge/Runtime-Claude_·_ChatGPT_·_Codex_·_Cursor_·_Kimi-8957e5?style=flat-square)
 
-<br>
+[Para quién es](#para-quién-es) · [Qué obtendrás](#qué-obtendrás) · [Cómo empezar](#cómo-empezar) · [Instalación](#instalación) · [Estructura de directorios](#estructura-de-directorios)
 
-**格物 · Gewu — deja de guardar y coleccionar; aprende de verdad hasta que tu conocimiento empiece a «respirar».**
-
-<br>
-
-Gewu aprende *contigo* mediante preguntas y respuestas al estilo Feynman, hasta que lo entiendes de verdad.<br>
-
-Trae tu objetivo y aprende para aplicarlo.<br>
-
-Obtén automáticamente un grafo de conocimiento + ruta de aprendizaje + planificación de objetivos.
-
-[Qué hace](#qué-hace) · [Inicio rápido](#inicio-rápido) · [Instalación](#instalación) · [Licencia](#licencia)
-
-<br>
-
-**Otros idiomas / 其他语言:**
-
-[中文](README.md) · [English](README_EN.md) · [Español](README_ES.md)
-
-<br>
+**Otros idiomas:** [简体中文](README.md) · [English](README_EN.md)
 
 ---
 
-## Qué hace
+## Para quién es
 
-**Gewu te guía a "decir un concepto en voz alta" — no para tomar notas que acumulan polvo, sino para entenderlo de verdad y hacer crecer todo lo aprendido hasta convertirlo en un sitio de conocimiento que «respira».**
+Gewu encaja en estos escenarios de aprendizaje:
 
-- **Capa de dominio**: al empezar un dominio nuevo, primero da una visión general, construye un mapa de conocimiento, te pregunta tu **objetivo de aprendizaje concreto** y planifica una ruta por "dependencias primero + importancia".
-- **Capa de concepto (5 pasos Feynman)**: `fijar el objetivo → encender (preguntar → traer fuentes autorizadas de la web → primer borrador) → modelado visual (la IA elige el tipo de gráfico + diagrama estructural) → explicar a un lego → retroceder donde te atascas → triple verificación → guardar`.
-- **Lo que se guarda**: cada concepto que dominas = una nota Markdown + un diagrama visual estructurado (Mermaid/SVG) + entrada en el grafo de conocimiento / hoja de ruta / sitio de documentos.
-- **Ciclo de objetivos**: define un objetivo concreto (p. ej. "postular a ingeniero de aplicaciones de IA", "CET-4"), y el agente de IA calcula tu coincidencia y tus brechas frente a los requisitos reales y planifica el siguiente paso; al cumplir un objetivo, el conocimiento correspondiente empieza a "respirar".
+- **Quieres entrar sistemáticamente en un campo nuevo**, pero no sabes qué estudiar primero ni después.
+- **Tienes un objetivo claro**, como un examen, cambio de rol, incorporarte a un proyecto o iniciarte en un negocio, y necesitas saber qué te falta.
+- **"Aprendizaje" fragmentado** — aprovecha el tiempo de espera de las respuestas de la IA para aprender cositas interesantes en trocitos.
+- **Entiendes al preguntar a la IA, pero lo olvidas a los días**, sin llegar a dominarlo de verdad.
 
-Creencia central: **la salida fuerza la entrada — solo lo entiendes si puedes explicarlo con claridad.**
+Gewu actúa como un presentador de aprendizaje: te acompaña a fijar un objetivo, diseña un mapa de conocimiento y una ruta de aprendizaje en torno a ese objetivo, te guía paso a paso para explicar los conceptos con claridad y, finalmente, asienta tus resultados de aprendizaje en local.
 
 ---
 
-## Inicio rápido
+## Qué obtendrás
 
-Dile a tu asistente de IA (cualquiera de estas frases lo activa):
+### Una ruta de aprendizaje que puedes recorrer
 
-- "Aprende **IA** con Gewu"
-- "Enséñame **Token** con el método Feynman"
-- "Estoy empezando con el **lenguaje C** — planifícame una ruta de aprendizaje"
-- "¿Qué debería aprender ahora / dónde voy?"
-- "Mi objetivo es **conseguir trabajo como ingeniero de IA** — analiza la brecha entre yo y ese objetivo"
+Solo di "quiero aprender IA / C / operaciones en Amazon / CET-4", y Gewu primero te preguntará por qué, y luego desglosará una ruta según tu objetivo. No es un índice de enciclopedia, sino "qué estudiar ahora, por qué estudiarlo primero, qué estudiar después".
 
-El asistente conduce tu aprendizaje con los 5 pasos de `SKILL.md` y actualiza el sitio de conocimiento cada vez que dominas un concepto. Para actualizar manualmente:
+### Un conjunto de notas realmente digeridas
 
-```bash
-python scripts/build_graph.py                   # actualiza el grafo de conocimiento
-python scripts/plan_path.py --goal entrevista   # actualiza el sitio de conocimiento (--goal opcional)
+Cada concepto no guarda solo la explicación de la IA, sino el resultado de lo que aprendiste:
+
+- Un posicionamiento en una frase
+- Aprendizajes clave
+- Puntos de bloqueo y correcciones
+- Límites, errores comunes
+- Diagramas de flujo y referencias visuales cuando hace falta
+
+### Una estación de conocimiento local
+
+Lo que has aprendido se convierte en páginas locales abribles:
+
+- **Hoja de ruta de aprendizaje**: ve dónde estás ahora y cuál es la siguiente parada.
+- **Grafo de conocimiento**: ve cómo se conectan los conceptos.
+- **Planificación de objetivos**: ve a qué distancia está tu conocimiento actual del objetivo.
+- **Documentos de conceptos**: cada concepto que has aprendido se puede repasar.
+
+<video src="./assets/学习站示例.mp4" controls=""></video>
+
+### Puedes retomar donde lo dejaste, incluso a medias
+
+Gewu registra el estado del aprendizaje. Si un concepto no se terminó, la próxima vez puedes continuar desde donde te atascaste, sin volver a explicar el contexto.
+
+### El conocimiento disperso no se pierde
+
+Si hoy solo quieres entender un concepto pequeño, también puedes registrarlo. Cuando se acumule contenido similar, Gewu lo organizará en el campo correspondiente, haciéndolo crecer en rutas y grafos.
+
+---
+
+## Cómo empezar
+
+Dile una frase a tu IA:
+
+```text
+Aprende IA con Gewu
 ```
 
-Abre `知识库/<categoría>/<categoría>-路线图.html` en tu navegador para explorar (claro por defecto; alterna entre los temas **claro / oscuro / papel Xuan / tinta nocturna** arriba a la derecha — los dos últimos son un estilo de tinta china).
+También puedes decir:
+
+```text
+Soy nuevo en C, ayúdame a planificar una ruta de aprendizaje.
+```
+
+```text
+Ayúdame a entender el campo de las operaciones en Amazon.
+```
+
+```text
+Guíame para aprender cómo mantener contenta a mi esposa y conseguir más dinero de bolsillo sin problemas.
+```
+
+En el primer uso, Gewu te preguntará dónde se guarda tu base de conocimiento. Elige una ubicación a largo plazo, por ejemplo:
+
+```text
+D:\gewu-vault
+```
+
+Después, la misma base de conocimiento seguirá acumulándose — no hace falta configurarla cada vez (la ruta se puede ajustar manualmente en ~/.gewu/glb_vault_path.json).
+
+---
+
+## Cómo aprende
+
+Las acciones centrales de Gewu son simples:
+
+1. **Pregunta el objetivo primero**: estudiarlo para un examen, entrevista, cambio de rol, incorporación a un proyecto o puro interés.
+2. **Trazar la ruta**: ordena la secuencia de aprendizaje según dependencias previas e importancia.
+3. **Aprender concepto por concepto**: plantea preguntas, explica, te pide que lo reformules, indaga en los puntos de bloqueo.
+4. **Validar para cerrar**: solo cuando puedes explicarlo con otras palabras y sabes cuándo falla, se da por aprendido.
+5. **Asentar de inmediato**: actualiza notas, hoja de ruta, grafo de conocimiento y progreso del objetivo.
+
+Credo central: **La salida empuja a la entrada. Si puedes explicarlo con claridad, de verdad lo entiendes.**
 
 ---
 
 ## Instalación
 
-Gewu sigue el estándar abierto Agent Skills (un único `SKILL.md` en la raíz) y funciona en cualquier agente compatible con skills.
+Gewu sigue el estándar abierto de Agent Skills y puede usarse en agentes que soporten skills.
 
-### Requisitos
+### Comprobación del entorno
 
 ```bash
 python --version
 ```
 
-- Muestra `Python 3.x` → salta a "Instalación" más abajo.
-- Comando no encontrado → instálalo:
-  - **Windows** → [python.org/downloads](https://www.python.org/downloads/), marca *Add Python to PATH* durante la instalación
-  - **macOS** → `brew install python` o desde python.org
-  - **Linux** → `sudo apt install python3`
+- Muestra `Python 3.x`: el entorno está listo, puedes continuar instalando el skill.
+- Comando no encontrado: instala Python primero. (PD: puedes usarlo sin Python, pero la base de conocimiento no se podrá persistir.)
+  - Windows: [python.org/downloads](https://www.python.org/downloads/), marca `Add Python to PATH` durante la instalación
+  - macOS: `brew install python`
+  - Linux: `sudo apt install python3`
 
-### Opción 1: en un clic (recomendada, multi-agente)
+### Opción 1: Instalación con un clic
 
-Solo dile al agente que estés usando:
+Dile al agente que estés usando:
 
+```text
+Ayúdame a instalar este skill: https://github.com/YuhangZho/gewu-skill
 ```
-Instálame este skill: https://github.com/YuhangZho/gewu-skill
-```
 
-O ejecuta desde la línea de comandos:
+O ejecuta por línea de comandos:
 
 ```bash
 npx skills add YuhangZho/gewu-skill
 ```
 
-### Opción 2: instalación manual (clonar en el directorio correcto)
+### Opción 2: Instalación manual
 
-<details><summary>Desplegar: directorio de skills por agente</summary>
+Copia la carpeta `gewu-skill` a la ruta correspondiente del agente.
 
-| Agente | directorio de skills (global) |
+<details>
+<summary>Desplegar: directorios de skills para agentes comunes</summary>
+
+| Agente | directorio de skills |
 |---|---|
-| Claude Code | `~/.claude/skills/gewu/` |
-| Claude escritorio / Cowork | **Ajustes → Capabilities**, añade la carpeta `gewu-skill`, o guarda el `gewu-skill.skill` incluido |
-| Codex | `~/.codex/skills/gewu/` |
-| Cursor | `~/.cursor/skills/gewu/` |
-| OpenClaw | `~/.openclaw/skills/gewu/` |
-| Qoder | `~/.qoder/skills/gewu/` |
-| Kimi Code CLI | `~/.config/agents/skills/gewu/` |
-| Otros 50+ agentes | las rutas varían, consulta la [tabla de soporte de vercel-labs/skills](https://github.com/vercel-labs/skills#supported-agents) |
-
+| Claude Code | `~/.claude/skills/` |
+| Claude Escritorio / Cowork | Ajustes → Capabilities, añade la carpeta `gewu` |
+| Codex | `~/.codex/skills/` |
+| Cursor | `~/.cursor/skills/` |
+| Kimi Work | `~/AppData/Roaming/kimi-desktop/daimon-share/daimon/skills/` |
+| Marvis | `~/AppData/Roaming/Tencent/Marvis/User/xx/skills/custom/` |
+| Trae CN | `~/.trae-cn/skills/` |
+| Qoder CN | `~/.qoder-cn/skills/` |
+| OpenClaw | `~/.openclaw/skills/` |
+| Otros 50+ agentes | Las rutas varían, ver [tabla de soporte vercel-labs/skills](https://github.com/vercel-labs/skills#supported-agents) |
 
 </details>
 
 ---
 
-## Personalización
+## Personalizar la apariencia
 
-### Interruptor de apariencia/comportamiento → `config.json`
+La estación de conocimiento usa por defecto el tema claro, y también soporta los temas oscuro, papel xuan y tinta nocturna. Copia la plantilla a tu base de conocimiento:
 
-¿Solo quieres cambiar el color de acento o el modo claro/oscuro por defecto, sin tocar código? Copia la plantilla a `知识库/_system/config.json`, **pon `enabled` en `true`** y cambia los parámetros (mientras esté apagado, todo usa los valores por defecto):
-
-```jsonc
-// 知识库/_system/config.json   (plantilla: templates/config.example.json)
-{
-  "enabled": true,                  // ← interruptor maestro, por defecto false
-  "theme_default": "dark",          // light / dark / ink (papel Xuan) / inkdark (tinta nocturna)
-  "accent": { "light": "#34c759", "dark": "#30d158" }  // acento: botones / enlaces / tarjeta activa
-}
+```text
+tu-base-de-conocimiento/_system/config.json
 ```
 
-Vuelve a ejecutar `python scripts/plan_path.py` — el sitio de conocimiento ahora usa oscuro por defecto con acento verde.
+Plantilla en:
 
-`enabled: false` (por defecto) ignora lo anterior y usa el claro + azul incorporados.
+```text
+templates/config.example.json
+```
+
+Tras editar, regenera la estación de conocimiento para que surta efecto.
 
 ---
 
-## Estructura
+## Estructura de directorios
 
-```
+```text
 gewu-skill/
-  SKILL.md                      archivo principal del skill (flujo + disparadores + spec visual)
-  README.md                     este archivo
-  templates/concept-template.md plantilla de nota de concepto
-  scripts/render_viz.py         model.json → diagrama estructural Mermaid/SVG
-  scripts/build_graph.py        escanea notas → grafo de conocimiento HTML (dirigido por fuerzas, flechas de dependencia, "respiración" de objetivos)
-  scripts/plan_path.py          → sitio de conocimiento de una página (hoja de ruta / docs de conceptos / planificación de objetivos / grafo embebido)
-  assets/hero.svg               animación promocional
+  SKILL.md                      Archivo principal del skill
+  templates/concept-template.md Plantilla de nota de concepto
+  scripts/render_viz.py         Genera diagramas de estructura de conceptos
+  scripts/build_graph.py        Genera el grafo de conocimiento
+  scripts/plan_path.py          Genera la estación de conocimiento
+  scripts/set_goal.py           Escribe objetivos y refresca las páginas
+  assets/merged_output.mp4      Vídeo de demostración
 ```
 
-Generado en tu directorio de aprendizaje tras una ejecución (ejemplo):
+Tras ejecutar, tu base de conocimiento se ve más o menos así:
 
+```text
+gewu-vault/
+  AI/
+    Token.md
+    Context.md
+    AI-hoja-de-ruta.html
+    AI-grafo-de-conocimiento.html
+    _viz/
+      Token.model.json
+      Token.mmd
+      Token.svg
+    _transcript/
+      Token.jsonl
+  fragment/
+    conceptos-pequeños-aprendidos-al-vuelo.md
+  _system/
+    graph_data.json
+    roadmap_data.json
+    goals.json
+    config.json
 ```
-知识库/
-  知识图谱.html               visión general global
-  AI/                         una categoría
-    概念.md                   una nota por concepto
-    _viz/概念.model.json      modelo visual estructurado escrito por la IA
-    _viz/概念.mmd             fuente Mermaid generada por el script
-    _viz/概念.svg             diagrama estructural opcional
-    AI-知识图谱.html          grafo de esta categoría
-    AI-路线图.html            sitio de conocimiento de una página (entrada; hoja de ruta / grafo / objetivos / docs)
-  _system/                    datos de máquina (graph_data / roadmap_data / domains / goals.json)
-```
 
+---
 
+## Apto y no apto
 
-## Créditos
-El borrador de la animación promocional se hizo con el skill [huashu-design](https://github.com/alchaincyf/huashu-design).
+Apto para:
+
+- Aprender sistemáticamente un campo
+- Asentar conversaciones con la IA en conocimiento repasable
+- Cubrir lagunas de conocimiento en torno a un objetivo
+- Usar el método Feynman para comprobar si de verdad entiendes
+
+No apto para:
+
+- Sustituir a bancos de preguntas, Anki o hacer miles de ejercicios
+- Sustituir la práctica con proyectos reales
+- Preguntar por el tiempo, etc.
+
+---
+
+## Agradecimientos
+
+El borrador de la animación promocional se diseñó y produjo usando el paquete de skills [huashu-design](https://github.com/alchaincyf/huashu-design).
+
+## Autor
+
+Yuhang, un programador de sistemas embebidos destilándose 🧪 a sí mismo.
+
+* El efecto de fusión de conocimiento disperso aún necesita más pruebas;
+
+* Aunque se soportan Marvis, Trae y Qoder, las pruebas reales muestran resultados mediocres — los modelos pueden sufrir deriva de atención (2026.6.26).
+
+* Cursor (auto) / Codex (5.5) / Claude (opus 4.8) / Kimi (K2.6) resultados de generación verificados como correctos.
+
+<p align="left">
+  <img src="./assets/wechat-search.png" alt="Búsqueda WeChat: Zhou Yuhang" width="620" style="display:block;margin-left:0;margin-right:auto;">
+</p>
 
 ## Licencia
-**MIT** © 2026 宇航 ([@YuhangZho](https://github.com/YuhangZho)) — consulta [`LICENSE`](./LICENSE). Libre para usar, modificar, distribuir y uso comercial, siempre que se conserven el aviso de copyright y la licencia.
+
+**MIT** © 2026 Yuhang ([@YuhangZho](https://github.com/YuhangZho)). Libre de usar y modificar, solo conserva el aviso de copyright y licencia.
