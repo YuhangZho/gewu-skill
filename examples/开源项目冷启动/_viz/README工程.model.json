@@ -1,0 +1,33 @@
+{
+  "concept": "README工程",
+  "category": "开源项目冷启动",
+  "chart_type": "flow",
+  "title": "README 转化漏斗：从看到到 star 的 7 个节点",
+  "nodes": [
+    {"id": "n1", "label": "首屏(标题+标语+徽章)", "kind": "concept", "note": "30秒内传递价值"},
+    {"id": "n2", "label": "访客·相关性识别", "kind": "actor", "note": "跟我有关吗？"},
+    {"id": "n3", "label": "Demo/截图", "kind": "data", "note": "视觉证明价值，不是文字承诺"},
+    {"id": "n4", "label": "Features/解决什么", "kind": "concept", "note": "展开核心卖点"},
+    {"id": "n5", "label": "Quick Start+安装", "kind": "process", "note": "10分钟跑起来"},
+    {"id": "n6", "label": "10分钟闸门", "kind": "rule", "note": "跑起来→继续；超时→流失"},
+    {"id": "n7", "label": "第一个wow时刻", "kind": "state", "note": "实际体验看到效果"},
+    {"id": "n8", "label": "社会证明", "kind": "data", "note": "star数/贡献者/使用案例"},
+    {"id": "n9", "label": "star+加作者", "kind": "process", "note": "转化完成"},
+    {"id": "b1", "label": "失效边界1", "kind": "boundary", "note": "首屏无视觉冲击→扫一眼就走"},
+    {"id": "b2", "label": "失效边界2", "kind": "boundary", "note": "安装超10分钟→耐心耗尽流失"},
+    {"id": "b3", "label": "失效边界3", "kind": "boundary", "note": "无社会证明→'就我一个人用'→只看不star"}
+  ],
+  "edges": [
+    {"from": "n1", "to": "n2", "label": "30秒看到"},
+    {"from": "n2", "to": "n3", "label": "感兴趣→看Demo"},
+    {"from": "n2", "to": "b1", "label": "无视觉→离开", "dashed": true},
+    {"from": "n3", "to": "n4", "label": "视觉验证→展开"},
+    {"from": "n4", "to": "n5", "label": "决定试用"},
+    {"from": "n5", "to": "n6", "label": "开始安装"},
+    {"from": "n6", "to": "n7", "label": "跑起来"},
+    {"from": "n6", "to": "b2", "label": "超时→流失", "dashed": true},
+    {"from": "n7", "to": "n8", "label": "体验wow"},
+    {"from": "n8", "to": "n9", "label": "社会证明助攻"},
+    {"from": "n8", "to": "b3", "label": "无证明→只看不star", "dashed": true}
+  ]
+}

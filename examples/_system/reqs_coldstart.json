@@ -1,0 +1,21 @@
+[
+  {"name": "能说清项目解决什么痛点、给谁用、为什么有人愿意 star", "kind": "知识型", "via": ["项目定位与价值主张"]},
+  {"name": "能写出高转化 README（30 秒内传递价值）", "kind": "知识型", "via": ["README工程"]},
+  {"name": "能设计 1 分钟跑通的快速上手路径", "kind": "知识型", "via": ["文档与快速上手", "Demo与可体验性"]},
+  {"name": "能列出冷启动渠道清单并知道每条渠道的打法与禁忌", "kind": "知识型", "via": ["冷启动渠道矩阵"]},
+  {"name": "能优化仓库发现性（topics / description / trending 机制）", "kind": "知识型", "via": ["GitHub发现性优化"]},
+  {"name": "能用内容营销 + Build in Public 持续带量", "kind": "知识型", "via": ["内容营销与Build in Public"]},
+  {"name": "能设计贡献者友好流程（CONTRIBUTING / Good First Issue / 响应纪律）", "kind": "知识型", "via": ["贡献者友好设计"]},
+  {"name": "能培育种子用户并建立反馈闭环", "kind": "知识型", "via": ["种子用户运营"]},
+  {"name": "能说清增长飞轮怎么转、卡在哪、怎么破", "kind": "知识型", "via": ["增长飞轮"]},
+  {"name": "能规划冷启动节奏与发布时机（5 阶段时间线）", "kind": "知识型", "via": ["冷启动节奏与发布时机"]},
+  {"name": "能用指标追踪效果并迭代", "kind": "知识型", "via": ["指标追踪与迭代"]},
+  {"name": "能选对开源协议并搭好基础治理", "kind": "知识型", "via": ["开源协议与基础治理"]},
+  {"name": "在 gewu-skill 上实测 README 转化效果（改前/改后对比）", "kind": "实践型"},
+  {"name": "给 gewu-skill 补 CONTRIBUTING.md + 至少 1 个 Good First Issue", "kind": "实践型"},
+  {"name": "给 gewu-skill 加 topics 标签 + 优化 description", "kind": "实践型"},
+  {"name": "录制 30 秒 Demo GIF/视频放进 README", "kind": "实践型"},
+  {"name": "选 3 个渠道实际发帖推广 gewu-skill（掘金/V2EX/Linux.do/Twitter 等）", "kind": "实践型"},
+  {"name": "提交 gewu-skill 到至少 2 个 Awesome Lists", "kind": "实践型"},
+  {"name": "建立 star 增长追踪（star-history + GitHub Insights）", "kind": "实践型"}
+]

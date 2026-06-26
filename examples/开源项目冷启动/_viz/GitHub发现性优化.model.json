@@ -1,0 +1,30 @@
+{
+  "concept": "GitHub发现性优化",
+  "category": "开源项目冷启动",
+  "chart_type": "flow",
+  "title": "GitHub 发现性漏斗：3条路径→description闸门→点击→README接力",
+  "nodes": [
+    {"id": "n1", "label": "访客进入GitHub", "kind": "actor", "note": "3条路径：搜索/Topics浏览/外部链接"},
+    {"id": "n2", "label": "搜索结果列表", "kind": "data", "note": "仓库名+description+topics+star数"},
+    {"id": "n3", "label": "description闸门", "kind": "rule", "note": "1句话决定点不点（SEO权重最高）"},
+    {"id": "n4", "label": "social preview", "kind": "data", "note": "外部链接分享时的预览图助攻"},
+    {"id": "n5", "label": "点击进入仓库", "kind": "state", "note": "从搜索结果/外部链接点进来"},
+    {"id": "n6", "label": "About+README接力", "kind": "concept", "note": "仓库主页信息密度+30秒法则"},
+    {"id": "n7", "label": "star+留人", "kind": "process", "note": "发现性漏斗末端=README漏斗起点"},
+    {"id": "b1", "label": "失效边界1", "kind": "boundary", "note": "无topics=搜索/浏览都找不到"},
+    {"id": "b2", "label": "失效边界2", "kind": "boundary", "note": "description差=搜索结果没人点"},
+    {"id": "b3", "label": "失效边界3", "kind": "boundary", "note": "无social preview=社交分享丑截图低点击"}
+  ],
+  "edges": [
+    {"from": "n1", "to": "n2", "label": "搜索/Topics浏览→结果列表"},
+    {"from": "n1", "to": "n5", "label": "外部链接→直接进仓库"},
+    {"from": "n4", "to": "n5", "label": "social preview助攻外部链接点击"},
+    {"from": "n2", "to": "n3", "label": "扫description"},
+    {"from": "n3", "to": "n5", "label": "description吸引→点"},
+    {"from": "n3", "to": "b2", "label": "description差→跳过", "dashed": true},
+    {"from": "n2", "to": "b1", "label": "无topics→不在结果里", "dashed": true},
+    {"from": "n4", "to": "b3", "label": "无preview→丑截图", "dashed": true},
+    {"from": "n5", "to": "n6", "label": "看About+README首屏"},
+    {"from": "n6", "to": "n7", "label": "信息密度高→star+留人"}
+  ]
+}

@@ -12,6 +12,7 @@ third_party/
 *.log
 *.pyc
 *.jsonl
+!examples/**/*.jsonl
 *.bun-build
 .env
 .env.local
@@ -22,4 +23,3 @@ plan/
 .vscode/
 .compile_workdir/
 output/
-

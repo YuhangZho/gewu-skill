@@ -1,0 +1,21 @@
+flowchart TD
+  n1["☻ 访客进入GitHub"]
+  n2["▣ 搜索结果列表"]
+  n3["◆ description闸门"]
+  n4["▣ social preview"]
+  n5["◇ 点击进入仓库"]
+  n6["◉ About+README接力"]
+  n7["⚙ star+留人"]
+  b1["⛔ 失效边界1"]
+  b2["⛔ 失效边界2"]
+  b3["⛔ 失效边界3"]
+  n1 -->|搜索/Topics浏览→结果列表| n2
+  n1 -->|外部链接→直接进仓库| n5
+  n4 -->|social preview助攻外部链接点击| n5
+  n2 -->|扫description| n3
+  n3 -->|description吸引→点| n5
+  n3 -->|description差→跳过| b2
+  n2 -->|无topics→不在结果里| b1
+  n4 -->|无preview→丑截图| b3
+  n5 -->|看About+README首屏| n6
+  n6 -->|信息密度高→star+留人| n7
