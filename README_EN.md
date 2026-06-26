@@ -4,7 +4,7 @@
 
 > Study one thing thoroughly to attain true knowledge: if you can explain it clearly, you truly understand it.
 
-<img src="./assets/merged_output_720p.gif" alt="格物演示" width="100%" style="display:block;margin-left:0;margin-right:auto;">
+<img src="./assets/merged_output_720p.webp" alt="格物演示" width="100%" style="display:block;margin-left:0;margin-right:auto;">
 
 [![License](https://img.shields.io/github/license/YuhangZho/gewu-skill?style=flat-square&color=green)](./LICENSE)
 [![Stars](https://img.shields.io/github/stars/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/stargazers)
