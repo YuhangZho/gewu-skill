@@ -1,0 +1,283 @@
+{
+  "generated": "2026-06-26 23:45",
+  "goal": "",
+  "categories": {
+    "开源项目冷启动": {
+      "order": [
+        {
+          "title": "项目定位与价值主张",
+          "status": "已完成",
+          "stage": 0,
+          "importance": 5,
+          "base_importance": 5,
+          "prereqs": [],
+          "desc": "它属于开源项目冷启动的地基层，是用来解决\"为什么有些项目发出去没人理\"的。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "地基"
+          ],
+          "related": [
+            "冷启动渠道矩阵",
+            "增长飞轮"
+          ]
+        },
+        {
+          "title": "README 工程",
+          "status": "已完成",
+          "stage": 1,
+          "importance": 5,
+          "base_importance": 5,
+          "prereqs": [
+            "项目定位与价值主张"
+          ],
+          "desc": "它属于开源项目冷启动的门面层，是用来解决\"访客来了留不住\"的——把 README 当转化漏斗设计，让访客从看到到 star 走完 7 个节点。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "门面"
+          ],
+          "related": [
+            "贡献者友好设计",
+            "项目定位与价值主张"
+          ]
+        },
+        {
+          "title": "冷启动渠道矩阵",
+          "status": "已完成",
+          "stage": 1,
+          "importance": 5,
+          "base_importance": 5,
+          "prereqs": [
+            "项目定位与价值主张"
+          ],
+          "desc": "它属于开源项目冷启动的渠道层，是用来解决\"项目做好了发到哪里、怎么发才有人用\"的——不是找地方发帖，是有策略的渠道组合。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "渠道"
+          ],
+          "related": [
+            "冷启动节奏与发布时机",
+            "增长飞轮",
+            "项目定位与价值主张"
+          ]
+        },
+        {
+          "title": "GitHub 发现性优化",
+          "status": "已完成",
+          "stage": 1,
+          "importance": 4,
+          "base_importance": 4,
+          "prereqs": [
+            "项目定位与价值主张"
+          ],
+          "desc": "它属于开源项目冷启动的渠道层，是用来解决\"别人怎么在 GitHub 上找到你的项目\"的——被动被发现的基础设施。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "渠道"
+          ],
+          "related": [
+            "冷启动渠道矩阵",
+            "增长飞轮",
+            "项目定位与价值主张"
+          ]
+        },
+        {
+          "title": "内容营销与 Build in Public",
+          "status": "待学",
+          "stage": 1,
+          "importance": 4,
+          "base_importance": 4,
+          "prereqs": [
+            "项目定位与价值主张"
+          ],
+          "desc": "待学。",
+          "xprereqs": [],
+          "track": "",
+          "groups": [
+            "渠道"
+          ],
+          "related": [
+            "冷启动渠道矩阵",
+            "种子用户运营",
+            "项目定位与价值主张"
+          ]
+        },
+        {
+          "title": "Demo 与可体验性",
+          "status": "待学",
+          "stage": 1,
+          "importance": 4,
+          "base_importance": 4,
+          "prereqs": [
+            "项目定位与价值主张"
+          ],
+          "desc": "待学。",
+          "xprereqs": [],
+          "track": "",
+          "groups": [
+            "门面"
+          ],
+          "related": [
+            "文档与快速上手",
+            "项目定位与价值主张"
+          ]
+        },
+        {
+          "title": "文档与快速上手",
+          "status": "待学",
+          "stage": 1,
+          "importance": 4,
+          "base_importance": 4,
+          "prereqs": [
+            "项目定位与价值主张"
+          ],
+          "desc": "待学。",
+          "xprereqs": [],
+          "track": "",
+          "groups": [
+            "门面"
+          ],
+          "related": [
+            "项目定位与价值主张"
+          ]
+        },
+        {
+          "title": "冷启动节奏与发布时机",
+          "status": "待学",
+          "stage": 2,
+          "importance": 4,
+          "base_importance": 4,
+          "prereqs": [
+            "冷启动渠道矩阵"
+          ],
+          "desc": "待学。",
+          "xprereqs": [],
+          "track": "",
+          "groups": [
+            "节奏"
+          ],
+          "related": [
+            "冷启动渠道矩阵",
+            "指标追踪与迭代"
+          ]
+        },
+        {
+          "title": "种子用户运营",
+          "status": "待学",
+          "stage": 2,
+          "importance": 4,
+          "base_importance": 4,
+          "prereqs": [
+            "冷启动渠道矩阵"
+          ],
+          "desc": "待学。",
+          "xprereqs": [],
+          "track": "",
+          "groups": [
+            "社区"
+          ],
+          "related": [
+            "冷启动渠道矩阵",
+            "增长飞轮"
+          ]
+        },
+        {
+          "title": "增长飞轮",
+          "status": "待学",
+          "stage": 3,
+          "importance": 5,
+          "base_importance": 5,
+          "prereqs": [
+            "冷启动渠道矩阵",
+            "种子用户运营"
+          ],
+          "desc": "待学。",
+          "xprereqs": [],
+          "track": "",
+          "groups": [
+            "社区"
+          ],
+          "related": [
+            "冷启动渠道矩阵",
+            "种子用户运营"
+          ]
+        },
+        {
+          "title": "指标追踪与迭代",
+          "status": "待学",
+          "stage": 0,
+          "importance": 3,
+          "base_importance": 3,
+          "prereqs": [],
+          "desc": "待学。",
+          "xprereqs": [],
+          "track": "",
+          "groups": [
+            "节奏"
+          ],
+          "related": [
+            "冷启动节奏与发布时机",
+            "增长飞轮"
+          ]
+        },
+        {
+          "title": "贡献者友好设计",
+          "status": "待学",
+          "stage": 2,
+          "importance": 3,
+          "base_importance": 3,
+          "prereqs": [
+            "文档与快速上手"
+          ],
+          "desc": "待学。",
+          "xprereqs": [],
+          "track": "",
+          "groups": [
+            "社区"
+          ],
+          "related": [
+            "开源协议与基础治理",
+            "文档与快速上手"
+          ]
+        },
+        {
+          "title": "开源协议与基础治理",
+          "status": "待学",
+          "stage": 0,
+          "importance": 3,
+          "base_importance": 3,
+          "prereqs": [],
+          "desc": "待学。",
+          "xprereqs": [],
+          "track": "",
+          "groups": [
+            "地基"
+          ],
+          "related": [
+            "贡献者友好设计"
+          ]
+        }
+      ],
+      "current": "内容营销与 Build in Public",
+      "next3": [
+        "Demo 与可体验性",
+        "文档与快速上手",
+        "冷启动节奏与发布时机"
+      ],
+      "progress_hint": {
+        "current_pct": 31,
+        "next_pct": 38,
+        "bar": "[███▒░░░░░░]",
+        "milestone": "",
+        "line": "当前知识图谱覆盖率31%，下一站完成可达38%。"
+      },
+      "learned": 4,
+      "total": 13,
+      "max_stage": 3
+    }
+  },
+  "expansions": {}
+}

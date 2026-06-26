@@ -1,0 +1,117 @@
+{
+  "开源项目冷启动": {
+    "goal": "实战冷启动 gewu-skill：从零获取首批 star / 用户 / 贡献者",
+    "status": "进行中",
+    "updated": "2026-06-26 14:30",
+    "goal_category": "知识变现",
+    "domain_type": "理论+实践",
+    "practice_note": "这个领域光看懂不够——每个概念都要在 gewu-skill 项目上动手实操一遍：写 README、录 Demo、发渠道、建贡献流程……看懂方法不等于能涨 star，得真做。",
+    "summary": "已学完『项目定位与价值主张』：gewu-skill 定位=为想系统学新领域但没框架的自学者，提供目标驱动的费曼学习地图。缺口=README 转化设计、Demo、渠道分发、贡献流程、topics 标签。gewu-skill 已 11 天，错过 ≤7 天 Trending 加权窗口，策略=先优化好定位+README+Demo 再集中一天发多渠道制造 star 增量尖峰。",
+    "sample": false,
+    "requirements": [
+      {
+        "name": "能说清项目解决什么痛点、给谁用、为什么有人愿意 star",
+        "kind": "知识型",
+        "via": [
+          "项目定位与价值主张"
+        ],
+        "have": true
+      },
+      {
+        "name": "能写出高转化 README（30 秒内传递价值）",
+        "kind": "知识型",
+        "via": [
+          "README工程"
+        ],
+        "have": false
+      },
+      {
+        "name": "能设计 1 分钟跑通的快速上手路径",
+        "kind": "知识型",
+        "via": [
+          "文档与快速上手",
+          "Demo与可体验性"
+        ],
+        "have": false
+      },
+      {
+        "name": "能列出冷启动渠道清单并知道每条渠道的打法与禁忌",
+        "kind": "知识型",
+        "via": [
+          "冷启动渠道矩阵"
+        ],
+        "have": false
+      },
+      {
+        "name": "能优化仓库发现性（topics / description / trending 机制）",
+        "kind": "知识型",
+        "via": [
+          "GitHub发现性优化"
+        ],
+        "have": false
+      },
+      {
+        "name": "能用内容营销 + Build in Public 持续带量",
+        "kind": "知识型",
+        "via": [
+          "内容营销与Build in Public"
+        ],
+        "have": false
+      },
+      {
+        "name": "能设计贡献者友好流程（CONTRIBUTING / Good First Issue / 响应纪律）",
+        "kind": "知识型",
+        "via": [
+          "贡献者友好设计"
+        ],
+        "have": false
+      },
+      {
+        "name": "能培育种子用户并建立反馈闭环",
+        "kind": "知识型",
+        "via": [
+          "种子用户运营"
+        ],
+        "have": false
+      },
+      {
+        "name": "能说清增长飞轮怎么转、卡在哪、怎么破",
+        "kind": "知识型",
+        "via": [
+          "增长飞轮"
+        ],
+        "have": false
+      },
+      {
+        "name": "能规划冷启动节奏与发布时机（5 阶段时间线）",
+        "kind": "知识型",
+        "via": [
+          "冷启动节奏与发布时机"
+        ],
+        "have": false
+      },
+      {
+        "name": "能用指标追踪效果并迭代",
+        "kind": "知识型",
+        "via": [
+          "指标追踪与迭代"
+        ],
+        "have": false
+      },
+      {
+        "name": "能选对开源协议并搭好基础治理",
+        "kind": "知识型",
+        "via": [
+          "开源协议与基础治理"
+        ],
+        "have": false
+      }
+    ],
+    "sources": [
+      "https://fansgurus.com/zh/blog/grow-github-stars-8-methods",
+      "https://linux.do/t/topic/813738",
+      "https://jishuzhan.net/article/2007766133328887809"
+    ]
+  }
+}
+

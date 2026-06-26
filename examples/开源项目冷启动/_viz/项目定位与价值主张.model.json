@@ -1,0 +1,30 @@
+{
+  "concept": "项目定位与价值主张",
+  "category": "开源项目冷启动",
+  "chart_type": "flow",
+  "title": "定位→相关性识别→传播链：冷启动的引擎",
+  "nodes": [
+    {"id": "n1", "label": "定位语", "kind": "concept", "note": "For who + 痛点 + 独特价值，一句话"},
+    {"id": "n2", "label": "访客大脑", "kind": "actor", "note": "3秒内做相关性识别"},
+    {"id": "n3", "label": "相关性识别", "kind": "rule", "note": "跟我有关吗？— 痛点普遍性决定识别率"},
+    {"id": "n4", "label": "ChatGPT参照系", "kind": "concept", "note": "访客脑中在做对比：凭什么用你"},
+    {"id": "n5", "label": "价值判断", "kind": "rule", "note": "值得 star/转发吗？"},
+    {"id": "n6", "label": "star + 转发", "kind": "process", "note": "star 留人，转发才是传播链燃料"},
+    {"id": "n7", "label": "新访客触达", "kind": "feedback", "note": "转发触达同质人群→循环放大"},
+    {"id": "n8", "label": "传播链启动", "kind": "state", "note": "冷启动成功的标志：传播链自我维持"},
+    {"id": "b1", "label": "失效边界1", "kind": "boundary", "note": "痛点不普遍→相关性识别失败→链断在第1节点"},
+    {"id": "b2", "label": "失效边界2", "kind": "boundary", "note": "与替代品无差异→无转发理由→链不启动"}
+  ],
+  "edges": [
+    {"from": "n1", "to": "n2", "label": "3秒看到"},
+    {"from": "n2", "to": "n3", "label": "触发"},
+    {"from": "n4", "to": "n3", "label": "对比参照"},
+    {"from": "n3", "to": "n5", "label": "识别成功"},
+    {"from": "n3", "to": "b1", "label": "识别失败→离开", "dashed": true},
+    {"from": "n5", "to": "n6", "label": "判断通过"},
+    {"from": "n5", "to": "b2", "label": "无差异→只star不转发", "dashed": true},
+    {"from": "n6", "to": "n7", "label": "转发触达"},
+    {"from": "n7", "to": "n2", "label": "新访客进入（反馈环）", "feedback": true},
+    {"from": "n7", "to": "n8", "label": "循环放大"}
+  ]
+}

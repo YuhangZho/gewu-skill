@@ -1,0 +1,35 @@
+{
+  "concept": "冷启动渠道矩阵",
+  "category": "开源项目冷启动",
+  "chart_type": "flow",
+  "title": "渠道矩阵组合策略：测试场→迭代场→扩量场 + 反馈环",
+  "nodes": [
+    {"id": "n1", "label": "渠道A(测试场·先发)", "kind": "process", "note": "如Linux.do，分享+听反馈"},
+    {"id": "n2", "label": "反馈1:访客卡在哪", "kind": "data", "note": "评论/安装失败/star转化率"},
+    {"id": "n3", "label": "迭代动作", "kind": "process", "note": "改README/改话术/改Demo"},
+    {"id": "n4", "label": "README转化率提升", "kind": "rule", "note": "下一个渠道受益于优化"},
+    {"id": "n5", "label": "渠道B(迭代场·第二)", "kind": "process", "note": "如掘金，复制优化版"},
+    {"id": "n6", "label": "反馈2:技术实现兴趣", "kind": "data", "note": "不同受众不同反馈"},
+    {"id": "n7", "label": "渠道C(扩量场·第三)", "kind": "process", "note": "如少数派，场景故事扩量"},
+    {"id": "n8", "label": "star增量尖峰", "kind": "state", "note": "3渠道错峰=持续长尾"},
+    {"id": "n9", "label": "持续长尾带量", "kind": "feedback", "note": "不是一天爆发后死掉"},
+    {"id": "b1", "label": "失效边界1", "kind": "boundary", "note": "同时发=无迭代=浪费渠道"},
+    {"id": "b2", "label": "失效边界2", "kind": "boundary", "note": "直接广告=被ban=渠道永久关闭"},
+    {"id": "b3", "label": "失效边界3", "kind": "boundary", "note": "渠道受众与目标用户不匹配=来了不留"}
+  ],
+  "edges": [
+    {"from": "n1", "to": "n2", "label": "发帖→收反馈"},
+    {"from": "n2", "to": "n3", "label": "反馈驱动迭代"},
+    {"from": "n3", "to": "n4", "label": "迭代→转化提升"},
+    {"from": "n4", "to": "n5", "label": "优化版复制到B"},
+    {"from": "n1", "to": "b1", "label": "若同时发→跳过迭代", "dashed": true},
+    {"from": "n1", "to": "b2", "label": "若直接广告→被ban", "dashed": true},
+    {"from": "n5", "to": "n6", "label": "发帖→收反馈2"},
+    {"from": "n6", "to": "n3", "label": "反馈2也驱动迭代", "feedback": true},
+    {"from": "n5", "to": "n7", "label": "再优化→扩量"},
+    {"from": "n7", "to": "n8", "label": "3渠道错峰"},
+    {"from": "n7", "to": "b3", "label": "受众不匹配→来了不留", "dashed": true},
+    {"from": "n8", "to": "n9", "label": "尖峰+长尾"},
+    {"from": "n9", "to": "n1", "label": "长尾持续带量回到测试场观察", "feedback": true}
+  ]
+}

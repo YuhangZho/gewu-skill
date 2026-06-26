@@ -1,0 +1,19 @@
+{"ts":"2026-06-26T17:15:00","role":"user","content":"学 GitHub 发现性优化","step":"M1-点火·立靶"}
+{"ts":"2026-06-26T17:15:00","role":"assistant","content":"分诊三问=3分→标准轨。前置=项目定位+README工程（均已完成）。设问5题点火。","step":"M1-点火·分诊"}
+{"ts":"2026-06-26T17:19:00","role":"user","content":"设问：1.发现路径=trending/硬链接/推广文/朋友介绍 2.topics不被检索/加错吸引不同频/加4-5个/已加 3.不清楚desc vs README 4.不清楚发现性vs Trending 5.About填了/topics加了/social preview是什么","step":"M1-点火·设问回答"}
+{"ts":"2026-06-26T17:19:00","role":"assistant","content":"校准：6种发现路径（补搜索/Topics浏览/用户主页/Explore）。description vs README标语=两块不同招牌。发现性vs Trending=地基vs楼。social preview=社交分享预览图1200x630。给6项优化清单。要求写初稿。","step":"M1-点火·校准+给料"}
+{"ts":"2026-06-26T17:25:00","role":"user","content":"初稿：1.topics已改 2.desc=A Feynman-method learning system with vault auto setup 3.About有 4.social preview无 5.README首屏=把有问题问AI变成有罗盘的学习地图 6.Release有","step":"M1-点火·初稿"}
+{"ts":"2026-06-26T17:25:00","role":"assistant","content":"初稿校准：desc缺为谁/vault auto setup是技术实现非用户价值/缺差异化。给3版优化desc（A推荐：Turn ask AI into goal-driven learning roadmap with Feynman method and auto knowledge vault）。social preview必须设。进M2视觉模型五问。","step":"M1完成→M2-视觉模型"}
+{"ts":"2026-06-26T17:29:00","role":"user","content":"五问：1.对象=搜索框/topics页面/搜索结果列表/About/description/social preview/README首屏 2.连接=搜索→结果→About/desc→social preview+README首屏 3.流向=线性 4.边界=无topics/加错 5.变化=description不同触发不同分支","step":"M2-视觉模型·五问"}
+{"ts":"2026-06-26T17:29:00","role":"assistant","content":"AI判型chart_type=flow。生成model.json+跑render_viz.py。图含：访客3路径(搜索/Topics/外部)→搜索结果列表→description闸门→点击→About+README接力→star。social preview助攻外部链接。3失效边界。要求用户指图讲正常流程+1失效边界。","step":"M2-视觉模型·出图验收"}
+{"ts":"2026-06-26T17:44:00","role":"user","content":"正常流程：description闸门在搜索列表，被动搜索用户最关键信息。访客从github搜索分类/关键词，或朋友分享链接进入，链接需social preview吸引点击，description吸引用户进入。","step":"M2-视觉模型·验收回答"}
+{"ts":"2026-06-26T17:44:00","role":"assistant","content":"验收通过但卡壳：跳过了About+README接力→star那段。补丁：发现性漏斗末端=README漏斗起点，两者接力。进第2步讲给外行，要求商店类比。","step":"M2-验收通过→第2步"}
+{"ts":"2026-06-26T17:45:00","role":"user","content":"商店类比：先看招牌和橱窗外置菜单，再搜大众点评和朋友推荐，进来之后看看店内环境感受下第一次的服务。","step":"M2-第2步·类比"}
+{"ts":"2026-06-26T17:45:00","role":"assistant","content":"类比抓到核心但缺第一句结构定位。扮演外行追问：'招牌'和上次说的'店内介绍'(README)是同一块招牌吗？为什么要有两块？","step":"M2-第2步·追问"}
+{"ts":"2026-06-26T17:47:00","role":"user","content":"不是。description更突出特质，README标语更激起用户好奇心。","step":"M2-第2步·答追问"}
+{"ts":"2026-06-26T17:47:00","role":"assistant","content":"答到关键但没说透。补丁：description=店外招牌(搜索结果里显示,SEO高,直白识别0.5秒)，README标语=店内介绍(点进来才看,可好奇可隐喻3-30秒)。两块招牌服务不同场景。进第3步卡壳回溯。卡壳3个：6路径/两块招牌/发现性vs Trending。","step":"M2-第3步·卡壳回溯"}
+{"ts":"2026-06-26T17:50:00","role":"user","content":"重讲：6种发现路径(trending/外部链接/搜索/Topics浏览/用户主页/Explore推荐)，站内搜索和Topics浏览是被动发现主力。description是店外招牌(SEO高直白识别)，README标语是店内介绍(可好奇可隐喻)。发现性=被动被发现基础设施，冲Trending=主动冲榜运营动作，不是同一件事。用户先看about和description，再看README首句话。","step":"M2-第3步·重讲通过"}
+{"ts":"2026-06-26T17:50:00","role":"assistant","content":"重讲通过，3卡壳点全覆盖。进M3三重验证：①正向验证举别的项目发现性 ②边界补丁挑1个失效场景 ③换类比不用商店。","step":"M3-三重验证任务"}
+{"ts":"2026-06-26T18:27:00","role":"user","content":"nuwa-skill都有除social preview不确定。边界：desc差找不准用户定位→补救Turn ask AI into goal-driven learning roadmap with auto knowledge vault。是否有吸引人的版本？换类比：书店找书→读者先找分类书柜，一本本看标题是否切合需求，找到后看作者和简介，发现宝藏分享书皮封面给朋友。","step":"M3-三重验证完成"}
+{"ts":"2026-06-26T18:27:00","role":"assistant","content":"三重验证通过。给description吸引力优化版。开始落盘。","step":"M3-落盘"}
+{"ts":"2026-06-26T18:27:00","role":"system_note","content":"本概念从M1到M3完整对话已逐字记录。","step":"M3-落盘·transcript补全"}
