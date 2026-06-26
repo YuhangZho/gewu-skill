@@ -4,17 +4,16 @@
 
 > Study one thing thoroughly to attain true knowledge: if you can explain it clearly, you truly understand it.
 
-<img src="./assets/merged_output_720p.webp" alt="格物演示" width="100%" style="display:block;margin-left:0;margin-right:auto;">
+<img src="./assets/merged_output_720p.webp" alt="Gewu demo" width="100%" style="display:block;margin-left:0;margin-right:auto;">
 
 [![License](https://img.shields.io/github/license/YuhangZho/gewu-skill?style=flat-square&color=green)](./LICENSE)
 [![Stars](https://img.shields.io/github/stars/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/stargazers)
-[![Last commit](https://img.shields.io/github/last-commit/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/commits)
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue?style=flat-square&logo=python&logoColor=white)
 ![Dependencies](https://img.shields.io/badge/deps-none%20%28stdlib%29-success?style=flat-square)
 ![Offline](https://img.shields.io/badge/offline-ready-success?style=flat-square)
 ![Agent Skills](https://img.shields.io/badge/Agent_Skills-Standard-3fb950?style=flat-square)
 [![skills.sh](https://skills.sh/b/YuhangZho/gewu-skill)](https://skills.sh/YuhangZho/gewu-skill)
-![Runtime](https://img.shields.io/badge/Runtime-Claude_·_ChatGPT_·_Codex_·_Cursor_·_Kimi-8957e5?style=flat-square)
+![Runtime](https://img.shields.io/badge/Runtime-Claude_·_Codex_·_Cursor_·_Kimi·_OpenClaw-8957e5?style=flat-square)
 
 [Who it's for](#who-its-for) · [What you'll get](#what-youll-get) · [How to start](#how-to-start) · [Installation](#installation) · [Directory structure](#directory-structure)
 
@@ -53,14 +52,14 @@ Each concept isn't just the AI explanation saved — it's the result of what you
 
 ### A local knowledge station
 
-What you've learned turns into openable local pages:
+Completed learning is automatically saved to the knowledge station, with built-in light / dark / xuan-paper / night-ink themes:
 
 - **Learning roadmap**: see where you are now and what the next stop is.
 - **Knowledge graph**: see how concepts connect.
 - **Goal planning**: see how far your current knowledge is from the goal.
 - **Concept documents**: every concept you've learned can be reviewed.
 
-<img src="./assets/学习站示例.gif" alt="学习站示例" width="100%" style="display:block;margin-left:0;margin-right:auto;">
+<img src="./assets/学习站示例.gif" alt="Knowledge station example" width="100%" style="display:block;margin-left:0;margin-right:auto;">
 
 ### Pick up where you left off, even mid-concept
 
@@ -125,14 +124,14 @@ Gewu follows the open Agent Skills standard and can be used in agents that suppo
 ### Environment check
 
 ```bash
-python --version
+python3 --version
 ```
 
-- Shows `Python 3.x`: environment is ready, you can continue installing the skill.
-- Command not found: install Python first. (PS: you can use it without Python, but the knowledge base can't be persisted.)
+- Requires `Python 3.8` or higher;
+- Python install or upgrade:
   - Windows: [python.org/downloads](https://www.python.org/downloads/), check `Add Python to PATH` during installation
-  - macOS: `brew install python`
-  - Linux: `sudo apt install python3`
+  - macOS (with Homebrew installed): `brew install python`
+  - Ubuntu / Debian: `sudo apt install python3`
 
 ### Option 1: One-click install
 
@@ -169,24 +168,6 @@ Copy the `gewu-skill` folder to the corresponding agent path.
 | Other 50+ agents | Paths vary, see [vercel-labs/skills support table](https://github.com/vercel-labs/skills#supported-agents) |
 
 </details>
-
----
-
-## Customize appearance
-
-The knowledge station defaults to light, and also supports dark, xuan-paper, and night-ink themes. Copy the template to your knowledge base:
-
-```text
-your-knowledge-base/_system/config.json
-```
-
-Template at:
-
-```text
-templates/config.example.json
-```
-
-After editing, regenerate the knowledge station to take effect.
 
 ---
 
@@ -252,13 +233,7 @@ The promotional animation draft was designed and produced using the [huashu-desi
 
 ## Author
 
-Yuhang, an embedded coder currently distilling 🧪 himself.
-
-* The fragmented-knowledge fusion effect still needs further testing;
-
-* Although Marvis, Trae, and Qoder are supported, real-world testing shows mediocre results — the models may suffer from attention drift (2026.6.26).
-
-* Cursor (auto) / Codex (5.5) / Claude (opus 4.8) / Kimi (K2.6) generation results have been verified as passing.
+Yuhang 🧪 distilling himself.
 
 <p align="left">
   <img src="./assets/wechat-search.png" alt="WeChat Search: Zhou Yuhang" width="620" style="display:block;margin-left:0;margin-right:auto;">

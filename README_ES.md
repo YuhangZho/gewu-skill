@@ -4,17 +4,16 @@
 
 > Estudia una cosa a fondo para alcanzar el verdadero conocimiento: si puedes explicarla con claridad, de verdad la entiendes.
 
-<img src="./assets/merged_output_720p.webp" alt="格物演示" width="100%" style="display:block;margin-left:0;margin-right:auto;">
+<img src="./assets/merged_output_720p.webp" alt="Demo de Gewu" width="100%" style="display:block;margin-left:0;margin-right:auto;">
 
 [![License](https://img.shields.io/github/license/YuhangZho/gewu-skill?style=flat-square&color=green)](./LICENSE)
 [![Stars](https://img.shields.io/github/stars/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/stargazers)
-[![Last commit](https://img.shields.io/github/last-commit/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/commits)
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue?style=flat-square&logo=python&logoColor=white)
 ![Dependencies](https://img.shields.io/badge/deps-none%20%28stdlib%29-success?style=flat-square)
 ![Offline](https://img.shields.io/badge/offline-ready-success?style=flat-square)
 ![Agent Skills](https://img.shields.io/badge/Agent_Skills-Standard-3fb950?style=flat-square)
 [![skills.sh](https://skills.sh/b/YuhangZho/gewu-skill)](https://skills.sh/YuhangZho/gewu-skill)
-![Runtime](https://img.shields.io/badge/Runtime-Claude_·_ChatGPT_·_Codex_·_Cursor_·_Kimi-8957e5?style=flat-square)
+![Runtime](https://img.shields.io/badge/Runtime-Claude_·_Codex_·_Cursor_·_Kimi·_OpenClaw-8957e5?style=flat-square)
 
 [Para quién es](#para-quién-es) · [Qué obtendrás](#qué-obtendrás) · [Cómo empezar](#cómo-empezar) · [Instalación](#instalación) · [Estructura de directorios](#estructura-de-directorios)
 
@@ -53,14 +52,14 @@ Cada concepto no guarda solo la explicación de la IA, sino el resultado de lo q
 
 ### Una estación de conocimiento local
 
-Lo que has aprendido se convierte en páginas locales abribles:
+Lo aprendido se guarda automáticamente en la estación de conocimiento, con temas claro / oscuro / papel xuan / tinta nocturna integrados:
 
 - **Hoja de ruta de aprendizaje**: ve dónde estás ahora y cuál es la siguiente parada.
 - **Grafo de conocimiento**: ve cómo se conectan los conceptos.
 - **Planificación de objetivos**: ve a qué distancia está tu conocimiento actual del objetivo.
 - **Documentos de conceptos**: cada concepto que has aprendido se puede repasar.
 
-<img src="./assets/学习站示例.gif" alt="学习站示例" width="100%" style="display:block;margin-left:0;margin-right:auto;">
+<img src="./assets/学习站示例.gif" alt="Ejemplo de estación de conocimiento" width="100%" style="display:block;margin-left:0;margin-right:auto;">
 
 ### Puedes retomar donde lo dejaste, incluso a medias
 
@@ -125,14 +124,14 @@ Gewu sigue el estándar abierto de Agent Skills y puede usarse en agentes que so
 ### Comprobación del entorno
 
 ```bash
-python --version
+python3 --version
 ```
 
-- Muestra `Python 3.x`: el entorno está listo, puedes continuar instalando el skill.
-- Comando no encontrado: instala Python primero. (PD: puedes usarlo sin Python, pero la base de conocimiento no se podrá persistir.)
+- Requiere `Python 3.8` o superior;
+- Instalación o actualización de Python:
   - Windows: [python.org/downloads](https://www.python.org/downloads/), marca `Add Python to PATH` durante la instalación
-  - macOS: `brew install python`
-  - Linux: `sudo apt install python3`
+  - macOS (con Homebrew instalado): `brew install python`
+  - Ubuntu / Debian: `sudo apt install python3`
 
 ### Opción 1: Instalación con un clic
 
@@ -169,24 +168,6 @@ Copia la carpeta `gewu-skill` a la ruta correspondiente del agente.
 | Otros 50+ agentes | Las rutas varían, ver [tabla de soporte vercel-labs/skills](https://github.com/vercel-labs/skills#supported-agents) |
 
 </details>
-
----
-
-## Personalizar la apariencia
-
-La estación de conocimiento usa por defecto el tema claro, y también soporta los temas oscuro, papel xuan y tinta nocturna. Copia la plantilla a tu base de conocimiento:
-
-```text
-tu-base-de-conocimiento/_system/config.json
-```
-
-Plantilla en:
-
-```text
-templates/config.example.json
-```
-
-Tras editar, regenera la estación de conocimiento para que surta efecto.
 
 ---
 
@@ -252,13 +233,7 @@ El borrador de la animación promocional se diseñó y produjo usando el paquete
 
 ## Autor
 
-Yuhang, un programador de sistemas embebidos destilándose 🧪 a sí mismo.
-
-* El efecto de fusión de conocimiento disperso aún necesita más pruebas;
-
-* Aunque se soportan Marvis, Trae y Qoder, las pruebas reales muestran resultados mediocres — los modelos pueden sufrir deriva de atención (2026.6.26).
-
-* Cursor (auto) / Codex (5.5) / Claude (opus 4.8) / Kimi (K2.6) resultados de generación verificados como correctos.
+Yuhang 🧪 destilándose a sí mismo.
 
 <p align="left">
   <img src="./assets/wechat-search.png" alt="Búsqueda WeChat: Zhou Yuhang" width="620" style="display:block;margin-left:0;margin-right:auto;">

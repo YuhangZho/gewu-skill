@@ -8,13 +8,12 @@
 
 [![License](https://img.shields.io/github/license/YuhangZho/gewu-skill?style=flat-square&color=green)](./LICENSE)
 [![Stars](https://img.shields.io/github/stars/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/stargazers)
-[![Last commit](https://img.shields.io/github/last-commit/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/commits)
 ![Python](https://img.shields.io/badge/python-3.8%2B-blue?style=flat-square&logo=python&logoColor=white)
 ![Dependencies](https://img.shields.io/badge/deps-none%20%28stdlib%29-success?style=flat-square)
 ![Offline](https://img.shields.io/badge/offline-ready-success?style=flat-square)
 ![Agent Skills](https://img.shields.io/badge/Agent_Skills-Standard-3fb950?style=flat-square)
 [![skills.sh](https://skills.sh/b/YuhangZho/gewu-skill)](https://skills.sh/YuhangZho/gewu-skill)
-![Runtime](https://img.shields.io/badge/Runtime-Claude_·_ChatGPT_·_Codex_·_Cursor_·_Kimi-8957e5?style=flat-square)
+![Runtime](https://img.shields.io/badge/Runtime-Claude_·_Codex_·_Cursor_·_Kimi·_OpenClaw-8957e5?style=flat-square)
 
 [适合谁](#适合谁) · [你会得到什么](#你会得到什么) · [怎么开始](#怎么开始) · [安装](#安装) · [目录结构](#目录结构)
 
