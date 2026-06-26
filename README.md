@@ -53,7 +53,7 @@
 
 ### 一个本地知识站
 
-学完的内容会变成可打开的本地页面：
+学完的内容自动落盘知识站，内置浅色/深色/宣纸/夜墨主题：
 
 - **学习路线图**：看当前走到哪、下一站是什么。
 - **知识图谱**：看概念之间如何连接。
@@ -125,14 +125,14 @@ D:\gewu-vault
 ### 环境检查
 
 ```bash
-python --version
+python3 --version
 ```
 
-- 显示 `Python 3.x`：满足环境，可继续安装skill。
-- 提示找不到命令：先安装 Python。(PS：不装python也可直接用，但无法落盘知识库)
+- 要求 `Python 3.8`或更高版本;
+- python安装或升级参考：
   - Windows：[python.org/downloads](https://www.python.org/downloads/)，安装时勾选 `Add Python to PATH`
-  - macOS：`brew install python`
-  - Linux：`sudo apt install python3`
+  - macOS（已安装 Homebrew）：`brew install python`
+  - Ubuntu / Debian：`sudo apt install python3`
 
 ### 方式一：一键安装
 
@@ -169,24 +169,6 @@ npx skills add YuhangZho/gewu-skill
 | 其他 50+ agent | 路径各异，见 [vercel-labs/skills 支持表](https://github.com/vercel-labs/skills#supported-agents) |
 
 </details>
-
----
-
-## 自定义外观
-
-知识站默认浅色，也支持深色、宣纸、夜墨主题。复制模板到你的知识库：
-
-```text
-你的知识库/_system/config.json
-```
-
-模板见：
-
-```text
-templates/config.example.json
-```
-
-改完后重新生成知识站即可生效。
 
 ---
 
@@ -252,13 +234,7 @@ gewu-vault/
 
 ## 作者
 
-宇航，正在蒸馏🧪自己的嵌入式码农。
-
-* 零散知识融合效果还有待进一步测试；
-
-* 虽然支持Marvis,Trae,Qoder 但实测效果一般, 可能模型存在注意力漂移的问题(2026.6.26)。
-
-* Cursor(auto)/Codex(5.5)/Claude(opus4.8)/Kimi(K2.6) 生成效果验证通过。
+宇航🧪蒸馏自己。
 
 <p align="left">
   <img src="./assets/wechat-search.png" alt="微信搜一搜：周宇航" width="620" style="display:block;margin-left:0;margin-right:auto;">
