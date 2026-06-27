@@ -1,0 +1,26 @@
+{
+  "chart_type": "flow",
+  "concept": "地主出牌策略",
+  "nodes": [
+    { "id": "goal_keep_control", "label": "守住牌权不接力", "kind": "concept" },
+    { "id": "rule_press_down", "label": "打下不上心法", "kind": "rule" },
+    { "id": "stage_opening", "label": "首发选牌阶段", "kind": "process" },
+    { "id": "stage_middle", "label": "中局控牌权阶段", "kind": "process" },
+    { "id": "stage_endgame", "label": "残局收尾阶段", "kind": "process" },
+    { "id": "state_strong", "label": "强牌强攻路径", "kind": "state" },
+    { "id": "state_mid", "label": "中牌控场路径", "kind": "state" },
+    { "id": "state_weak", "label": "弱牌藏拙路径", "kind": "state" },
+    { "id": "boundary_reverse", "label": "剩2-3张反转", "kind": "boundary" }
+  ],
+  "edges": [
+    { "from": "goal_keep_control", "to": "rule_press_down", "style": "solid" },
+    { "from": "rule_press_down", "to": "stage_opening", "style": "solid" },
+    { "from": "stage_opening", "to": "stage_middle", "style": "solid", "label": "先长后短" },
+    { "from": "stage_middle", "to": "stage_endgame", "style": "solid", "label": "忍让控盘" },
+    { "from": "stage_opening", "to": "state_strong", "style": "dashed", "label": "牌力分流" },
+    { "from": "stage_opening", "to": "state_mid", "style": "dashed" },
+    { "from": "stage_opening", "to": "state_weak", "style": "dashed" },
+    { "from": "stage_endgame", "to": "boundary_reverse", "style": "solid", "label": "张数触发" },
+    { "from": "boundary_reverse", "to": "goal_keep_control", "style": "dashed", "label": "抢牌权第一" }
+  ]
+}

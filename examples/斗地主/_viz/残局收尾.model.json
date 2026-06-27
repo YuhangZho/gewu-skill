@@ -1,0 +1,26 @@
+{
+  "chart_type": "flow",
+  "concept": "残局收尾",
+  "nodes": [
+    { "id": "core_card_right", "label": "牌权即一切", "kind": "concept" },
+    { "id": "formula_win", "label": "控牌+跑路必胜公式", "kind": "rule" },
+    { "id": "scene_one_hand", "label": "一手走完场景", "kind": "state" },
+    { "id": "scene_two_hand", "label": "两手走完场景", "kind": "state" },
+    { "id": "scene_control_run", "label": "控牌+跑路场景", "kind": "state" },
+    { "id": "process_5step", "label": "五步推演", "kind": "process" },
+    { "id": "boundary_info", "label": "信息不充分", "kind": "boundary" },
+    { "id": "tactic_reverse_win", "label": "反败为胜三招", "kind": "process" }
+  ],
+  "edges": [
+    { "from": "core_card_right", "to": "formula_win", "style": "solid" },
+    { "from": "formula_win", "to": "scene_one_hand", "style": "dashed", "label": "场景分流" },
+    { "from": "formula_win", "to": "scene_two_hand", "style": "dashed" },
+    { "from": "formula_win", "to": "scene_control_run", "style": "dashed" },
+    { "from": "scene_one_hand", "to": "process_5step", "style": "solid" },
+    { "from": "scene_two_hand", "to": "process_5step", "style": "solid" },
+    { "from": "scene_control_run", "to": "process_5step", "style": "solid" },
+    { "from": "process_5step", "to": "boundary_info", "style": "dashed", "label": "推演失败" },
+    { "from": "boundary_info", "to": "tactic_reverse_win", "style": "solid", "label": "兜底路径" },
+    { "from": "tactic_reverse_win", "to": "core_card_right", "style": "dashed", "label": "逼拆/诱导/控节拍" }
+  ]
+}

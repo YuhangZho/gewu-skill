@@ -1,0 +1,26 @@
+stateDiagram-v2
+  state "◇ 发牌完成待叫牌" as initial_deal
+  state "◇ 有人叫1分" as called_one
+  state "◇ 三家弃叫重发" as no_call
+  state "◇ 评估是否抢地主" as rob_decision
+  state "◇ 抢地主成功翻倍" as rob_landlord
+  state "◇ 不抢维持原叫" as no_rob
+  state "◇ 评估是否明牌" as show_card_eval
+  state "◇ 明牌翻倍" as show_card
+  state "◇ 不明牌正常打" as no_show
+  state "◇ 结算查春天反春" as spring_check
+  state "◇ 春天翻倍结算" as spring_win
+  state "◇ 反春天翻倍结算" as anti_spring
+  initial_deal --> called_one : 首家叫1分
+  initial_deal --> no_call : 三家均弃叫
+  called_one --> rob_decision : 后家评估抢与否
+  rob_decision --> rob_landlord : 牌力≥8分且结构完整
+  rob_decision --> no_rob : 牌力不足或风险过大
+  rob_landlord --> show_card_eval : 进入明牌评估
+  no_rob --> show_card_eval : 进入明牌评估
+  show_card_eval --> show_card : 牌力极强≥8分
+  show_card_eval --> no_show : 中档以下绝不
+  show_card --> spring_check : 出牌结束查春天
+  no_show --> spring_check : 出牌结束查春天
+  spring_check --> spring_win : 地主春天农民未出牌
+  spring_check --> anti_spring : 地主仅出一手被反春

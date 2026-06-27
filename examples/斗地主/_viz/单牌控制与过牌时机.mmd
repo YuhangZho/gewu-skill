@@ -1,0 +1,12 @@
+stateDiagram-v2
+  state "◇ 探路送小单" as probe
+  state "◇ 压牌抢权" as press
+  state "◇ 过牌忍着" as pass
+  state "◇ 收尾锁权" as finish
+  probe --> press : 对手顶牌暴露大牌
+  probe --> pass : 手牌未成型
+  pass --> press : 关键牌权/对手将跑
+  press --> probe : 夺权后再探虚实
+  press --> finish : 进入残局
+  pass --> finish : 留作回手收尾
+  finish --> press : 对手反压

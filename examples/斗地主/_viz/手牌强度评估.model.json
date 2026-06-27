@@ -1,0 +1,138 @@
+{
+  "chart_type": "hierarchy",
+  "concept": "手牌强度评估",
+  "nodes": [
+    {
+      "id": "hand_strength",
+      "label": "手牌强度评估",
+      "kind": "concept"
+    },
+    {
+      "id": "abs_power",
+      "label": "绝对点力",
+      "kind": "data"
+    },
+    {
+      "id": "structure",
+      "label": "牌型结构",
+      "kind": "data"
+    },
+    {
+      "id": "control",
+      "label": "控制力",
+      "kind": "data"
+    },
+    {
+      "id": "tempo",
+      "label": "手数速度",
+      "kind": "data"
+    },
+    {
+      "id": "point_system",
+      "label": "牌点制4/3/2/1",
+      "kind": "rule"
+    },
+    {
+      "id": "break_count",
+      "label": "断张数≤2",
+      "kind": "rule"
+    },
+    {
+      "id": "continuity",
+      "label": "首发续控能力",
+      "kind": "rule"
+    },
+    {
+      "id": "min_hands",
+      "label": "最少出牌次数≤5",
+      "kind": "rule"
+    },
+    {
+      "id": "decision_tree",
+      "label": "叫牌决策树",
+      "kind": "process"
+    },
+    {
+      "id": "strong_zone",
+      "label": "≥7分强牌叫3分",
+      "kind": "boundary"
+    },
+    {
+      "id": "weak_zone",
+      "label": "≤4分必弃",
+      "kind": "boundary"
+    }
+  ],
+  "edges": [
+    {
+      "from": "hand_strength",
+      "to": "abs_power",
+      "style": "solid"
+    },
+    {
+      "from": "hand_strength",
+      "to": "structure",
+      "style": "solid"
+    },
+    {
+      "from": "hand_strength",
+      "to": "control",
+      "style": "solid"
+    },
+    {
+      "from": "hand_strength",
+      "to": "tempo",
+      "style": "solid"
+    },
+    {
+      "from": "abs_power",
+      "to": "point_system",
+      "style": "solid"
+    },
+    {
+      "from": "structure",
+      "to": "break_count",
+      "style": "solid"
+    },
+    {
+      "from": "control",
+      "to": "continuity",
+      "style": "solid"
+    },
+    {
+      "from": "tempo",
+      "to": "min_hands",
+      "style": "solid"
+    },
+    {
+      "from": "point_system",
+      "to": "decision_tree",
+      "style": "solid"
+    },
+    {
+      "from": "break_count",
+      "to": "decision_tree",
+      "style": "solid"
+    },
+    {
+      "from": "continuity",
+      "to": "decision_tree",
+      "style": "solid"
+    },
+    {
+      "from": "min_hands",
+      "to": "decision_tree",
+      "style": "solid"
+    },
+    {
+      "from": "decision_tree",
+      "to": "strong_zone",
+      "style": "solid"
+    },
+    {
+      "from": "decision_tree",
+      "to": "weak_zone",
+      "style": "solid"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "chart_type": "flow",
+  "concept": "算牌与概率推断",
+  "nodes": [
+    {"id": "collect_data", "label": "记牌收集数据", "kind": "process"},
+    {"id": "layer1_bomb", "label": "断张炸弹排查", "kind": "rule"},
+    {"id": "layer2_struct", "label": "牌型结构反推", "kind": "rule"},
+    {"id": "layer3_remain", "label": "剩余牌力计算", "kind": "rule"},
+    {"id": "behavior_sig", "label": "六种行为信号", "kind": "data"},
+    {"id": "confidence", "label": "置信度评估", "kind": "concept"},
+    {"id": "prob_data", "label": "概率数据参考", "kind": "data"},
+    {"id": "act_verify", "label": "行动并验证", "kind": "process"},
+    {"id": "low_conf_warn", "label": "低置信仅参考", "kind": "boundary"}
+  ],
+  "edges": [
+    {"from": "collect_data", "to": "layer1_bomb", "style": "solid"},
+    {"from": "layer1_bomb", "to": "layer2_struct", "style": "solid", "label": "底线排查后"},
+    {"from": "layer2_struct", "to": "layer3_remain", "style": "solid", "label": "中局反推后"},
+    {"from": "behavior_sig", "to": "layer2_struct", "style": "dashed", "label": "信号补充"},
+    {"from": "prob_data", "to": "confidence", "style": "solid", "label": "概率量化"},
+    {"from": "layer3_remain", "to": "confidence", "style": "solid"},
+    {"from": "confidence", "to": "act_verify", "style": "solid", "label": "高置信"},
+    {"from": "confidence", "to": "low_conf_warn", "style": "dashed", "label": "低置信"},
+    {"from": "low_conf_warn", "to": "collect_data", "style": "dashed", "label": "继续观察"},
+    {"from": "act_verify", "to": "collect_data", "style": "solid", "label": "验证修正闭环"}
+  ]
+}

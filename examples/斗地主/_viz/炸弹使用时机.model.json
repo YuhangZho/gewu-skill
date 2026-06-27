@@ -1,0 +1,28 @@
+{
+  "chart_type": "flow",
+  "concept": "炸弹使用时机",
+  "nodes": [
+    {"id": "detect_turn", "label": "识别拐点信号", "kind": "concept"},
+    {"id": "four_ask", "label": "炸弹四问决策", "kind": "rule"},
+    {"id": "will_lose", "label": "不出会输?", "kind": "rule"},
+    {"id": "can_ctrl", "label": "出了可控?", "kind": "rule"},
+    {"id": "multi_ok", "label": "倍数划算?", "kind": "rule"},
+    {"id": "no_counter", "label": "有反制?", "kind": "rule"},
+    {"id": "play_bomb", "label": "果断出手炸", "kind": "process"},
+    {"id": "hold_bomb", "label": "忍住保留", "kind": "process"},
+    {"id": "endgame_warn", "label": "残局慎炸", "kind": "boundary"}
+  ],
+  "edges": [
+    {"from": "detect_turn", "to": "four_ask", "style": "solid"},
+    {"from": "four_ask", "to": "will_lose", "style": "solid"},
+    {"from": "will_lose", "to": "can_ctrl", "style": "solid", "label": "是"},
+    {"from": "can_ctrl", "to": "multi_ok", "style": "solid", "label": "是"},
+    {"from": "multi_ok", "to": "no_counter", "style": "solid", "label": "是"},
+    {"from": "no_counter", "to": "play_bomb", "style": "solid", "label": "全过"},
+    {"from": "will_lose", "to": "hold_bomb", "style": "dashed", "label": "否"},
+    {"from": "can_ctrl", "to": "hold_bomb", "style": "dashed", "label": "否"},
+    {"from": "multi_ok", "to": "hold_bomb", "style": "dashed", "label": "否"},
+    {"from": "no_counter", "to": "hold_bomb", "style": "dashed", "label": "有反制"},
+    {"from": "play_bomb", "to": "endgame_warn", "style": "dashed", "label": "残局重估"}
+  ]
+}

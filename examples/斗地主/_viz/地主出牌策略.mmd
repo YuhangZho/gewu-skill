@@ -1,0 +1,19 @@
+flowchart TD
+  goal_keep_control["◉ 守住牌权不接力"]
+  rule_press_down["◆ 打下不上心法"]
+  stage_opening["⚙ 首发选牌阶段"]
+  stage_middle["⚙ 中局控牌权阶段"]
+  stage_endgame["⚙ 残局收尾阶段"]
+  state_strong["◇ 强牌强攻路径"]
+  state_mid["◇ 中牌控场路径"]
+  state_weak["◇ 弱牌藏拙路径"]
+  boundary_reverse["⛔ 剩2-3张反转"]
+  goal_keep_control --> rule_press_down
+  rule_press_down --> stage_opening
+  stage_opening -->|先长后短| stage_middle
+  stage_middle -->|忍让控盘| stage_endgame
+  stage_opening -.->|牌力分流| state_strong
+  stage_opening -.-> state_mid
+  stage_opening -.-> state_weak
+  stage_endgame -->|张数触发| boundary_reverse
+  boundary_reverse -.->|抢牌权第一| goal_keep_control

@@ -1,0 +1,19 @@
+{
+  "chart_type": "state",
+  "concept": "单牌控制与过牌时机",
+  "states": [
+    {"id": "probe", "label": "探路送小单"},
+    {"id": "press", "label": "压牌抢权"},
+    {"id": "pass", "label": "过牌忍着"},
+    {"id": "finish", "label": "收尾锁权"}
+  ],
+  "transitions": [
+    {"from": "probe", "to": "press", "trigger": "对手顶牌暴露大牌"},
+    {"from": "probe", "to": "pass", "trigger": "手牌未成型"},
+    {"from": "pass", "to": "press", "trigger": "关键牌权/对手将跑"},
+    {"from": "press", "to": "probe", "trigger": "夺权后再探虚实"},
+    {"from": "press", "to": "finish", "trigger": "进入残局"},
+    {"from": "pass", "to": "finish", "trigger": "留作回手收尾"},
+    {"from": "finish", "to": "press", "trigger": "对手反压"}
+  ]
+}

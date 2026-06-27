@@ -1,0 +1,19 @@
+flowchart TD
+  role_up["☻ 地主上家·顶牌"]
+  role_down["☻ 地主下家·跑牌"]
+  step_count["⚙ 算牌三要素"]
+  step_block["◆ 顶牌铁律"]
+  step_pass["⚙ 送牌三步"]
+  step_run["⚙ 跑牌三技巧"]
+  tactic_reverse["◆ 反向出牌法"]
+  rule_no_crush["◆ 不压自己人"]
+  boundary_special["⛔ 地主剩1-2张"]
+  step_count -->|算准断张| role_up
+  step_count -->|算准过牌| role_down
+  role_up -->|单不过10双不过6| step_block
+  role_up -.->|送队友| step_pass
+  role_down -->|抢先上手| step_run
+  step_pass -.-> tactic_reverse
+  tactic_reverse --> rule_no_crush
+  rule_no_crush -.->|剩1-2张切换| boundary_special
+  boundary_special -.->|出非单张/出单逼拆| step_pass
