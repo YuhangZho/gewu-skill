@@ -1,0 +1,19 @@
+graph LR
+  trap_call["◉ 叫牌陷阱"]
+  trap_play["◉ 出牌陷阱"]
+  trap_bomb["◉ 炸弹陷阱"]
+  trap_count["◉ 记牌陷阱"]
+  trap_mind["↺ 心理陷阱·放大器"]
+  fix_checklist["◆ 每手牌检查清单"]
+  fix_pressure["◆ 压力下走捷径识别"]
+  trap_mind -.->|上头追倍放大| trap_call
+  trap_mind -.->|摆烂放大| trap_play
+  trap_mind -.->|情绪化用炸| trap_bomb
+  trap_mind -.->|放弃记牌| trap_count
+  trap_count -->|记错关键张→出牌错| trap_play
+  trap_count -->|不算牌→乱炸| trap_bomb
+  trap_call -->|错叫后强行扳| trap_play
+  fix_checklist -.->|规避| trap_call
+  fix_checklist -.->|规避| trap_play
+  fix_checklist -.->|规避| trap_bomb
+  fix_pressure -.->|截断放大器| trap_mind

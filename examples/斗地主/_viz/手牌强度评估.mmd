@@ -1,0 +1,27 @@
+flowchart TD
+  hand_strength["◉ 手牌强度评估"]
+  abs_power["▣ 绝对点力"]
+  structure["▣ 牌型结构"]
+  control["▣ 控制力"]
+  tempo["▣ 手数速度"]
+  point_system["◆ 牌点制4/3/2/1"]
+  break_count["◆ 断张数≤2"]
+  continuity["◆ 首发续控能力"]
+  min_hands["◆ 最少出牌次数≤5"]
+  decision_tree["⚙ 叫牌决策树"]
+  strong_zone["⛔ ≥7分强牌叫3分"]
+  weak_zone["⛔ ≤4分必弃"]
+  hand_strength --> abs_power
+  hand_strength --> structure
+  hand_strength --> control
+  hand_strength --> tempo
+  abs_power --> point_system
+  structure --> break_count
+  control --> continuity
+  tempo --> min_hands
+  point_system --> decision_tree
+  break_count --> decision_tree
+  continuity --> decision_tree
+  min_hands --> decision_tree
+  decision_tree --> strong_zone
+  decision_tree --> weak_zone

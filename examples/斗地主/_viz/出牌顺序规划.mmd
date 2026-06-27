@@ -1,0 +1,15 @@
+flowchart TD
+  scan_hand["⚙ 扫断张定骨架"]
+  count_hands["▣ 数当前手数"]
+  three_rules["◆ 拆牌三原则校验"]
+  choose_split["◉ 选三大拆法"]
+  keep_control["◆ 保留大牌+炸"]
+  play_order["⚙ 定出牌顺序"]
+  hand_overload["⛔ 手数≥8失控"]
+  scan_hand --> count_hands
+  count_hands --> three_rules
+  three_rules -->|三原则都过| choose_split
+  choose_split --> keep_control
+  keep_control --> play_order
+  count_hands -.->|手数≥8| hand_overload
+  hand_overload -.->|强制重拆| three_rules

@@ -1,0 +1,142 @@
+{
+  "chart_type": "flow",
+  "concept": "叫地主决策",
+  "nodes": [
+    {
+      "id": "start",
+      "label": "发牌完成17张",
+      "kind": "process"
+    },
+    {
+      "id": "power_score",
+      "label": "牌力基础分",
+      "kind": "data"
+    },
+    {
+      "id": "strong_zone",
+      "label": "≥7分强牌区",
+      "kind": "boundary"
+    },
+    {
+      "id": "gray_zone",
+      "label": "5-6分灰色地带",
+      "kind": "boundary"
+    },
+    {
+      "id": "weak_zone",
+      "label": "≤4分弱牌区",
+      "kind": "boundary"
+    },
+    {
+      "id": "position_fix",
+      "label": "位置修正",
+      "kind": "rule"
+    },
+    {
+      "id": "bottom_expect",
+      "label": "底牌期望分",
+      "kind": "rule"
+    },
+    {
+      "id": "call_3",
+      "label": "叫3分",
+      "kind": "state"
+    },
+    {
+      "id": "call_1",
+      "label": "叫1分试探",
+      "kind": "state"
+    },
+    {
+      "id": "pass",
+      "label": "弃叫",
+      "kind": "state"
+    },
+    {
+      "id": "three_dims",
+      "label": "三维决策合并",
+      "kind": "concept"
+    },
+    {
+      "id": "moat",
+      "label": "叫错代价>不叫损失",
+      "kind": "feedback"
+    }
+  ],
+  "edges": [
+    {
+      "from": "start",
+      "to": "power_score",
+      "style": "solid"
+    },
+    {
+      "from": "power_score",
+      "to": "strong_zone",
+      "style": "solid"
+    },
+    {
+      "from": "power_score",
+      "to": "gray_zone",
+      "style": "solid"
+    },
+    {
+      "from": "power_score",
+      "to": "weak_zone",
+      "style": "solid"
+    },
+    {
+      "from": "strong_zone",
+      "to": "call_3",
+      "style": "solid",
+      "label": "断张≤2+有控"
+    },
+    {
+      "from": "gray_zone",
+      "to": "position_fix",
+      "style": "solid"
+    },
+    {
+      "from": "position_fix",
+      "to": "bottom_expect",
+      "style": "solid"
+    },
+    {
+      "from": "bottom_expect",
+      "to": "call_1",
+      "style": "solid",
+      "label": "末家+断1张"
+    },
+    {
+      "from": "bottom_expect",
+      "to": "pass",
+      "style": "solid",
+      "label": "首家+断2张"
+    },
+    {
+      "from": "weak_zone",
+      "to": "pass",
+      "style": "solid",
+      "label": "直接否决"
+    },
+    {
+      "from": "call_3",
+      "to": "three_dims",
+      "style": "dashed"
+    },
+    {
+      "from": "call_1",
+      "to": "three_dims",
+      "style": "dashed"
+    },
+    {
+      "from": "pass",
+      "to": "three_dims",
+      "style": "dashed"
+    },
+    {
+      "from": "three_dims",
+      "to": "moat",
+      "style": "solid"
+    }
+  ]
+}

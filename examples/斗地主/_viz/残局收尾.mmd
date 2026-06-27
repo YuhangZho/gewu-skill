@@ -1,0 +1,19 @@
+flowchart TD
+  core_card_right["◉ 牌权即一切"]
+  formula_win["◆ 控牌+跑路必胜公式"]
+  scene_one_hand["◇ 一手走完场景"]
+  scene_two_hand["◇ 两手走完场景"]
+  scene_control_run["◇ 控牌+跑路场景"]
+  process_5step["⚙ 五步推演"]
+  boundary_info["⛔ 信息不充分"]
+  tactic_reverse_win["⚙ 反败为胜三招"]
+  core_card_right --> formula_win
+  formula_win -.->|场景分流| scene_one_hand
+  formula_win -.-> scene_two_hand
+  formula_win -.-> scene_control_run
+  scene_one_hand --> process_5step
+  scene_two_hand --> process_5step
+  scene_control_run --> process_5step
+  process_5step -.->|推演失败| boundary_info
+  boundary_info -->|兜底路径| tactic_reverse_win
+  tactic_reverse_win -.->|逼拆/诱导/控节拍| core_card_right

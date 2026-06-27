@@ -1,0 +1,18 @@
+flowchart TD
+  root["◉ 记牌技巧体系"]
+  four_three["◆ 四三法则"]
+  layer_mem["◆ 四类牌分层"]
+  broken["▣ 断张(最高)"]
+  big_cards["▣ 大牌王2A"]
+  seven_ten["▣ 关键张7和10"]
+  infer["⚙ 行牌推理"]
+  three_methods["◆ 三种记忆法"]
+  train_path["⚙ 四阶段训练"]
+  root --> four_three
+  root --> layer_mem
+  root --> three_methods
+  root --> train_path
+  layer_mem -->|优先级1| broken
+  layer_mem -->|优先级2| big_cards
+  layer_mem -->|优先级3| seven_ten
+  layer_mem -->|优先级4| infer

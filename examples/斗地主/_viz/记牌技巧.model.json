@@ -1,0 +1,25 @@
+{
+  "chart_type": "hierarchy",
+  "concept": "记牌技巧",
+  "nodes": [
+    {"id": "root", "label": "记牌技巧体系", "kind": "concept"},
+    {"id": "four_three", "label": "四三法则", "kind": "rule"},
+    {"id": "layer_mem", "label": "四类牌分层", "kind": "rule"},
+    {"id": "broken", "label": "断张(最高)", "kind": "data"},
+    {"id": "big_cards", "label": "大牌王2A", "kind": "data"},
+    {"id": "seven_ten", "label": "关键张7和10", "kind": "data"},
+    {"id": "infer", "label": "行牌推理", "kind": "process"},
+    {"id": "three_methods", "label": "三种记忆法", "kind": "rule"},
+    {"id": "train_path", "label": "四阶段训练", "kind": "process"}
+  ],
+  "edges": [
+    {"from": "root", "to": "four_three", "style": "solid"},
+    {"from": "root", "to": "layer_mem", "style": "solid"},
+    {"from": "root", "to": "three_methods", "style": "solid"},
+    {"from": "root", "to": "train_path", "style": "solid"},
+    {"from": "layer_mem", "to": "broken", "style": "solid", "label": "优先级1"},
+    {"from": "layer_mem", "to": "big_cards", "style": "solid", "label": "优先级2"},
+    {"from": "layer_mem", "to": "seven_ten", "style": "solid", "label": "优先级3"},
+    {"from": "layer_mem", "to": "infer", "style": "solid", "label": "优先级4"}
+  ]
+}

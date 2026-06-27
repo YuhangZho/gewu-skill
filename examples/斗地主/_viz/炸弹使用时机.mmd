@@ -1,0 +1,21 @@
+flowchart TD
+  detect_turn["◉ 识别拐点信号"]
+  four_ask["◆ 炸弹四问决策"]
+  will_lose["◆ 不出会输?"]
+  can_ctrl["◆ 出了可控?"]
+  multi_ok["◆ 倍数划算?"]
+  no_counter["◆ 有反制?"]
+  play_bomb["⚙ 果断出手炸"]
+  hold_bomb["⚙ 忍住保留"]
+  endgame_warn["⛔ 残局慎炸"]
+  detect_turn --> four_ask
+  four_ask --> will_lose
+  will_lose -->|是| can_ctrl
+  can_ctrl -->|是| multi_ok
+  multi_ok -->|是| no_counter
+  no_counter -->|全过| play_bomb
+  will_lose -.->|否| hold_bomb
+  can_ctrl -.->|否| hold_bomb
+  multi_ok -.->|否| hold_bomb
+  no_counter -.->|有反制| hold_bomb
+  play_bomb -.->|残局重估| endgame_warn

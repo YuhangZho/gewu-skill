@@ -1,0 +1,26 @@
+{
+  "chart_type": "relation",
+  "concept": "反直觉陷阱与常见错误",
+  "nodes": [
+    { "id": "trap_call", "label": "叫牌陷阱", "kind": "concept" },
+    { "id": "trap_play", "label": "出牌陷阱", "kind": "concept" },
+    { "id": "trap_bomb", "label": "炸弹陷阱", "kind": "concept" },
+    { "id": "trap_count", "label": "记牌陷阱", "kind": "concept" },
+    { "id": "trap_mind", "label": "心理陷阱·放大器", "kind": "feedback" },
+    { "id": "fix_checklist", "label": "每手牌检查清单", "kind": "rule" },
+    { "id": "fix_pressure", "label": "压力下走捷径识别", "kind": "rule" }
+  ],
+  "edges": [
+    { "from": "trap_mind", "to": "trap_call", "style": "dashed", "label": "上头追倍放大" },
+    { "from": "trap_mind", "to": "trap_play", "style": "dashed", "label": "摆烂放大" },
+    { "from": "trap_mind", "to": "trap_bomb", "style": "dashed", "label": "情绪化用炸" },
+    { "from": "trap_mind", "to": "trap_count", "style": "dashed", "label": "放弃记牌" },
+    { "from": "trap_count", "to": "trap_play", "style": "solid", "label": "记错关键张→出牌错" },
+    { "from": "trap_count", "to": "trap_bomb", "style": "solid", "label": "不算牌→乱炸" },
+    { "from": "trap_call", "to": "trap_play", "style": "solid", "label": "错叫后强行扳" },
+    { "from": "fix_checklist", "to": "trap_call", "style": "dashed", "label": "规避" },
+    { "from": "fix_checklist", "to": "trap_play", "style": "dashed", "label": "规避" },
+    { "from": "fix_checklist", "to": "trap_bomb", "style": "dashed", "label": "规避" },
+    { "from": "fix_pressure", "to": "trap_mind", "style": "dashed", "label": "截断放大器" }
+  ]
+}

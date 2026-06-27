@@ -1,0 +1,20 @@
+flowchart TD
+  collect_data["⚙ 记牌收集数据"]
+  layer1_bomb["◆ 断张炸弹排查"]
+  layer2_struct["◆ 牌型结构反推"]
+  layer3_remain["◆ 剩余牌力计算"]
+  behavior_sig["▣ 六种行为信号"]
+  confidence["◉ 置信度评估"]
+  prob_data["▣ 概率数据参考"]
+  act_verify["⚙ 行动并验证"]
+  low_conf_warn["⛔ 低置信仅参考"]
+  collect_data --> layer1_bomb
+  layer1_bomb -->|底线排查后| layer2_struct
+  layer2_struct -->|中局反推后| layer3_remain
+  behavior_sig -.->|信号补充| layer2_struct
+  prob_data -->|概率量化| confidence
+  layer3_remain --> confidence
+  confidence -->|高置信| act_verify
+  confidence -.->|低置信| low_conf_warn
+  low_conf_warn -.->|继续观察| collect_data
+  act_verify -->|验证修正闭环| collect_data

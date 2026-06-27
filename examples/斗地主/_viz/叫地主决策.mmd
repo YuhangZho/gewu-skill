@@ -1,0 +1,27 @@
+flowchart TD
+  start["⚙ 发牌完成17张"]
+  power_score["▣ 牌力基础分"]
+  strong_zone["⛔ ≥7分强牌区"]
+  gray_zone["⛔ 5-6分灰色地带"]
+  weak_zone["⛔ ≤4分弱牌区"]
+  position_fix["◆ 位置修正"]
+  bottom_expect["◆ 底牌期望分"]
+  call_3["◇ 叫3分"]
+  call_1["◇ 叫1分试探"]
+  pass["◇ 弃叫"]
+  three_dims["◉ 三维决策合并"]
+  moat["↺ 叫错代价>不叫损失"]
+  start --> power_score
+  power_score --> strong_zone
+  power_score --> gray_zone
+  power_score --> weak_zone
+  strong_zone -->|断张≤2+有控| call_3
+  gray_zone --> position_fix
+  position_fix --> bottom_expect
+  bottom_expect -->|末家+断1张| call_1
+  bottom_expect -->|首家+断2张| pass
+  weak_zone -->|直接否决| pass
+  call_3 -.-> three_dims
+  call_1 -.-> three_dims
+  pass -.-> three_dims
+  three_dims --> moat

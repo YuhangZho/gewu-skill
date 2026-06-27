@@ -1,0 +1,22 @@
+{
+  "chart_type": "flow",
+  "concept": "出牌顺序规划",
+  "nodes": [
+    {"id": "scan_hand", "label": "扫断张定骨架", "kind": "process"},
+    {"id": "count_hands", "label": "数当前手数", "kind": "data"},
+    {"id": "three_rules", "label": "拆牌三原则校验", "kind": "rule"},
+    {"id": "choose_split", "label": "选三大拆法", "kind": "concept"},
+    {"id": "keep_control", "label": "保留大牌+炸", "kind": "rule"},
+    {"id": "play_order", "label": "定出牌顺序", "kind": "process"},
+    {"id": "hand_overload", "label": "手数≥8失控", "kind": "boundary"}
+  ],
+  "edges": [
+    {"from": "scan_hand", "to": "count_hands", "style": "solid"},
+    {"from": "count_hands", "to": "three_rules", "style": "solid"},
+    {"from": "three_rules", "to": "choose_split", "style": "solid", "label": "三原则都过"},
+    {"from": "choose_split", "to": "keep_control", "style": "solid"},
+    {"from": "keep_control", "to": "play_order", "style": "solid"},
+    {"from": "count_hands", "to": "hand_overload", "style": "dashed", "label": "手数≥8"},
+    {"from": "hand_overload", "to": "three_rules", "style": "dashed", "label": "强制重拆"}
+  ]
+}
