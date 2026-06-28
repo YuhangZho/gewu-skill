@@ -1,0 +1,16 @@
+flowchart TD
+  doc_vecs["▣ 文档向量集合"]
+  index_build["⚙ 索引构建"]
+  ann_index["◇ ANN索引"]
+  query_vec["▣ 查询向量"]
+  traverse["⚙ 索引遍历"]
+  candidates["▣ 候选集"]
+  rerank["⚙ 精排"]
+  topk["▣ top-k结果"]
+  doc_vecs -->|批量插入| index_build
+  index_build -->|建HNSW/IVF| ann_index
+  query_vec -->|查询| traverse
+  ann_index -->|走索引| traverse
+  traverse -->|近邻候选| candidates
+  candidates -->|精确算相似度| rerank
+  rerank -->|排序取top| topk

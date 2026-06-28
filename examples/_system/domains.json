@@ -1,0 +1,33 @@
+{
+  "AI应用开发": {
+    "summary": "AI应用开发（LLM应用工程）领域已完成基础到应用层19概念",
+    "extensions": [
+      {
+        "name": "MLOps与LLMOps",
+        "why": "生产级AI应用的工程化运维：CI/CD、模型注册、漂移监控、灰度发布",
+        "importance": 5
+      },
+      {
+        "name": "向量检索进阶",
+        "why": "大规模向量库性能调优、混合检索、GraphRAG、多模态检索",
+        "importance": 4
+      },
+      {
+        "name": "LLM安全与对齐",
+        "why": "Prompt注入防御、越狱防护、内容安全、RLHF/DPO对齐原理",
+        "importance": 4
+      },
+      {
+        "name": "多模态AI应用",
+        "why": "视觉+语言模型应用、图像理解、OCR、视频分析",
+        "importance": 4
+      },
+      {
+        "name": "AI产品与商业化",
+        "why": "AI应用的产品设计、定价模型、用户增长、商业化路径",
+        "importance": 3
+      }
+    ]
+  }
+}
+

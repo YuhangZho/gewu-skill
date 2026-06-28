@@ -1,0 +1,29 @@
+{
+  "concept": "LLM工作原理与Token机制",
+  "chart_type": "flow",
+  "nodes": [
+    {"id": "raw_text", "label": "原始文本", "kind": "data"},
+    {"id": "tokenizer", "label": "分词器BPE", "kind": "process"},
+    {"id": "token_ids", "label": "Token ID序列", "kind": "data"},
+    {"id": "ctx_window", "label": "上下文窗口", "kind": "boundary"},
+    {"id": "model", "label": "Transformer模型", "kind": "process"},
+    {"id": "kv_cache", "label": "KV Cache", "kind": "state"},
+    {"id": "prob_dist", "label": "概率分布", "kind": "data"},
+    {"id": "sampling", "label": "采样策略", "kind": "process"},
+    {"id": "new_token", "label": "新Token", "kind": "data"},
+    {"id": "billing", "label": "计费规则", "kind": "rule"}
+  ],
+  "edges": [
+    {"from": "raw_text", "to": "tokenizer", "label": "encode"},
+    {"from": "tokenizer", "to": "token_ids", "label": "BPE合并表"},
+    {"from": "token_ids", "to": "ctx_window", "label": "填充"},
+    {"from": "ctx_window", "to": "model", "label": "输入"},
+    {"from": "model", "to": "kv_cache", "label": "读写复用", "style": "dashed"},
+    {"from": "model", "to": "prob_dist", "label": "预测下一token"},
+    {"from": "prob_dist", "to": "sampling", "label": "argmax/temperature"},
+    {"from": "sampling", "to": "new_token", "label": "选出"},
+    {"from": "new_token", "to": "ctx_window", "label": "回填·自回归循环"},
+    {"from": "ctx_window", "to": "billing", "label": "输入计数"},
+    {"from": "new_token", "to": "billing", "label": "输出计数·贵3-4倍", "style": "dashed"}
+  ]
+}

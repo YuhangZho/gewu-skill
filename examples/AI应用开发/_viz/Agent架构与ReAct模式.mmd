@@ -1,0 +1,13 @@
+flowchart LR
+  goal["▣ 用户目标"]
+  thought["⚙ Thought思考"]
+  action["⚙ Action行动"]
+  tools["◆ 工具集"]
+  observation["▣ Observation观察"]
+  final["▣ Final Answer"]
+  goal -->|开始| thought
+  thought -->|决定下一步| action
+  action -->|调用| tools
+  tools -->|返回结果| observation
+  observation -->|循环再思考| thought
+  thought -->|完成退出| final

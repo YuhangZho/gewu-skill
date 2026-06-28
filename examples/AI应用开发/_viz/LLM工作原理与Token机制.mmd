@@ -1,0 +1,22 @@
+flowchart TD
+  raw_text["▣ 原始文本"]
+  tokenizer["⚙ 分词器BPE"]
+  token_ids["▣ Token ID序列"]
+  ctx_window["⛔ 上下文窗口"]
+  model["⚙ Transformer模型"]
+  kv_cache["◇ KV Cache"]
+  prob_dist["▣ 概率分布"]
+  sampling["⚙ 采样策略"]
+  new_token["▣ 新Token"]
+  billing["◆ 计费规则"]
+  raw_text -->|encode| tokenizer
+  tokenizer -->|BPE合并表| token_ids
+  token_ids -->|填充| ctx_window
+  ctx_window -->|输入| model
+  model -.->|读写复用| kv_cache
+  model -->|预测下一token| prob_dist
+  prob_dist -->|argmax/temperature| sampling
+  sampling -->|选出| new_token
+  new_token -->|回填·自回归循环| ctx_window
+  ctx_window -->|输入计数| billing
+  new_token -.->|输出计数·贵3-4倍| billing

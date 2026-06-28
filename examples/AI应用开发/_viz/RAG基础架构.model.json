@@ -1,0 +1,28 @@
+{
+  "concept": "RAG基础架构",
+  "chart_type": "flow",
+  "nodes": [
+    {"id": "docs", "label": "原始文档", "kind": "data"},
+    {"id": "chunk", "label": "分块", "kind": "process"},
+    {"id": "embed_offline", "label": "Embedding", "kind": "process"},
+    {"id": "vecdb", "label": "向量库", "kind": "state"},
+    {"id": "query", "label": "用户查询", "kind": "data"},
+    {"id": "retrieve", "label": "检索", "kind": "process"},
+    {"id": "topk", "label": "top-k文档块", "kind": "data"},
+    {"id": "prompt", "label": "Prompt组装", "kind": "process"},
+    {"id": "llm", "label": "LLM生成", "kind": "process"},
+    {"id": "answer", "label": "带引用回答", "kind": "data"}
+  ],
+  "edges": [
+    {"from": "docs", "to": "chunk", "label": "离线索引"},
+    {"from": "chunk", "to": "embed_offline", "label": "切块"},
+    {"from": "embed_offline", "to": "vecdb", "label": "入库"},
+    {"from": "query", "to": "retrieve", "label": "在线查询"},
+    {"from": "vecdb", "to": "retrieve", "label": "搜索"},
+    {"from": "retrieve", "to": "topk", "label": "top-k"},
+    {"from": "topk", "to": "prompt", "label": "组装"},
+    {"from": "query", "to": "prompt", "label": "问题"},
+    {"from": "prompt", "to": "llm", "label": "生成"},
+    {"from": "llm", "to": "answer", "label": "回答+引用"}
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "concept": "高级RAG技术",
+  "chart_type": "hierarchy",
+  "nodes": [
+    {"id": "adv_rag", "label": "高级RAG", "kind": "concept"},
+    {"id": "retrieval_opt", "label": "检索侧优化", "kind": "process"},
+    {"id": "gen_opt", "label": "生成侧优化", "kind": "process"},
+    {"id": "eval_driven", "label": "评估驱动", "kind": "process"},
+    {"id": "chunking", "label": "语义分块", "kind": "process"},
+    {"id": "hybrid", "label": "混合检索", "kind": "process"},
+    {"id": "rerank", "label": "重排序", "kind": "process"},
+    {"id": "rewrite", "label": "查询改写", "kind": "process"},
+    {"id": "self_rag", "label": "Self-RAG", "kind": "process"},
+    {"id": "agentic_rag", "label": "Agentic RAG", "kind": "process"},
+    {"id": "ragas", "label": "RAGAS评估", "kind": "rule"}
+  ],
+  "edges": [
+    {"from": "adv_rag", "to": "retrieval_opt", "label": "包含"},
+    {"from": "adv_rag", "to": "gen_opt", "label": "包含"},
+    {"from": "adv_rag", "to": "eval_driven", "label": "包含"},
+    {"from": "retrieval_opt", "to": "chunking", "label": "手段"},
+    {"from": "retrieval_opt", "to": "hybrid", "label": "手段"},
+    {"from": "retrieval_opt", "to": "rerank", "label": "手段"},
+    {"from": "retrieval_opt", "to": "rewrite", "label": "手段"},
+    {"from": "gen_opt", "to": "self_rag", "label": "手段"},
+    {"from": "gen_opt", "to": "agentic_rag", "label": "手段"},
+    {"from": "eval_driven", "to": "ragas", "label": "工具"}
+  ]
+}

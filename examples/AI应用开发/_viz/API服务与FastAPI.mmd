@@ -1,0 +1,15 @@
+flowchart TD
+  client["☻ 客户端"]
+  auth["◆ 鉴权中间件"]
+  rate_limit["◆ 限流器"]
+  fastapi["⚙ FastAPI"]
+  llm_api["⚙ LLM API"]
+  stream["▣ 流式响应"]
+  fallback["◇ 降级缓存"]
+  client -->|请求| auth
+  auth -->|通过| rate_limit
+  rate_limit -->|放行| fastapi
+  fastapi -->|异步调用| llm_api
+  llm_api -->|SSE流式| stream
+  stream -->|返回| client
+  llm_api -.->|失败降级| fallback

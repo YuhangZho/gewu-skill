@@ -224,6 +224,197 @@
         "have": false
       }
     ]
+  },
+  "AI应用开发": {
+    "goal": "3-6个月转岗AI应用开发工程师（LLM应用工程方向），有Python/C基础+会用Claude Code/Codex",
+    "status": "进行中",
+    "updated": "2026-06-28 09:33",
+    "goal_category": "求职",
+    "domain_type": "理论+实践",
+    "practice_note": "这是理论+实践型领域——光看懂不够，每个核心概念都要动手做一遍小练习才能真内化。你已有Python基础+会用AI编码工具，落地速度会很快，但'会用工具生成代码'≠'真懂原理'，遇到面试和排错时差别就出来了。",
+    "summary": "目标：3-6个月转岗AI应用开发工程师(LLM应用工程方向)。依据Boss直聘JD分析+吴恩达LLM路线+2025技能图谱，需补齐LLM原理、Prompt、RAG、Agent、LangChain、向量库、部署评估等19个核心概念，并产出1-2个作品集项目。图谱分7组：LLM基础认知→RAG→Agent→开发框架→模型原理→部署评估→作品集。",
+    "sample": false,
+    "requirements": [
+      {
+        "name": "掌握LLM工作原理：Token、上下文窗口、生成机制、成本计费",
+        "kind": "知识型",
+        "via": [
+          "LLM工作原理与Token机制"
+        ],
+        "have": false
+      },
+      {
+        "name": "能写好Prompt：角色设定、Few-shot、CoT、结构化输出",
+        "kind": "知识型",
+        "via": [
+          "Prompt工程基础"
+        ],
+        "have": false
+      },
+      {
+        "name": "能用ChatGPT API搭建状态化对话系统",
+        "kind": "知识型",
+        "via": [
+          "ChatGPT API与对话系统"
+        ],
+        "have": false
+      },
+      {
+        "name": "理解Embedding与向量表示的原理与选型",
+        "kind": "知识型",
+        "via": [
+          "Embedding与向量表示"
+        ],
+        "have": false
+      },
+      {
+        "name": "会用向量数据库做相似度检索（Chroma/Milvus等）",
+        "kind": "知识型",
+        "via": [
+          "向量数据库与相似度检索"
+        ],
+        "have": false
+      },
+      {
+        "name": "能搭建RAG知识库问答系统（文档解析→检索→生成）",
+        "kind": "知识型",
+        "via": [
+          "RAG基础架构",
+          "高级RAG技术"
+        ],
+        "have": false
+      },
+      {
+        "name": "掌握Function Calling/工具调用",
+        "kind": "知识型",
+        "via": [
+          "Function Calling与工具调用"
+        ],
+        "have": false
+      },
+      {
+        "name": "能开发ReAct模式的Agent系统",
+        "kind": "知识型",
+        "via": [
+          "Agent架构与ReAct模式"
+        ],
+        "have": false
+      },
+      {
+        "name": "会做多Agent协作与工作流编排（LangGraph）",
+        "kind": "知识型",
+        "via": [
+          "多Agent协作与工作流编排"
+        ],
+        "have": false
+      },
+      {
+        "name": "熟练使用LangChain框架开发应用",
+        "kind": "知识型",
+        "via": [
+          "LangChain框架",
+          "LCEL与LangGraph"
+        ],
+        "have": false
+      },
+      {
+        "name": "会用Dify等低代码平台快速搭建AI应用",
+        "kind": "知识型",
+        "via": [
+          "Dify低代码AI平台"
+        ],
+        "have": false
+      },
+      {
+        "name": "懂Transformer架构原理（自注意力/位置编码）",
+        "kind": "知识型",
+        "via": [
+          "Transformer架构原理"
+        ],
+        "have": false
+      },
+      {
+        "name": "了解模型微调（SFT/LoRA）的原理与适用场景",
+        "kind": "知识型",
+        "via": [
+          "模型微调入门"
+        ],
+        "have": false
+      },
+      {
+        "name": "能用FastAPI把AI能力封装成RESTful服务",
+        "kind": "知识型",
+        "via": [
+          "API服务与FastAPI"
+        ],
+        "have": false
+      },
+      {
+        "name": "会用Docker容器化部署AI应用",
+        "kind": "知识型",
+        "via": [
+          "Docker容器化部署"
+        ],
+        "have": false
+      },
+      {
+        "name": "会做AI应用评估与线上监控（检索/生成质量、漂移）",
+        "kind": "知识型",
+        "via": [
+          "AI应用评估与可观测性"
+        ],
+        "have": false
+      },
+      {
+        "name": "能0-1独立落地一个可写简历的AI应用作品",
+        "kind": "知识型",
+        "via": [
+          "AI应用作品集项目"
+        ],
+        "have": false
+      },
+      {
+        "name": "动手跑通一个基础RAG demo（本地文档问答）",
+        "kind": "实践型",
+        "via": [],
+        "have": false
+      },
+      {
+        "name": "动手开发一个带工具调用的Agent（如联网搜索+计算）",
+        "kind": "实践型",
+        "via": [],
+        "have": false
+      },
+      {
+        "name": "用LangChain/LangGraph搭一个完整应用并部署",
+        "kind": "实践型",
+        "via": [],
+        "have": false
+      },
+      {
+        "name": "把作品上传GitHub并写好README（可展示）",
+        "kind": "实践型",
+        "via": [],
+        "have": false
+      },
+      {
+        "name": "整理1-2个能讲清技术选型的面试项目故事",
+        "kind": "实践型",
+        "via": [],
+        "have": false
+      }
+    ],
+    "suggested_goals": [
+      "3-6个月转岗AI应用开发工程师（LLM应用工程方向）",
+      "做出2个可写简历的AI应用作品集",
+      "能独立设计和落地企业级RAG/Agent系统"
+    ],
+    "sources": [
+      "https://juejin.cn/post/7581081334851190825",
+      "https://datawhalechina.github.io/llm-cookbook/",
+      "https://techlife.blog/posts/ai-skills-2025-langchain-rag-mlops-guide/",
+      "https://news.qq.com/rain/a/20250815A01UEM00"
+    ]
   }
 }
 

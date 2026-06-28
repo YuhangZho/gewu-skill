@@ -1,0 +1,25 @@
+{
+  "concept": "AI应用评估与可观测性",
+  "chart_type": "hierarchy",
+  "nodes": [
+    {"id": "root", "label": "评估与可观测性", "kind": "concept"},
+    {"id": "offline", "label": "离线评估", "kind": "process"},
+    {"id": "online", "label": "线上监控", "kind": "process"},
+    {"id": "ragas", "label": "RAGAS指标", "kind": "rule"},
+    {"id": "agent_eval", "label": "Agent评估", "kind": "rule"},
+    {"id": "golden", "label": "黄金数据集", "kind": "data"},
+    {"id": "quality", "label": "质量监控", "kind": "process"},
+    {"id": "cost", "label": "成本监控", "kind": "process"},
+    {"id": "drift", "label": "漂移监控", "kind": "process"}
+  ],
+  "edges": [
+    {"from": "root", "to": "offline", "label": "包含"},
+    {"from": "root", "to": "online", "label": "包含"},
+    {"from": "offline", "to": "ragas", "label": "RAG用"},
+    {"from": "offline", "to": "agent_eval", "label": "Agent用"},
+    {"from": "offline", "to": "golden", "label": "回归测试"},
+    {"from": "online", "to": "quality", "label": "盯质量"},
+    {"from": "online", "to": "cost", "label": "盯成本"},
+    {"from": "online", "to": "drift", "label": "盯漂移"}
+  ]
+}

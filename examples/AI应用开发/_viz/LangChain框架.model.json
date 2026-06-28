@@ -1,0 +1,25 @@
+{
+  "concept": "LangChain框架",
+  "chart_type": "hierarchy",
+  "nodes": [
+    {"id": "langchain", "label": "LangChain", "kind": "concept"},
+    {"id": "models", "label": "Models", "kind": "concept"},
+    {"id": "prompts", "label": "Prompts", "kind": "concept"},
+    {"id": "memory", "label": "Memory", "kind": "concept"},
+    {"id": "retrievers", "label": "Retrievers", "kind": "concept"},
+    {"id": "tools", "label": "Tools/Agents", "kind": "concept"},
+    {"id": "chains", "label": "Chains", "kind": "concept"},
+    {"id": "lcel", "label": "LCEL语法", "kind": "process"},
+    {"id": "app", "label": "AI应用", "kind": "data"}
+  ],
+  "edges": [
+    {"from": "langchain", "to": "models", "label": "包含"},
+    {"from": "langchain", "to": "prompts", "label": "包含"},
+    {"from": "langchain", "to": "memory", "label": "包含"},
+    {"from": "langchain", "to": "retrievers", "label": "包含"},
+    {"from": "langchain", "to": "tools", "label": "包含"},
+    {"from": "langchain", "to": "chains", "label": "核心"},
+    {"from": "chains", "to": "lcel", "label": "声明式"},
+    {"from": "chains", "to": "app", "label": "编排产出"}
+  ]
+}
