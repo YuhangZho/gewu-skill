@@ -1,10 +1,11 @@
 # Gewu · 格物
 
-**Turn "asking AI when I have a question" into a learning map with a compass.**
+**AI answered your question — you "got it," but you can't explain it.**
 
-> Study one thing thoroughly to attain true knowledge: if you can explain it clearly, you truly understand it.
-
-<img src="./assets/merged_output_720p.webp" alt="Gewu demo" width="100%" style="display:block;margin-left:0;margin-right:auto;">
+> Turn "ask AI when I have a question" into "ask AI with a goal" — it guides you to explain clearly; if you can't explain it, you don't truly understand.
+>
+> > Study one thing thoroughly to attain true knowledge: if you can explain it clearly, you truly understand it.
+>
 
 [![License](https://img.shields.io/github/license/YuhangZho/gewu-skill?style=flat-square&color=green)](./LICENSE)
 [![Stars](https://img.shields.io/github/stars/YuhangZho/gewu-skill?style=flat-square)](https://github.com/YuhangZho/gewu-skill/stargazers)
@@ -13,107 +14,59 @@
 ![Offline](https://img.shields.io/badge/offline-ready-success?style=flat-square)
 ![Agent Skills](https://img.shields.io/badge/Agent_Skills-Standard-3fb950?style=flat-square)
 [![skills.sh](https://skills.sh/b/YuhangZho/gewu-skill)](https://skills.sh/YuhangZho/gewu-skill)
-![Runtime](https://img.shields.io/badge/Runtime-Claude_·_Codex_·_Cursor_·_Kimi·_OpenClaw-8957e5?style=flat-square)
+![Runtime](https://img.shields.io/badge/Runtime-Claude_·_Codex_·_Cursor_·_Kimi·_OpenClaw·_WorkBuddy-8957e5?style=flat-square)
 
-[Who it's for](#who-its-for) · [What you'll get](#what-youll-get) · [How to start](#how-to-start) · [Installation](#installation) · [Directory structure](#directory-structure)
+[Who it's for](#let-gewu-take-you) · [What you'll get](#you-focus-on-learning-we-handle-the-rest) · [How to start](#how-to-start) · [Installation](#installation) · [Directory structure](#directory-structure)
 
 **Other Languages:** [简体中文](README.md) · [Español](README_ES.md)
 
 ---
 
-## Who it's for
+## **Let Gewu take you —**
 
-Gewu fits these learning scenarios:
+> - 🃏 Become a Doudizhu (Fight the Landlord) pro: understand **why experts hold bombs but don't play them first**
+> - 🧮 Grasp what "chickens and rabbits in a cage" is really calculating — then help **your child** truly understand (not just memorize a formula)
+> - 💼 Switch to AI application development — lay out a **prioritized** learning map from scratch
+> - 📖 Three weeks to CET-4 — first figure out **what you actually need to learn**
+> - 💗 Win over your partner, negotiate a raise: understand **why the playbook works**
 
-- **Want to systematically enter a new field**, but don't know what to learn first or next.
-- **Have a clear goal**, such as an exam, role transfer, onboarding to a project, or getting into a business line, and need to know what you're missing.
-- **Fragmented "learning"** — turn the time spent waiting for AI replies into bite-sized learning of interesting things.
-- **Understand it when you ask AI, but forget it a few days later**, never truly mastering it.
+```
+You  : A token is just splitting text into chunks, right?
+Gewu : How many chunks would "unhappiness" be split into? Why not by letter, or by whole word?
+You  : Uh… by word? No, there are too many words… I can't explain it.
+Gewu : Right — that's where you're stuck. What is subword tokenization balancing? Let's fill that gap.
+```
 
-Gewu acts like a learning host: it helps you set a goal, designs a knowledge map and learning path around that goal, guides you step by step to explain concepts clearly, and finally settles your learning outcomes locally.
+Gewu's trade-off:
 
----
+> Gewu is not a quick Q&A bot. It's **slow** and process-driven — because it's pushing you to truly understand.
 
-## What you'll get
+**If you want a quick answer on demand, it's not for you; if you want to truly master something, that's what it's built for.**
 
-### A learning route you can actually walk
+----
 
-Just say "I want to learn AI / C / Amazon operations / CET-4", and Gewu will first ask you why, then break down a route based on your goal. It's not an encyclopedia table of contents, but "what to learn now, why learn it first, what to learn next".
+## You focus on learning — we handle the rest
 
-### A set of truly digested notes
+You just need to master each concept. Notes, bidirectional links, knowledge graphs, goal progress — Gewu generates them as you learn, without you typing an extra word or drawing a single line.
 
-Each concept isn't just the AI explanation saved — it's the result of what you learned:
+### A planned learning route
 
-- A one-sentence positioning
-- Core takeaways
-- Stuck points and corrections
-- Boundaries, common pitfalls
-- Flowcharts and reference views when needed
+Just say "I want to learn AI / frontend / CET-4," and Gewu breaks down a progressive route around your goal.
 
-### A local knowledge station
+### Auto-generated local knowledge station
 
-Completed learning is automatically saved to the knowledge station, with built-in light / dark / xuan-paper / night-ink themes:
+- **Learning roadmap**: where you are now and what the next stop is.
+- **Knowledge graph**: how concepts connect.
+- **Goal planning**: sub-goals and current progress.
+- **Concept documents**: review every concept you've learned.
+  - One-sentence positioning
+  - Core takeaways
+  - Stuck points and corrections
+  - Boundaries, common pitfalls
+  - Flowcharts and reference views
 
-- **Learning roadmap**: see where you are now and what the next stop is.
-- **Knowledge graph**: see how concepts connect.
-- **Goal planning**: see how far your current knowledge is from the goal.
-- **Concept documents**: every concept you've learned can be reviewed.
 
 <img src="./assets/学习站示例.gif" alt="Knowledge station example" width="100%" style="display:block;margin-left:0;margin-right:auto;">
-
-### Pick up where you left off, even mid-concept
-
-Gewu records your learning state. If a concept isn't finished, next time you can continue from where you got stuck, without re-explaining the background.
-
-### Fragmented knowledge won't get lost
-
-If today you only want to figure out one small concept, you can still record it. Once similar content accumulates, Gewu will organize them into the corresponding field, growing into routes and graphs.
-
----
-
-## How to start
-
-Say one sentence to your AI:
-
-```text
-Learn AI with Gewu
-```
-
-You can also say:
-
-```text
-I'm new to C, help me plan a learning route.
-```
-
-```text
-Help me understand the field of Amazon operations.
-```
-
-```text
-Guide me to learn how to keep my wife happy and smoothly get more pocket money.
-```
-
-On first use, Gewu will ask where your knowledge base is stored. Pick a long-term location, for example:
-
-```text
-D:\gewu-vault
-```
-
-After that, the same knowledge base will keep accumulating — no need to set it up each time (path can be manually adjusted in ~/.gewu/glb_vault_path.json).
-
----
-
-## How it learns
-
-Gewu's core actions are simple:
-
-1. **Ask the goal first**: learning it for an exam, interview, role transfer, project onboarding, or pure interest.
-2. **Lay out the route**: arrange the learning order by prerequisite dependencies and importance.
-3. **Learn concept by concept**: pose questions, explain, ask you to restate, probe the stuck points.
-4. **Pass validation, then close**: only when you can rephrase it, know when it breaks, is it considered learned.
-5. **Settle immediately**: update notes, roadmap, knowledge graph, and goal progress.
-
-Core belief: **Output drives input. If you can explain it clearly, you truly understand it.**
 
 ---
 
@@ -154,20 +107,68 @@ Copy the `gewu-skill` folder to the corresponding agent path.
 <details>
 <summary>Expand: skills directories for common agents</summary>
 
-| Agent | skills directory |
-|---|---|
-| Claude Code | `~/.claude/skills/` |
-| Claude Desktop / Cowork | Settings → Capabilities, add the `gewu` folder |
-| Codex | `~/.codex/skills/` |
-| Cursor | `~/.cursor/skills/` |
-| Kimi Work | `~/AppData/Roaming/kimi-desktop/daimon-share/daimon/skills/` |
-| Marvis | `~/AppData/Roaming/Tencent/Marvis/User/xx/skills/custom/` |
-| Trae CN | `~/.trae-cn/skills/` |
-| Qoder CN | `~/.qoder-cn/skills/` |
-| OpenClaw | `~/.openclaw/skills/` |
-| Other 50+ agents | Paths vary, see [vercel-labs/skills support table](https://github.com/vercel-labs/skills#supported-agents) |
+
+| Agent                  | skills directory                                                  |
+| ---------------------- | ------------------------------------------------------------ |
+| Claude Code            | `~/.claude/skills/`                                          |
+| Claude Desktop / Cowork | Settings → Capabilities, add the `gewu` folder                      |
+| Codex                  | `~/.codex/skills/`                                           |
+| Cursor                 | `~/.cursor/skills/`                                          |
+| WorkBuddy              | `~/.workbuddy/skills/`                                       |
+| Kimi Work              | `~/AppData/Roaming/kimi-desktop/daimon-share/daimon/skills/` |
+| Marvis                 | `~/AppData/Roaming/Tencent/Marvis/User/xx/skills/custom/`    |
+| Trae CN                | `~/.trae-cn/skills/`                                         |
+| Qoder CN               | `~/.qoder-cn/skills/`                                        |
+| OpenClaw               | `~/.openclaw/skills/`                                        |
+| Other 50+ agents       | Paths vary, see [vercel-labs/skills support table](https://github.com/vercel-labs/skills#supported-agents) |
 
 </details>
+
+---
+
+## How to start
+
+Say one sentence to your AI:
+
+```text
+Use Gewu to help me become a Doudizhu pro
+```
+
+You can also say:
+
+```text
+Three weeks to CET-4 — first help me figure out what I actually need to learn
+```
+
+```text
+I want to switch to AI application development — plan a learning route from scratch
+```
+
+```text
+Help me understand my child's "chickens and rabbits in a cage" problem so I can quiz them
+```
+
+On first use, Gewu will ask where your knowledge base is stored. Pick a long-term location, for example:
+
+```text
+D:\gewu-vault
+```
+
+After that, the same knowledge base will keep accumulating — no need to set it up each time (path can be manually adjusted in ~/.gewu/glb_vault_path.json).
+
+---
+
+## How Gewu works
+
+Gewu's core actions:
+
+1. **Ask the goal first**: learning it for an exam, interview, role transfer, project onboarding, or pure interest.
+2. **Lay out the route**: arrange the learning order by prerequisite dependencies and importance.
+3. **Learn concept by concept**: pose questions, explain, ask you to restate, probe the stuck points.
+4. **Pass validation, then close**: only when you can rephrase it and know when it breaks is it considered learned.
+5. **Settle immediately**: update notes, roadmap, knowledge graph, and goal progress.
+
+Core belief: **Output drives input. If you can explain it clearly, you truly understand it.**
 
 ---
 
@@ -175,13 +176,13 @@ Copy the `gewu-skill` folder to the corresponding agent path.
 
 ```text
 gewu-skill/
-  SKILL.md                      Skill main file
-  templates/concept-template.md Concept note template
-  scripts/render_viz.py         Generate concept structure diagrams
-  scripts/build_graph.py        Generate knowledge graph
-  scripts/plan_path.py          Generate knowledge station
-  scripts/set_goal.py           Write goals and refresh pages
-  assets/merged_output.mp4      Demo video
+  SKILL.md                        Skill main file
+  templates/concept-template.md   Concept note template
+  scripts/render_viz.py           Generate concept structure diagrams
+  scripts/build_graph.py          Generate knowledge graph
+  scripts/plan_path.py            Generate knowledge station
+  scripts/set_goal.py             Write goals and refresh pages
+  assets/merged_output_720p.webp  Demo video
 ```
 
 After running, your knowledge base looks roughly like this:
@@ -191,8 +192,8 @@ gewu-vault/
   AI/
     Token.md
     Context.md
-    AI-roadmap.html
-    AI-knowledge-graph.html
+    AI-路线图.html
+    AI-知识图谱.html
     _viz/
       Token.model.json
       Token.mmd
@@ -209,27 +210,6 @@ gewu-vault/
 ```
 
 ---
-
-## Suitable and not suitable
-
-Suitable for:
-
-- Systematically learning a field
-- Settling AI conversations into reviewable knowledge
-- Filling knowledge gaps around a goal
-- Using the Feynman method to check whether you truly understand
-
-Not suitable for:
-
-- Replacing question banks, Anki, or mass drilling
-- Replacing real project practice
-- Asking about the weather, etc.
-
----
-
-## Acknowledgements
-
-The promotional animation draft was designed and produced using the [huashu-design](https://github.com/alchaincyf/huashu-design) skill package.
 
 ## Author
 
