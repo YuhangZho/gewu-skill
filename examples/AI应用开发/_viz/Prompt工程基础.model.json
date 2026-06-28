@@ -1,0 +1,27 @@
+{
+  "concept": "Prompt工程基础",
+  "chart_type": "hierarchy",
+  "nodes": [
+    {"id": "prompt", "label": "Prompt", "kind": "concept"},
+    {"id": "role", "label": "角色设定", "kind": "rule"},
+    {"id": "instruction", "label": "指令", "kind": "rule"},
+    {"id": "context", "label": "上下文", "kind": "data"},
+    {"id": "examples", "label": "Few-shot示例", "kind": "process"},
+    {"id": "schema", "label": "输出格式Schema", "kind": "rule"},
+    {"id": "zero_shot", "label": "Zero-shot", "kind": "process"},
+    {"id": "few_shot", "label": "Few-shot", "kind": "process"},
+    {"id": "cot", "label": "CoT思维链", "kind": "process"},
+    {"id": "output", "label": "模型输出", "kind": "data"}
+  ],
+  "edges": [
+    {"from": "prompt", "to": "role", "label": "包含"},
+    {"from": "prompt", "to": "instruction", "label": "包含"},
+    {"from": "prompt", "to": "context", "label": "包含"},
+    {"from": "prompt", "to": "examples", "label": "包含"},
+    {"from": "prompt", "to": "schema", "label": "包含"},
+    {"from": "examples", "to": "few_shot", "label": "技法"},
+    {"from": "examples", "to": "zero_shot", "label": "技法", "style": "dashed"},
+    {"from": "examples", "to": "cot", "label": "技法"},
+    {"from": "prompt", "to": "output", "label": "约束生成"}
+  ]
+}

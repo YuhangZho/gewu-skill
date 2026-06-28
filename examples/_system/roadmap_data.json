@@ -1,7 +1,446 @@
 {
-  "generated": "2026-06-27 23:48",
+  "generated": "2026-06-28 16:00",
   "goal": "",
   "categories": {
+    "AI应用开发": {
+      "order": [
+        {
+          "title": "LLM工作原理与Token机制",
+          "status": "已完成",
+          "stage": 0,
+          "importance": 5,
+          "base_importance": 5,
+          "prereqs": [],
+          "desc": "它属于AI应用开发，是用来解决〔大模型如何逐 Token 生成文字、上下文窗口与成本计费的本质〕的——是理解一切 LLM 应用的地基。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "LLM基础认知"
+          ],
+          "related": [
+            "ChatGPT API与对话系统",
+            "Embedding与向量表示",
+            "Prompt工程基础",
+            "Transformer架构原理"
+          ]
+        },
+        {
+          "title": "Embedding与向量表示",
+          "status": "已完成",
+          "stage": 1,
+          "importance": 5,
+          "base_importance": 5,
+          "prereqs": [
+            "LLM工作原理与Token机制"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔把文本变成可计算语义相似度的高维向量〕的——是让机器\"读懂\"语义的数学基础，RAG 和语义搜索的地基。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "RAG检索增强"
+          ],
+          "related": [
+            "LLM工作原理与Token机制",
+            "RAG基础架构",
+            "向量数据库与相似度检索",
+            "高级RAG技术"
+          ]
+        },
+        {
+          "title": "Prompt工程基础",
+          "status": "已完成",
+          "stage": 1,
+          "importance": 5,
+          "base_importance": 5,
+          "prereqs": [
+            "LLM工作原理与Token机制"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔如何构造提示词让模型稳定产出预期结果〕的——含角色设定、Few-shot、CoT等核心技法，是所有 LLM 应用的\"接口层\"。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "LLM基础认知"
+          ],
+          "related": [
+            "Agent架构与ReAct模式",
+            "ChatGPT API与对话系统",
+            "LLM工作原理与Token机制",
+            "RAG基础架构"
+          ]
+        },
+        {
+          "title": "ChatGPT API与对话系统",
+          "status": "已完成",
+          "stage": 2,
+          "importance": 5,
+          "base_importance": 5,
+          "prereqs": [
+            "Prompt工程基础"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔用 Messages 结构搭建状态化对话系统〕的——是从\"调用 API\"到\"做应用\"的关键一跃。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "LLM基础认知"
+          ],
+          "related": [
+            "API服务与FastAPI",
+            "Function Calling与工具调用",
+            "LangChain框架",
+            "Prompt工程基础"
+          ]
+        },
+        {
+          "title": "LangChain框架",
+          "status": "已完成",
+          "stage": 3,
+          "importance": 5,
+          "base_importance": 5,
+          "prereqs": [
+            "ChatGPT API与对话系统",
+            "Prompt工程基础"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔LLM 应用编排框架的核心抽象〕的——Chain/Memory/Retriever/Tool 是 AI 应用开发的\"事实标准\"。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "开发框架与工程化"
+          ],
+          "related": [
+            "Agent架构与ReAct模式",
+            "ChatGPT API与对话系统",
+            "LCEL与LangGraph",
+            "Prompt工程基础",
+            "RAG基础架构"
+          ]
+        },
+        {
+          "title": "Function Calling与工具调用",
+          "status": "已完成",
+          "stage": 3,
+          "importance": 5,
+          "base_importance": 5,
+          "prereqs": [
+            "ChatGPT API与对话系统"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔让模型按结构化 JSON 格式输出以调用外部函数〕的——是 LLM 从\"聊天\"走向\"做事\"的接口层。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "Agent与工具调用"
+          ],
+          "related": [
+            "Agent架构与ReAct模式",
+            "ChatGPT API与对话系统",
+            "LangChain框架",
+            "多Agent协作与工作流编排"
+          ]
+        },
+        {
+          "title": "Agent架构与ReAct模式",
+          "status": "已完成",
+          "stage": 4,
+          "importance": 5,
+          "base_importance": 5,
+          "prereqs": [
+            "Function Calling与工具调用",
+            "Prompt工程基础"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔思考-行动-观察的自主决策循环〕的——让模型能规划、调工具、纠错地完成多步任务。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "Agent与工具调用"
+          ],
+          "related": [
+            "Function Calling与工具调用",
+            "LCEL与LangGraph",
+            "LangChain框架",
+            "Prompt工程基础",
+            "多Agent协作与工作流编排"
+          ]
+        },
+        {
+          "title": "Transformer架构原理",
+          "status": "已完成",
+          "stage": 1,
+          "importance": 4,
+          "base_importance": 4,
+          "prereqs": [
+            "LLM工作原理与Token机制"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔自注意力机制与 Encoder-Decoder 架构〕的——是读懂一切大模型论文和做微调的理论门槛。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "模型原理"
+          ],
+          "related": [
+            "Embedding与向量表示",
+            "LLM工作原理与Token机制",
+            "模型微调入门"
+          ]
+        },
+        {
+          "title": "LCEL与LangGraph",
+          "status": "已完成",
+          "stage": 5,
+          "importance": 4,
+          "base_importance": 4,
+          "prereqs": [
+            "Agent架构与ReAct模式",
+            "LangChain框架"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔声明式链构建 LCEL + 有状态工作流 LangGraph〕的——是从 demo 走向生产级 Agent 的关键。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "开发框架与工程化"
+          ],
+          "related": [
+            "Agent架构与ReAct模式",
+            "LangChain框架",
+            "多Agent协作与工作流编排"
+          ]
+        },
+        {
+          "title": "多Agent协作与工作流编排",
+          "status": "已完成",
+          "stage": 5,
+          "importance": 4,
+          "base_importance": 4,
+          "prereqs": [
+            "Agent架构与ReAct模式"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔用 LangGraph 等编排多智能体有状态协作〕的——解决复杂业务流程的自动化。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "Agent与工具调用"
+          ],
+          "related": [
+            "AI应用评估与可观测性",
+            "Agent架构与ReAct模式",
+            "LCEL与LangGraph",
+            "LangChain框架"
+          ]
+        },
+        {
+          "title": "向量数据库与相似度检索",
+          "status": "已完成",
+          "stage": 2,
+          "importance": 4,
+          "base_importance": 4,
+          "prereqs": [
+            "Embedding与向量表示"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔存储海量向量并做高效近邻检索〕的——是 RAG 和语义搜索的工程基石。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "RAG检索增强"
+          ],
+          "related": [
+            "Embedding与向量表示",
+            "RAG基础架构",
+            "高级RAG技术"
+          ]
+        },
+        {
+          "title": "RAG基础架构",
+          "status": "已完成",
+          "stage": 3,
+          "importance": 5,
+          "base_importance": 5,
+          "prereqs": [
+            "Embedding与向量表示",
+            "Prompt工程基础",
+            "向量数据库与相似度检索"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔检索-增强-生成的完整管道〕的——解决大模型知识滞后、幻觉、私域知识缺失三大痛点。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "RAG检索增强"
+          ],
+          "related": [
+            "Embedding与向量表示",
+            "LangChain框架",
+            "Prompt工程基础",
+            "向量数据库与相似度检索",
+            "高级RAG技术"
+          ]
+        },
+        {
+          "title": "AI应用作品集项目",
+          "status": "已完成",
+          "stage": 5,
+          "importance": 5,
+          "base_importance": 5,
+          "prereqs": [
+            "Agent架构与ReAct模式",
+            "LangChain框架",
+            "RAG基础架构"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔0-1 独立落地一个可写进简历的 AI 应用〕的——把所有技能串成端到端能力证明。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "作品集与落地"
+          ],
+          "related": [
+            "AI应用评估与可观测性",
+            "API服务与FastAPI",
+            "Agent架构与ReAct模式",
+            "Docker容器化部署",
+            "LangChain框架",
+            "RAG基础架构"
+          ]
+        },
+        {
+          "title": "高级RAG技术",
+          "status": "已完成",
+          "stage": 4,
+          "importance": 4,
+          "base_importance": 4,
+          "prereqs": [
+            "RAG基础架构"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔分块策略、混合检索、重排序、Self-RAG/Agentic RAG 等进阶优化〕的——把检索准确率拉到生产可用。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "RAG检索增强"
+          ],
+          "related": [
+            "AI应用评估与可观测性",
+            "Agent架构与ReAct模式",
+            "RAG基础架构",
+            "向量数据库与相似度检索"
+          ]
+        },
+        {
+          "title": "AI应用评估与可观测性",
+          "status": "已完成",
+          "stage": 5,
+          "importance": 4,
+          "base_importance": 4,
+          "prereqs": [
+            "Agent架构与ReAct模式",
+            "RAG基础架构"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔评估指标 + 线上监控〕的——让 AI 应用可度量可维护。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "部署与评估"
+          ],
+          "related": [
+            "API服务与FastAPI",
+            "Agent架构与ReAct模式",
+            "RAG基础架构",
+            "高级RAG技术"
+          ]
+        },
+        {
+          "title": "API服务与FastAPI",
+          "status": "已完成",
+          "stage": 3,
+          "importance": 4,
+          "base_importance": 4,
+          "prereqs": [
+            "ChatGPT API与对话系统"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔把 AI 能力封装成 RESTful 服务〕的——做好鉴权、流式、并发，是工程交付的标配。",
+          "xprereqs": [],
+          "track": "标准轨",
+          "groups": [
+            "部署与评估"
+          ],
+          "related": [
+            "AI应用作品集项目",
+            "AI应用评估与可观测性",
+            "ChatGPT API与对话系统",
+            "Docker容器化部署"
+          ]
+        },
+        {
+          "title": "模型微调入门",
+          "status": "已完成",
+          "stage": 2,
+          "importance": 3,
+          "base_importance": 3,
+          "prereqs": [
+            "Transformer架构原理"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔SFT/LoRA 等轻量微调原理与适用场景〕的——应用工程师\"了解\"层，不必深入训练。",
+          "xprereqs": [],
+          "track": "快轨",
+          "groups": [
+            "模型原理"
+          ],
+          "related": [
+            "LLM工作原理与Token机制",
+            "RAG基础架构",
+            "Transformer架构原理"
+          ]
+        },
+        {
+          "title": "Dify低代码AI平台",
+          "status": "已完成",
+          "stage": 5,
+          "importance": 3,
+          "base_importance": 3,
+          "prereqs": [
+            "Agent架构与ReAct模式",
+            "RAG基础架构"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔低代码可视化快速搭建 AI 应用〕的——适合快速验证和内部工具场景。",
+          "xprereqs": [],
+          "track": "快轨",
+          "groups": [
+            "开发框架与工程化"
+          ],
+          "related": [
+            "Agent架构与ReAct模式",
+            "LangChain框架",
+            "RAG基础架构"
+          ]
+        },
+        {
+          "title": "Docker容器化部署",
+          "status": "已完成",
+          "stage": 4,
+          "importance": 3,
+          "base_importance": 3,
+          "prereqs": [
+            "API服务与FastAPI"
+          ],
+          "desc": "它属于AI应用开发，是用来解决〔用容器化方式交付 AI 应用〕的——解决环境一致性与云端部署问题。",
+          "xprereqs": [],
+          "track": "快轨",
+          "groups": [
+            "部署与评估"
+          ],
+          "related": [
+            "AI应用作品集项目",
+            "API服务与FastAPI"
+          ]
+        }
+      ],
+      "current": null,
+      "next3": [],
+      "progress_hint": {
+        "current_pct": 100,
+        "next_pct": 100,
+        "bar": "[██████████]",
+        "milestone": "",
+        "line": "当前知识图谱覆盖率100%，下一站完成可达100%。"
+      },
+      "learned": 19,
+      "total": 19,
+      "max_stage": 5
+    },
     "开源项目冷启动": {
       "order": [
         {

@@ -1,0 +1,22 @@
+{
+  "concept": "多Agent协作与工作流编排",
+  "chart_type": "flow",
+  "nodes": [
+    {"id": "supervisor", "label": "Supervisor", "kind": "actor"},
+    {"id": "worker1", "label": "Worker1", "kind": "process"},
+    {"id": "worker2", "label": "Worker2", "kind": "process"},
+    {"id": "state", "label": "共享状态", "kind": "state"},
+    {"id": "human", "label": "人工审批", "kind": "boundary"},
+    {"id": "merge", "label": "合并结果", "kind": "process"},
+    {"id": "output", "label": "最终输出", "kind": "data"}
+  ],
+  "edges": [
+    {"from": "supervisor", "to": "worker1", "label": "分派"},
+    {"from": "supervisor", "to": "worker2", "label": "分派"},
+    {"from": "worker1", "to": "state", "label": "写状态"},
+    {"from": "worker2", "to": "state", "label": "写状态"},
+    {"from": "state", "to": "merge", "label": "读取"},
+    {"from": "merge", "to": "human", "label": "关键节点"},
+    {"from": "human", "to": "output", "label": "批准后输出"}
+  ]
+}

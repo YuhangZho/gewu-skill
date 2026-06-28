@@ -1,0 +1,23 @@
+{
+  "concept": "向量数据库与相似度检索",
+  "chart_type": "flow",
+  "nodes": [
+    {"id": "doc_vecs", "label": "文档向量集合", "kind": "data"},
+    {"id": "index_build", "label": "索引构建", "kind": "process"},
+    {"id": "ann_index", "label": "ANN索引", "kind": "state"},
+    {"id": "query_vec", "label": "查询向量", "kind": "data"},
+    {"id": "traverse", "label": "索引遍历", "kind": "process"},
+    {"id": "candidates", "label": "候选集", "kind": "data"},
+    {"id": "rerank", "label": "精排", "kind": "process"},
+    {"id": "topk", "label": "top-k结果", "kind": "data"}
+  ],
+  "edges": [
+    {"from": "doc_vecs", "to": "index_build", "label": "批量插入"},
+    {"from": "index_build", "to": "ann_index", "label": "建HNSW/IVF"},
+    {"from": "query_vec", "to": "traverse", "label": "查询"},
+    {"from": "ann_index", "to": "traverse", "label": "走索引"},
+    {"from": "traverse", "to": "candidates", "label": "近邻候选"},
+    {"from": "candidates", "to": "rerank", "label": "精确算相似度"},
+    {"from": "rerank", "to": "topk", "label": "排序取top"}
+  ]
+}

@@ -1,0 +1,22 @@
+flowchart TD
+  adv_rag["◉ 高级RAG"]
+  retrieval_opt["⚙ 检索侧优化"]
+  gen_opt["⚙ 生成侧优化"]
+  eval_driven["⚙ 评估驱动"]
+  chunking["⚙ 语义分块"]
+  hybrid["⚙ 混合检索"]
+  rerank["⚙ 重排序"]
+  rewrite["⚙ 查询改写"]
+  self_rag["⚙ Self-RAG"]
+  agentic_rag["⚙ Agentic RAG"]
+  ragas["◆ RAGAS评估"]
+  adv_rag -->|包含| retrieval_opt
+  adv_rag -->|包含| gen_opt
+  adv_rag -->|包含| eval_driven
+  retrieval_opt -->|手段| chunking
+  retrieval_opt -->|手段| hybrid
+  retrieval_opt -->|手段| rerank
+  retrieval_opt -->|手段| rewrite
+  gen_opt -->|手段| self_rag
+  gen_opt -->|手段| agentic_rag
+  eval_driven -->|工具| ragas

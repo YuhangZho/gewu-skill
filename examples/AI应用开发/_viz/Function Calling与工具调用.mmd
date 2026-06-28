@@ -1,0 +1,17 @@
+flowchart TD
+  user_msg["▣ 用户消息"]
+  tools["◆ 工具定义Schema"]
+  model["⚙ LLM模型"]
+  tool_call["▣ tool_call"]
+  app["☻ 应用层"]
+  func["⚙ 函数执行"]
+  tool_result["▣ tool_result"]
+  final_answer["▣ 最终回答"]
+  user_msg -->|第一段| model
+  tools -->|约束| model
+  model -->|决策调用| tool_call
+  tool_call -->|解析| app
+  app -->|执行| func
+  func -->|产出| tool_result
+  tool_result -->|第二段回填| model
+  model -->|生成| final_answer

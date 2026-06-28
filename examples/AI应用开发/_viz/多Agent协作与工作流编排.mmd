@@ -1,0 +1,15 @@
+flowchart TD
+  supervisor["☻ Supervisor"]
+  worker1["⚙ Worker1"]
+  worker2["⚙ Worker2"]
+  state["◇ 共享状态"]
+  human["⛔ 人工审批"]
+  merge["⚙ 合并结果"]
+  output["▣ 最终输出"]
+  supervisor -->|分派| worker1
+  supervisor -->|分派| worker2
+  worker1 -->|写状态| state
+  worker2 -->|写状态| state
+  state -->|读取| merge
+  merge -->|关键节点| human
+  human -->|批准后输出| output

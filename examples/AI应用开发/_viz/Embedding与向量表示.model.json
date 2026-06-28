@@ -1,0 +1,25 @@
+{
+  "concept": "Embedding与向量表示",
+  "chart_type": "flow",
+  "nodes": [
+    {"id": "query_text", "label": "查询文本", "kind": "data"},
+    {"id": "doc_text", "label": "文档文本", "kind": "data"},
+    {"id": "embed_model", "label": "Embedding模型", "kind": "process"},
+    {"id": "query_vec", "label": "查询向量", "kind": "data"},
+    {"id": "doc_vec", "label": "文档向量", "kind": "data"},
+    {"id": "similarity", "label": "相似度计算", "kind": "process"},
+    {"id": "score", "label": "相似度分数", "kind": "data"},
+    {"id": "vec_space", "label": "向量空间", "kind": "boundary"}
+  ],
+  "edges": [
+    {"from": "query_text", "to": "embed_model", "label": "编码"},
+    {"from": "doc_text", "to": "embed_model", "label": "编码"},
+    {"from": "embed_model", "to": "query_vec", "label": "产出"},
+    {"from": "embed_model", "to": "doc_vec", "label": "产出"},
+    {"from": "query_vec", "to": "vec_space", "label": "映射"},
+    {"from": "doc_vec", "to": "vec_space", "label": "映射"},
+    {"from": "query_vec", "to": "similarity", "label": "余弦比较"},
+    {"from": "doc_vec", "to": "similarity", "label": "余弦比较"},
+    {"from": "similarity", "to": "score", "label": "输出"}
+  ]
+}

@@ -1,6 +1,13 @@
 {
   "nodes": [
     {
+      "id": "cat::AI应用开发",
+      "label": "AI应用开发",
+      "type": "category",
+      "category": "AI应用开发",
+      "count": 19
+    },
+    {
       "id": "cat::开源项目冷启动",
       "label": "开源项目冷启动",
       "type": "category",
@@ -13,6 +20,392 @@
       "type": "category",
       "category": "斗地主",
       "count": 13
+    },
+    {
+      "id": "Agent架构与ReAct模式",
+      "label": "Agent架构与ReAct模式",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 5,
+      "track": "标准轨",
+      "ready": false,
+      "aliases": [
+        "Agent",
+        "ReAct",
+        "智能体"
+      ],
+      "body": "# Agent架构与ReAct模式\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔思考-行动-观察的自主决策循环〕的——让模型能规划、调工具、纠错地完成多步任务。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能设计一个 ReAct Agent：定义工具集、写 system prompt 设定角色、实现 Thought-Action-Observation 循环、处理停止条件。\n\n**重点结论**（7 条）：\n1. **Agent = LLM + 工具 + 循环**：模型自主决定\"下一步做什么\"（调工具/回答/继续思考），循环直到完成。和单次 Function Calling 的区别是\"自主决策+多步\"。\n2. **ReAct = Reasoning + Acting**：每步先 Thought（思考当前状态和下一步）→ Action（调工具）→ Observation（看工具结果）→ 再 Thought。思考让行动有依据，行动让思考有新信息。\n3. **System Prompt 定义 Agent 人格**：角色（你是 XX 助手）+ 目标（帮用户完成 X）+ 约束（只用这些工具/最多 N 步/什么情况停止）+ 工具说明。\n4. **停止条件**：任务完成（模型说\"Final Answer\"）+ 达到最大步数（防死循环）+ 工具连续失败 + 用户中断。\n5. **记忆与状态**：短期=当前对话/工具历史；长期=向量库存过往交互；状态管理决定 Agent 能否处理复杂任务。\n6. **规划能力是关键**：复杂任务 Agent 要先\"拆解计划\"再逐步执行，Plan-and-Execute 模式比纯 ReAct 更适合长任务。\n7. **Agent 可靠性挑战**：循环可能死循环/跑偏/调错工具；生产 Agent 要加护栏（步数限制/工具白名单/结果校验/人工介入）。\n\n**重点知识大纲**：\n- Agent 本质\n  - LLM + 工具 + 自主循环\n  - vs 单次 Function Calling = 多步自主\n- ReAct 循环\n  - Thought（思考）\n  - Action（调工具）\n  - Observation（看结果）\n  - 循环直到 Final Answer\n- System Prompt 设计\n  - 角色 + 目标 + 约束 + 工具\n- 停止条件\n  - Final Answer\n  - 最大步数\n  - 连续失败\n  - 用户中断\n- 记忆与状态\n  - 短期（对话历史）\n  - 长期（向量库）\n  - 规划（Plan-and-Execute）\n- 可靠性工程\n  - 步数限制\n  - 工具白名单\n  - 结果校验\n  - 人工介入\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要与卡壳细节）</summary>\n\n**起点认知**：以为 Agent 就是\"让模型调用工具\"，不知道 ReAct 的思考-行动-观察循环和自主决策这层。\n\n**视觉模型（五问）**：\n- 对象：用户目标、System Prompt、LLM、工具集、Thought、Action、Observation、Final Answer\n- 连接：目标→System Prompt→LLM→Thought→Action→工具→Observation→LLM→Thought...→Final Answer\n- 流向：循环（Thought-Action-Observation 重复），最终 Final Answer 退出\n- 边界：步数上限防死循环；工具失败要降级；模型可能跑偏需要护栏\n- 变化：每步 Observation 改变状态→下一步 Thought 据此调整\n\n**视觉模型结构**：chart_type=cycle（ReAct 是循环）。Thought(process)→Action(process)→Observation(data)→回到 Thought，循环 N 次直到 Final Answer(data)退出。\n\n**类比**：Agent 像有个实习生——你给目标\"帮我订下周去上海的机票\"，他自己想：先查日历（Thought）→调日历工具（Action）→看到下周三有空（Observation）→再想查航班→调航班工具→看到 3 班→再想选最便宜的→调预订→完成。每步思考让行动有依据。\n\n**大白话讲解**：它属于AI应用开发，解决怎么让 AI 自己完成多步任务。普通 AI 你问一句答一句，Agent 会自己想\"要完成这事得先做 X 再做 Y\"，然后调工具一步步来，遇到结果还会调整计划。核心是\"想-做-看\"循环：先想下一步做什么，做（调工具），看结果，再想。就像派个实习生去办事，他不会一步到位，而是一步步摸索着完成。\n\n**三个应用例子**：\n1. 研究助手：用户问\"对比 A/B 两款产品\"→Agent 搜 A→搜 B→整理对比表→回答。\n2. 代码助手：用户说\"修这个 bug\"→Agent 读代码→定位→改→跑测试→报告。\n3. 旅行规划：用户说\"规划 3 天上海行\"→Agent 查景点→查天气→排日程→输出行程。\n\n**失效边界**：\n- 死循环（模型反复调同工具）\n- 跑偏（工具结果误导，越走越远）\n- 工具失败连锁（一个失败导致后续全错）\n\n**边界补丁**：\n- 边界1（死循环）→ 最大步数 + 检测重复 Action 强制停止\n- 边界2（跑偏）→ System Prompt 强约束 + 关键步人工确认\n- 边界3（工具失败）→ 重试 + 降级 + 反馈给模型让其换方案\n\n**卡壳点复盘**：\n1. Agent 和 Function Calling 区别：原以为一样→校准为 Function Calling 是单次，Agent 是多步自主循环。\n2. ReAct 为什么有效：原以为就是\"调工具\"→校准为 Thought 让模型显式推理，行动有依据，比直接调工具更准。\n3. 什么时候用 Agent：原以为都用→校准为简单任务用 Chain（固定流程），复杂/不确定流程才用 Agent（自主决策）。\n\n**成长对比**：起点（Agent=调工具）→ 现在（ReAct循环+System Prompt设计+停止条件+记忆规划+可靠性工程）。\n\n</details>\n\n📎 [完整对话记录](_transcript/Agent架构与ReAct模式.jsonl)\n\n## 视觉模型图\n- 打开图：[_viz/Agent架构与ReAct模式.svg](_viz/Agent架构与ReAct模式.svg)\n- Mermaid 源：[_viz/Agent架构与ReAct模式.mmd](_viz/Agent架构与ReAct模式.mmd)\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料（点开查看本轮引用来源）</summary>\n\n- **ReAct 论文**（arXiv，2026-06-28）https://arxiv.org/abs/2210.03629\n  - 原话：\"synergize reasoning and acting\"——思考和行动交织提升效果。\n- **LangChain Agents 文档**（官方文档，2026-06-28）https://python.langchain.com/docs/modules/agents/\n  - 原话：Agent = LLM + 工具 + 循环，ReAct 是主流模式。\n- **Lilian Weng LLM Agent 综述**（博客，2026-06-28）https://lilianweng.github.io/posts/2023-06-23-agent/\n  - 原话：Agent 的核心是规划+记忆+工具+行动。\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Yao Shunyu · ReAct 论文作者\n- **身份**：普林斯顿大学研究员\n- **与本概念的关系**：ReAct 框架的提出者，奠定 Thought-Action-Observation 循环\n- **核心洞见**：纯推理（CoT）会幻觉，纯行动（工具调用）无规划，ReAct 让两者协同\n- **代表作**：*ReAct: Synergizing Reasoning and Acting in Language Models*\n- **扩展阅读**：[arXiv 论文](https://arxiv.org/abs/2210.03629)\n\n### 2. Lilian Weng · Agent 综述权威\n- **身份**：OpenAI 研究主管\n- **与本概念的关系**：写了最被引用的 LLM Agent 综述，系统梳理规划/记忆/工具/行动四要素\n- **核心洞见**：Agent = 规划 + 记忆 + 工具 + 行动，缺一不可\n- **代表作**：*LLM Powered Autonomous Agents* 博客\n- **扩展阅读**：[Lilian Weng Blog](https://lilianweng.github.io/posts/2023-06-23-agent/)\n\n### 3. Harrison Chase · LangChain/LangGraph 创始人\n- **身份**：LangChain Inc CEO\n- **与本概念的关系**：LangChain/LangGraph 是 Agent 工程化的事实标准框架\n- **核心洞见**：Agent 的可靠性是工程问题，要靠框架提供状态管理/检查点/人工介入\n- **代表作**：LangChain、LangGraph\n- **扩展阅读**：[LangGraph 文档](https://langchain-ai.github.io/langgraph/)\n\n</details>\n\n## 相关\n[[Function Calling与工具调用]] · [[Prompt工程基础]] · [[多Agent协作与工作流编排]] · [[LangChain框架]] · [[LCEL与LangGraph]]",
+      "rel": "AI应用开发/Agent架构与ReAct模式.md",
+      "viz": "AI应用开发/_viz/Agent架构与ReAct模式.svg",
+      "viz_source": "AI应用开发/_viz/Agent架构与ReAct模式.mmd",
+      "viz_chart": "cycle",
+      "alive": "full"
+    },
+    {
+      "id": "AI应用作品集项目",
+      "label": "AI应用作品集项目",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 5,
+      "track": "标准轨",
+      "ready": false,
+      "aliases": [
+        "Portfolio",
+        "作品集"
+      ],
+      "body": "# AI应用作品集项目\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔0-1 独立落地一个可写进简历的 AI 应用〕的——把所有技能串成端到端能力证明。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能独立设计并落地一个完整的 AI 应用（RAG/Agent），写进简历并在面试时讲清技术选型和踩坑。\n\n**重点结论**（7 条）：\n1. **作品集是转岗的硬通货**：JD 要\"有 LLM 应用经验\"，作品集 = 经验证明。比刷题/八股更能打动面试官。\n2. **好作品集三标准**：① 真实痛点（不是 toy）；② 端到端（数据→模型→API→部署）；③ 可演示（Docker 一键跑/有 demo URL）。\n3. **推荐项目方向**：① RAG 知识库问答（企业文档/技术文档）；② Agent 工具调用（研究助手/旅行规划）；③ 垂直 Agent（代码审查/数据分析）。选你熟悉领域。\n4. **技术栈标配**：LangChain/LangGraph 编排 + 向量库（Chroma/Milvus）+ FastAPI 服务 + Docker 部署 + RAGAS 评估 + GitHub README。\n5. **简历讲法**：用 STAR（Situation/Task/Action/Result）讲——痛点是什么、你做了什么、技术选型为什么、量化结果（如召回率从 X 到 Y）。\n6. **面试防翻车**：要能讲清每个技术决策的 why（为什么选 Chroma 不选 Milvus）、踩过的坑（分块/检索/幻觉怎么解）、改进方向。\n7. **加分项**：① 用 LangGraph 做有状态 Agent；② 加评估指标；③ 有真实用户/上线；④ 写技术博客总结。\n\n**重点知识大纲**：\n- 作品集定位\n  - 转岗硬通货\n  - 经验证明\n  - 比八股更能打动人\n- 好作品三标准\n  - 真实痛点（非 toy）\n  - 端到端（数据→部署）\n  - 可演示（Docker/demo URL）\n- 推荐方向\n  - RAG 知识库问答\n  - Agent 工具调用\n  - 垂直 Agent（代码/数据）\n- 技术栈标配\n  - LangChain/LangGraph\n  - 向量库\n  - FastAPI\n  - Docker\n  - RAGAS 评估\n  - GitHub README\n- 简历讲法\n  - STAR 结构\n  - 技术选型 why\n  - 量化结果\n- 面试防翻车\n  - 每个决策的 why\n  - 踩过的坑\n  - 改进方向\n- 加分项\n  - LangGraph 状态 Agent\n  - 评估指标\n  - 真实用户\n  - 技术博客\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要与卡壳细节）</summary>\n\n**起点认知**：以为作品集就是\"做个 demo 放 GitHub\"，不知道三标准和面试讲法。\n\n**视觉模型（五问）**：\n- 对象：痛点、需求、技术选型、实现、评估、部署、简历、面试\n- 连接：痛点→需求→选型→实现→评估→部署→简历→面试\n- 流向：从问题到证明的端到端流\n- 边界：toy 项目不被认可；不能演示等于没有；讲不清 why 等于没做\n- 变化：面试官追问深度→要能下钻每层细节\n\n**视觉模型结构**：chart_type=flow。痛点(data)→需求(rule)→选型(process)→实现(process)→评估(process)→部署(process)→简历(data)→面试(boundary)。\n\n**类比**：作品集像程序员的\"作品集画册\"——不是堆代码，而是讲\"我遇到什么问题、怎么解、为什么这么解、效果如何\"。面试官看的是工程思维和解决问题的能力。\n\n**大白话讲解**：它属于AI应用开发，是转岗找工作的关键。光说不练假把式，要做出一个真能用的 AI 应用放 GitHub——RAG 问答或 Agent 助手，用 LangChain+向量库+FastAPI+Docker 全套搭起来，写好 README 能一键跑。简历用 STAR 讲，面试能讲清每个技术选型的 why 和踩坑。这是\"会做 AI 应用\"的硬证明。\n\n**三个应用例子**：\n1. 企业文档 RAG：上传公司 wiki→问\"年假怎么请\"→答+引用。技术：LangChain+Milvus+RAGAS。\n2. 研究助手 Agent：给主题→Agent 自主搜网+整理+出报告。技术：LangGraph+搜索工具+FastAPI。\n3. 代码审查 Agent：提交 PR→Agent 审安全/性能/风格→评论。技术：LangGraph 多 Agent+GitHub API。\n\n**失效边界**：\n- toy 项目（如\"Hello GPT\"）不被认可\n- 不能演示（只有代码没 demo）等于没有\n- 讲不清技术选型 why 等于没做\n\n**边界补丁**：\n- 边界1（toy）→ 选真实痛点，最好有潜在用户\n- 边界2（不能演示）→ Docker 化+部署 demo URL\n- 边界3（讲不清）→ 写技术博客总结选型理由\n\n**卡壳点复盘**：\n1. 什么算\"好\"作品集：原以为功能多就好→校准为真实痛点+端到端+可演示三标准。\n2. 简历怎么写：原以为列技术栈→校准为 STAR 讲故事+量化结果。\n3. 面试防翻车：原以为会做就行→校准为要能讲清每个 why 和踩坑。\n\n**成长对比**：起点（作品集=demo）→ 现在（三标准+技术栈标配+STAR+面试防翻车）。\n\n</details>\n\n📎 [完整对话记录](_transcript/AI应用作品集项目.jsonl)\n\n## 视觉模型图\n- 打开图：[_viz/AI应用作品集项目.svg](_viz/AI应用作品集项目.svg)\n- Mermaid 源：[_viz/AI应用作品集项目.mmd](_viz/AI应用作品集项目.mmd)\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料</summary>\n\n- **LLM 应用作品集指南**（博客，2026-06-28）https://www.elastic.co/blog/llm-app-portfolio-projects\n- **DataCamp 作品集建议**（教程，2026-06-28）https://www.datacamp.com/blog/llm-portfolio-project\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Eugene Yan · 应用工程与求职视角\n- **身份**：应用机器学习工程师、技术博主\n- **与本概念的关系**：写了大量 ML/AI 求职作品集建议\n- **核心洞见**：作品集要讲\"解决问题的能力\"不是\"用过的技术\"，STAR + 量化结果最打动人\n- **代表作**：*Getting a Data Science Job* 系列\n- **扩展阅读**：[eugeneyan.com](https://eugeneyan.com/)\n\n### 2. Greg Kamradt · 从0到1实战\n- **身份**：技术博主\n- **与本概念的关系**：RAG From Scratch 等教程是作品集项目的最佳起点\n- **核心洞见**：作品集要\"小而完整\"——一个端到端 RAG 比十个 demo 强\n- **代表作**：RAG From Scratch 教程\n- **扩展阅读**：[Greg Kamradt GitHub](https://github.com/gkamradt)\n\n### 3. 招聘方视角 · AI 应用 JD 分析\n- **身份**：AI 应用团队招聘负责人（多 JD 汇总）\n- **与本概念的关系**：从 JD 反推作品集要展示什么\n- **核心洞见**：JD 要\"有 LLM 应用经验\"，作品集是经验证明；端到端+可演示+讲得清是硬要求\n- **代表作**：Boss 直聘 AI 应用开发 JD 汇总分析\n- **扩展阅读**：[Boss 直聘 AI 应用开发岗](https://www.zhipin.com/)\n\n</details>\n\n## 相关\n[[RAG基础架构]] · [[Agent架构与ReAct模式]] · [[LangChain框架]] · [[API服务与FastAPI]] · [[Docker容器化部署]] · [[AI应用评估与可观测性]]",
+      "rel": "AI应用开发/AI应用作品集项目.md",
+      "viz": "AI应用开发/_viz/AI应用作品集项目.svg",
+      "viz_source": "AI应用开发/_viz/AI应用作品集项目.mmd",
+      "viz_chart": "flow",
+      "alive": "full"
+    },
+    {
+      "id": "AI应用评估与可观测性",
+      "label": "AI应用评估与可观测性",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 4,
+      "track": "标准轨",
+      "ready": false,
+      "aliases": [
+        "Evaluation",
+        "Observability",
+        "LLM监控"
+      ],
+      "body": "# AI应用评估与可观测性\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔评估指标 + 线上监控〕的——让 AI 应用可度量可维护。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能为 RAG/Agent 应用设计评估指标（离线）+ 线上监控（漂移/成本/延迟/质量），让 AI 应用\"可度量可维护\"。\n\n**重点结论**（7 条）：\n1. **AI 应用必须评估+监控**：传统软件测 pass/fail，AI 应用输出概率性，要用指标量化质量，线上还要监控漂移。\n2. **RAG 评估三维度（RAGAS）**：① 生成质量（faithfulness 答案有没有依据/relevance 相关性）；② 检索质量（context_recall 召回/context_precision 精度）；③ 端到端（answer_correctness）。\n3. **Agent 评估**：任务成功率、步数（效率）、工具调用准确率、token 消耗、是否跑偏/死循环。\n4. **线上监控四要素**：① 质量监控（用 LLM as judge 实时评）；② 成本监控（token/费用告警）；③ 延迟监控（首 token/总时间）；④ 漂移监控（输入分布/输出分布变化）。\n5. **黄金数据集**：离线评估要用人工标注的黄金集回归测试，每次改 Prompt/换模型都跑，防止改坏。\n6. **LLM as Judge**：用强模型评弱模型输出，是 AI 评估的常用手段，但有偏差要校准。\n7. **工具栈**：RAGAS（RAG 评估）/ LangSmith / Phoenix（Arize）/ Langfuse（开源可观测），按场景选。\n\n**重点知识大纲**：\n- 为什么 AI 要评估\n  - 输出概率性\n  - 不能 pass/fail\n  - 要量化质量\n- RAG 评估（RAGAS）\n  - 生成：faithfulness/relevance\n  - 检索：context_recall/precision\n  - 端到端：answer_correctness\n- Agent 评估\n  - 任务成功率\n  - 步数/效率\n  - 工具调用准确率\n- 线上监控\n  - 质量监控（LLM as judge）\n  - 成本监控（token 告警）\n  - 延迟监控（首token/总）\n  - 漂移监控（分布变化）\n- 黄金数据集\n  - 人工标注\n  - 回归测试\n- 工具栈\n  - RAGAS / LangSmith / Phoenix / Langfuse\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要与卡壳细节）</summary>\n\n**起点认知**：以为 AI 应用\"能用就行\"，不知道评估指标和线上监控这套体系。\n\n**视觉模型（五问）**：\n- 对象：黄金数据集、评估指标、LLM as judge、线上日志、监控仪表盘、告警\n- 连接：离线评估（黄金集→指标→报告）；线上监控（请求→日志→指标→告警）\n- 流向：离线评估驱动迭代，线上监控保稳定\n- 边界：LLM as judge 有偏差；漂移检测滞后；评估成本高\n- 变化：模型/Prompt 变→重跑评估；线上分布变→漂移告警\n\n**视觉模型结构**：chart_type=hierarchy。评估与可观测性(concept)→[离线评估(指标/黄金集)/线上监控(质量/成本/延迟/漂移)/工具栈]。\n\n**类比**：像给 AI 应用配体检+监护仪——离线评估是定期体检（黄金集查健康），线上监控是 ICU 监护仪（实时盯生命体征）。没这两套，AI 应用上线就是黑盒瞎跑。\n\n**大白话讲解**：它属于AI应用开发，解决怎么知道 AI 应用好不好、坏没坏。AI 输出不是对错而是好坏，所以要量化评估：RAG 用 RAGAS 量检索准不准、答得有没有依据；Agent 量任务成功率。上线后还要实时盯——成本别爆、延迟别太长、用户输入分布变了要发现（漂移）。就像传统软件要测试+监控，AI 应用要评估+可观测。\n\n**三个应用例子**：\n1. RAG 上线前：用 100 条黄金问题跑 RAGAS，faithfulness 要 > 0.9 才发布。\n2. Agent 监控：步数突增告警（可能死循环），成本突增告警（可能被刷）。\n3. 模型升级回归：换 GPT-4o-mini 前跑黄金集，确认指标不降才切。\n\n**失效边界**：\n- LLM as judge 有偏差（评自己更宽容）\n- 漂移检测滞后（要积累数据才发现）\n- 评估成本高（用 GPT-4 评贵）\n\n**边界补丁**：\n- 边界1（judge 偏差）→ 用不同模型族 judge + 人工抽查校准\n- 边界2（漂移滞后）→ 缩短窗口+主动监控关键词分布\n- 边界3（成本）→ 抽样评估+用小模型 judge\n\n**卡壳点复盘**：\n1. RAG 怎么评：原以为看回答顺不顺→校准为 RAGAS 四指标（检索召回/精度+生成 faithfulness/relevance）。\n2. 线上监控盯什么：原以为只看错误率→校准为质量+成本+延迟+漂移四要素。\n3. LLM as judge 可信吗：原以为完全可信→校准为有偏差要校准，评自己更宽容。\n\n**成长对比**：起点（AI能用就行）→ 现在（RAGAS指标+Agent评估+线上四要素监控+黄金集回归）。\n\n</details>\n\n📎 [完整对话记录](_transcript/AI应用评估与可观测性.jsonl)\n\n## 视觉模型图\n- 打开图：[_viz/AI应用评估与可观测性.svg](_viz/AI应用评估与可观测性.svg)\n- Mermaid 源：[_viz/AI应用评估与可观测性.mmd](_viz/AI应用评估与可观测性.mmd)\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料</summary>\n\n- **RAGAS 文档**（官方，2026-06-28）https://docs.ragas.io/\n  - 原话：RAGAS 提供 faithfulness/relevance/context_recall/precision 四指标。\n- **LangSmith 文档**（官方，2026-06-28）https://docs.smith.langchain.com/\n  - 原话：LangSmith 提供 LLM 应用的调试/监控/评估。\n- **Arize Phoenix**（开源，2026-06-28）https://www.phoenix.arize.com/\n  - 原话：开源 LLM 可观测性工具。\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Shahul Es · RAGAS 作者\n- **身份**：RAGAS 维护者\n- **与本概念的关系**：RAGAS 是 RAG 评估的事实标准\n- **核心洞见**：RAG 优化必须评估驱动，没指标就是盲调\n- **代表作**：RAGAS\n- **扩展阅读**：[RAGAS 文档](https://docs.ragas.io/)\n\n### 2. Harrison Chase · LangSmith 设计者\n- **身份**：LangChain Inc CEO\n- **与本概念的关系**：LangSmith 把 LLM 应用的调试/监控/评估一体化\n- **核心洞见**：LLM 应用的可观测性比传统软件更重要，因为输出不确定\n- **代表作**：LangSmith\n- **扩展阅读**：[LangSmith 文档](https://docs.smith.langchain.com/)\n\n### 3. Jason Lopatecki · Arize AI 创始人\n- **身份**：Arize AI 创始人\n- **与本概念的关系**：Phoenix 是开源 LLM 可观测性工具，专注漂移和质量监控\n- **核心洞见**：LLM 应用的漂移和质量监控要借鉴传统 ML 的可观测性经验\n- **代表作**：Arize Phoenix\n- **扩展阅读**：[Phoenix GitHub](https://github.com/Arize-ai/phoenix)\n\n</details>\n\n## 相关\n[[RAG基础架构]] · [[高级RAG技术]] · [[Agent架构与ReAct模式]] · [[API服务与FastAPI]]",
+      "rel": "AI应用开发/AI应用评估与可观测性.md",
+      "viz": "AI应用开发/_viz/AI应用评估与可观测性.svg",
+      "viz_source": "AI应用开发/_viz/AI应用评估与可观测性.mmd",
+      "viz_chart": "hierarchy",
+      "alive": "full"
+    },
+    {
+      "id": "API服务与FastAPI",
+      "label": "API服务与FastAPI",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 4,
+      "track": "标准轨",
+      "ready": false,
+      "aliases": [
+        "FastAPI",
+        "API服务"
+      ],
+      "body": "# API服务与FastAPI\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔把 AI 能力封装成 RESTful 服务〕的——做好鉴权、流式、并发，是工程交付的标配。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能用 FastAPI 把 AI 能力封装成生产级 API：鉴权、流式响应、并发管理、错误处理、文档自动生成。\n\n**重点结论**（7 条）：\n1. **FastAPI 是 AI API 首选**：异步原生支持（LLM 调用是 IO 密集）、Pydantic 数据校验、自动 OpenAPI 文档、性能接近 Go。\n2. **流式响应是 AI API 关键**：LLM 生成慢，用 SSE/WebSocket 流式返回 chunks，首 token 延迟 < 500ms，体验质变。FastAPI 用 `StreamingResponse` 实现。\n3. **鉴权与限流**：API key/JWT 鉴权 + 限流（按用户/IP）防滥用+控成本。AI API 成本高，不限流容易被刷爆。\n4. **并发与超时**：LLM 调用慢（几秒到几十秒），要设超时 + 异步并发 + 队列缓冲，避免阻塞。\n5. **错误处理与降级**：LLM API 会失败（rate limit/超时/模型不可用），要重试+退避+降级（换小模型/返回缓存）。\n6. **Pydantic 定义 Schema**：请求/响应用 Pydantic 模型，自动校验+文档+序列化，AI 应用数据结构复杂时特别有用。\n7. **部署配 Uvicorn/Gunicorn**：开发用 Uvicorn，生产用 Gunicorn+Uvicorn worker，前面挂 Nginx。\n\n**重点知识大纲**：\n- FastAPI 选型理由\n  - 异步原生（LLM IO 密集）\n  - Pydantic 校验\n  - 自动文档\n  - 高性能\n- 流式响应\n  - SSE / WebSocket\n  - StreamingResponse\n  - 首 token 延迟\n- 鉴权与限流\n  - API key / JWT\n  - 按用户/IP 限流\n  - 控成本防滥用\n- 并发与超时\n  - 异步并发\n  - 超时控制\n  - 队列缓冲\n- 错误处理\n  - 重试退避\n  - 降级策略\n  - 缓存兜底\n- 部署\n  - Uvicorn/Gunicorn\n  - Nginx 反代\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要与卡壳细节）</summary>\n\n**起点认知**：会用 Flask 写简单 API，但没想过 AI API 的流式、限流、降级这些特殊问题。\n\n**视觉模型（五问）**：\n- 对象：客户端、FastAPI、LLM API、鉴权中间件、限流器、流式响应、队列\n- 连接：客户端→鉴权→限流→FastAPI→LLM API→流式 chunks→客户端\n- 流向：请求进→异步调 LLM→流式回；并发请求靠异步 IO 不阻塞\n- 边界：LLM 超时/失败要降级；限流防刷；流式中断要处理\n- 变化：并发量↑→异步+队列；LLM 慢→流式+超时\n\n**视觉模型结构**：chart_type=flow。客户端(actor)→鉴权(rule)→限流(rule)→FastAPI(process)→LLM API(process)→流式(data)→客户端。\n\n**类比**：FastAPI 像餐厅前厅——接单（请求）、验身（鉴权）、限流（座位数）、异步下单到厨房（LLM）、出菜窗口流式端菜（SSE）。前厅不阻塞，厨房慢不影响接单。\n\n**大白话讲解**：它属于AI应用开发，解决怎么把 AI 能力做成别人能调的接口。直接调 LLM API 慢且贵，要包一层：验身份防滥用、限流控成本、流式返回让用户秒看到第一个字、出错能降级。FastAPI 因为异步+自动文档是首选。\n\n**三个应用例子**：\n1. AI 写作 API：FastAPI+SSE 流式返回，用户边生成边看。\n2. 客服后端：JWT 鉴权+按租户限流+LLM 失败降级到规则引擎。\n3. 批量处理 API：异步队列+webhook 回调，长任务不阻塞。\n\n**失效边界**：\n- LLM API 超时/失败 → 阻塞或报错\n- 高并发不限流 → 成本爆炸\n- 流式中断 → 用户拿到残缺结果\n\n**边界补丁**：\n- 边界1（LLM 失败）→ 重试+退避+降级（换模型/缓存）\n- 边界2（成本爆炸）→ 按用户限流+预算告警\n- 边界3（流式中断）→ 记录已返回 chunks+断点续传或重试\n\n**卡壳点复盘**：\n1. 为什么用 FastAPI 不用 Flask：原以为都行→校准为 AI API 是 IO 密集，FastAPI 异步原生性能远超 Flask 同步。\n2. 流式为什么重要：原以为只是体验→校准为首 token 延迟决定用户感知\"快慢\"，整段等用户以为卡死。\n3. 限流怎么做：原以为只限 QPS→校准为按用户/IP/租户多维限流，AI 还要按 token 预算限。\n\n**成长对比**：起点（FastAPI=异步Flask）→ 现在（流式+鉴权限流+并发超时+降级+部署全栈）。\n\n</details>\n\n📎 [完整对话记录](_transcript/API服务与FastAPI.jsonl)\n\n## 视觉模型图\n- 打开图：[_viz/API服务与FastAPI.svg](_viz/API服务与FastAPI.svg)\n- Mermaid 源：[_viz/API服务与FastAPI.mmd](_viz/API服务与FastAPI.mmd)\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料</summary>\n\n- **FastAPI 官方文档**（官方，2026-06-28）https://fastapi.tiangolo.com/\n  - 原话：FastAPI 异步原生+Pydantic+自动文档。\n- **OpenAI Chat API**（官方，2026-06-28）https://platform.openai.com/docs/api-reference/chat\n  - 原话：stream:true 流式返回 SSE chunks。\n- **Uvicorn**（官方，2026-06-28）https://www.uvicorn.org/\n  - 原话：ASGI 服务器，生产配 Gunicorn。\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Sebastián Ramírez · FastAPI 作者\n- **身份**：FastAPI 创始人\n- **与本概念的关系**：FastAPI 的设计者，异步+类型+文档三合一\n- **核心洞见**：API 框架应该让开发者\"写得少、得的多\"——Pydantic 校验+自动文档+异步是关键\n- **代表作**：FastAPI\n- **扩展阅读**：[FastAPI 官网](https://fastapi.tiangolo.com/)\n\n### 2. Sam Column · LLM API 工程实践\n- **身份**：AI 应用架构师\n- **与本概念的关系**：系统总结 LLM API 的流式/限流/降级工程模式\n- **核心洞见**：LLM API 的工程复杂度远超传统 API，流式+降级+成本控制是生产标配\n- **代表作**：LLM API 工程模式系列博客\n- **扩展阅读**：[相关博客合集](https://thetechbuffer.com/)\n\n### 3. 王树义 · 中文 AI 工程实践\n- **身份**：技术博主、AI 工程师\n- **与本概念的关系**：用中文场景讲 FastAPI+LLM 的工程实践\n- **核心洞见**：中文场景的 LLM API 要特别处理 token 成本和中文流式渲染\n- **代表作**：AI 工程实践系列博客\n- **扩展阅读**：[王树义博客](https://www.jianshu.com/u/8c85b4c4b3b5)\n\n</details>\n\n## 相关\n[[ChatGPT API与对话系统]] · [[Docker容器化部署]] · [[AI应用评估与可观测性]] · [[AI应用作品集项目]]",
+      "rel": "AI应用开发/API服务与FastAPI.md",
+      "viz": "AI应用开发/_viz/API服务与FastAPI.svg",
+      "viz_source": "AI应用开发/_viz/API服务与FastAPI.mmd",
+      "viz_chart": "flow",
+      "alive": "full"
+    },
+    {
+      "id": "ChatGPT API与对话系统",
+      "label": "ChatGPT API与对话系统",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 5,
+      "track": "标准轨",
+      "ready": false,
+      "aliases": [
+        "OpenAI API",
+        "Messages API"
+      ],
+      "body": "# ChatGPT API与对话系统\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔用 Messages 结构搭建状态化对话系统〕的——是从\"调用 API\"到\"做应用\"的关键一跃。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能用 Messages 数组管理多轮对话状态、做流式输出、控制生成参数，搭建一个真正的对话应用后端。\n\n**重点结论**（7 条）：\n1. **API 无状态，状态在你这边**：模型本身不记上次对话，每次请求要把完整历史 `messages` 数组传过去。对话状态管理是应用层的活。\n2. **Messages 三种角色**：`system`（设定身份/规则，权重高）、`user`（用户输入）、`assistant`（模型历史回复）。多轮对话就是不断 append 这三类消息。\n3. **流式输出（streaming）**：`stream: true` 让模型边生成边返回 SSE chunks，首 token 延迟从\"等完\"降到\"几百毫秒\"，是用户体验关键。\n4. **生成参数**：`temperature`（随机性 0-2，0 最确定、1 常用）、`max_tokens`（输出上限）、`top_p`（核采样）、`frequency_penalty/presence_penalty`（抑制重复）。生产环境要锁定。\n5. **Token 计费含历史**：每次请求传的整个 `messages` 数组都计 input token，所以长对话越来越贵——要做摘要/截断/滑窗。\n6. **错误处理**：rate limit（429）、context length（400）、server error（5xx）都要重试 + 退避；生产应用必须做。\n7. **多模型选择**：用 `model` 参数切换（gpt-4o/gpt-4o-mini/claude-opus 等），简单任务用小模型省钱省延迟，复杂任务用大模型。\n\n**重点知识大纲**：\n- API 调用结构\n  - messages 数组（system/user/assistant）\n  - model 参数（模型选择）\n  - 生成参数（temperature/max_tokens/top_p）\n- 状态管理\n  - 应用层维护对话历史\n  - 多轮 append 三类消息\n  - 滑窗/摘要压缩\n- 流式输出\n  - stream: true + SSE\n  - 首 token 延迟优化\n  - 增量渲染\n- 计费与限制\n  - input/output 分别计费\n  - 历史消息也计 input\n  - rate limit + 重试退避\n- 生产化\n  - 错误处理（429/400/5xx）\n  - 多模型路由\n  - 日志与监控\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要与卡壳细节）</summary>\n\n**起点认知**：以为调用 API 就是传个 prompt 拿回复，对话就是循环调用；流式输出听过但没想过为什么重要。\n\n**视觉模型（五问）**：\n- 对象：messages 数组、system/user/assistant 三角色、生成参数、模型、流式 chunks、对话状态存储\n- 连接：应用→（组装 messages）→API→（流式 chunks）→应用→（append assistant 消息）→状态存储→下次请求\n- 流向：每次请求是独立的（无状态），但应用层维护的 messages 数组形成\"逻辑状态\"\n- 边界：context window 上限（历史太长报错）；rate limit（并发/TPM 限制）\n- 变化：每轮对话 messages 累加→token 增→成本增→需要截断/摘要\n\n**视觉模型结构**：chart_type=flow。节点：应用(actor)、messages数组(data)、API端点(process)、模型(process)、流式chunks(data)、状态存储(state)。flow 体现\"组装→请求→流式接收→append→存\"的循环。\n\n**类比**：API 像失忆的咨询顾问——每次咨询都要把之前所有对话记录完整带给他，他才\"记得\"上下文。你这边要做记录员（状态管理）。\n\n**大白话讲解**：它属于AI应用开发，解决怎么让 AI 记住你们之前聊过啥。模型本身是失忆的，每次调用都是新的，你得自己当记录员——把之前所有对话整理成一份清单（messages 数组）每次都带上。清单越长安越贵越慢，所以聊久了得做摘要。流式输出就是让它边想边往外吐字，不用等整段写完，体验好很多。\n\n**三个应用例子**：\n1. 客服 bot：维护用户对话历史，append 到 messages，用 system 设定客服身份。\n2. 流式写作助手：stream:true 实现打字机效果，首字延迟 < 500ms。\n3. 多模型路由：简单分类用 gpt-4o-mini，复杂推理切 gpt-4o，降本 70%。\n\n**失效边界**：\n- 对话历史超 context window → 报错或被截断（丢上下文）\n- 流式输出中途网络断 → chunk 丢失，需重试或断点续传\n- temperature 调高 → 输出不稳定，生产环境要锁定\n\n**边界补丁**：\n- 边界1（超窗口）→ 滑窗（保留最近 N 轮）+ 摘要（旧对话压缩成一段）\n- 边界2（流式中断）→ 记录已收 chunks，重试时用相同参数（注意 temperature>0 结果会变）\n- 边界3（不稳定）→ 生产环境 temperature=0 或低值，需要多样性时用 top_p 控制\n\n**卡壳点复盘**：\n1. system 消息权重：原以为和 user 一样→校准为 system 在开头权重最高，设定身份/规则/格式最有效。\n2. 流式为什么重要：原以为只是体验→校准为首 token 延迟是用户感知\"快慢\"的关键，整段等完用户以为卡死。\n3. 多轮计费：原以为只算当次输入→校准为整个 messages 数组都算 input，长对话成本线性增长。\n\n**成长对比**：起点（API=传prompt拿回复）→ 现在（无状态本质+状态管理+流式+计费模型+生产化错误处理）。\n\n</details>\n\n📎 [完整对话记录](_transcript/ChatGPT API与对话系统.jsonl)\n\n## 视觉模型图\n- 打开图：[_viz/ChatGPT API与对话系统.svg](_viz/ChatGPT API与对话系统.svg)\n- Mermaid 源：[_viz/ChatGPT API与对话系统.mmd](_viz/ChatGPT API与对话系统.mmd)\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料（点开查看本轮引用来源）</summary>\n\n- **OpenAI Chat API Reference**（官方文档，2026-06-28）https://platform.openai.com/docs/api-reference/chat\n  - 原话：messages 数组含 system/user/assistant 三角色，model 参数选模型，stream 开启流式。\n- **OpenAI Text Generation Guide**（官方文档，2026-06-28）https://platform.openai.com/docs/guides/text-generation\n  - 原话：streaming 用 SSE，chunks 增量返回。\n- **Anthropic Messages API**（官方文档，2026-06-28）https://docs.anthropic.com/en/api/messages\n  - 原话：Claude API 同样无状态，messages 数组维护上下文。\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Greg Brockman · API 工程化布道\n- **身份**：OpenAI 联合创始人、前 CTO\n- **与本概念的关系**：推动 ChatGPT API 的 Messages 结构设计，让\"对话\"成为一等公民 API 原语\n- **核心洞见**：API 设计要让开发者\"像搭积木一样组合\"，Messages 数组就是这种积木\n- **代表作**：OpenAI API 设计与 GPT 系列发布\n- **扩展阅读**：[OpenAI Blog](https://openai.com/blog/)\n\n### 2. Harrison Chase · LangChain 创始人\n- **身份**：LangChain 创始人、LangChain Inc CEO\n- **与本概念的关系**：LangChain 最早就是为封装 ChatGPT API 的状态管理/记忆/链式调用而生\n- **核心洞见**：API 无状态是开发者的痛点，框架的价值在于抽象掉状态管理和错误重试\n- **代表作**：LangChain 框架\n- **扩展阅读**：[LangChain Docs](https://python.langchain.com/)\n\n### 3. Simon Willison · LLM 应用实践观察者\n- **身份**：Django 联合创始人、LLM 工具生态博主\n- **与本概念的关系**：大量实测各家 API、记录流式/计费/错误处理的工程细节\n- **核心洞见**：\"LLM API 的稳定性远不如传统 API，错误处理和降级是生产应用的第一课\"\n- **代表作**：Datasette、llm CLI 工具、Simon Willison's Weblog\n- **扩展阅读**：[simonwillison.net](https://simonwillison.net/)\n\n</details>\n\n## 相关\n[[Prompt工程基础]] · [[Function Calling与工具调用]] · [[API服务与FastAPI]] · [[LangChain框架]]",
+      "rel": "AI应用开发/ChatGPT API与对话系统.md",
+      "viz": "AI应用开发/_viz/ChatGPT API与对话系统.svg",
+      "viz_source": "AI应用开发/_viz/ChatGPT API与对话系统.mmd",
+      "viz_chart": "flow",
+      "alive": "full"
+    },
+    {
+      "id": "Dify低代码AI平台",
+      "label": "Dify低代码AI平台",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 3,
+      "track": "快轨",
+      "ready": false,
+      "aliases": [
+        "Dify"
+      ],
+      "body": "# Dify低代码AI平台\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔低代码可视化快速搭建 AI 应用〕的——适合快速验证和内部工具场景。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能判断什么场景该用 Dify（快速验证/内部工具）什么场景该写代码（定制/生产），并用 Dify 搭一个基础 RAG/Agent 应用。\n\n**重点结论**（5 条）：\n1. **Dify = 开源低代码 AI 应用平台**：可视化拖拽搭 Workflow/Prompt/RAG/Agent，不用写代码就能出 demo。\n2. **核心能力**：Prompt 管理 + RAG 知识库 + Workflow 编排 + Agent + 模型管理（多供应商）+ API 一键发布。\n3. **适合场景**：快速原型验证、内部工具、非工程团队自助搭建、教学演示。\n4. **不适合场景**：高度定制逻辑、性能敏感、复杂状态管理、需要深度集成的生产系统——这些用 LangChain/LangGraph 写代码。\n5. **和 LangChain 关系**：Dify 是\"给非开发者用\"，LangChain 是\"给开发者用\"；Dify 底层也用类似编排思想但封装更深。\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要）</summary>\n\n**起点认知**：以为 Dify 是\"玩具\"，不知道它在快速验证和内部工具场景的价值。\n\n**核心要点**：Dify 降低了 AI 应用搭建门槛——产品经理/运营都能拖拽搭一个 RAG 问答或 Agent。代价是灵活性受限，复杂逻辑还是得写代码。生产级定制用 LangChain，快速验证用 Dify。\n\n**类比**：Dify 像 AI 应用版的 WordPress/Wix——拖拽建站快，但要做高度定制的电商 SaaS 还得自己写。\n\n**应用例子**：\n1. 内部知识库问答：上传文档→配 Prompt→发布，半天出 demo。\n2. 客服 Agent：拖 Workflow 配工具，不用写代码。\n3. 概念验证：见投资人前用 Dify 2 小时搭原型。\n\n</details>\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料</summary>\n\n- **Dify 官方文档**（官方，2026-06-28）https://docs.dify.ai/\n- **Dify GitHub**（开源，2026-06-28）https://github.com/langgenius/dify\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. 张路宇（Ly. Zhang）· Dify 创始人\n- **身份**：LangGenius 创始人\n- **与本概念的关系**：Dify 的设计者，定位\"让 AI 应用开发平民化\"\n- **核心洞见**：不是所有 AI 应用都需要写代码，低代码让更多人能参与 AI 应用构建\n- **代表作**：Dify\n- **扩展阅读**：[Dify GitHub](https://github.com/langgenius/dify)\n\n### 2. Harrison Chase · 对照视角（LangChain 创始人）\n- **身份**：LangChain Inc CEO\n- **与本概念的关系**：LangChain 是\"给开发者\"的框架，和 Dify\"给所有人\"形成对照\n- **核心洞见**：低代码和代码框架不冲突，服务不同人群和场景\n- **代表作**：LangChain\n- **扩展阅读**：[LangChain 官网](https://www.langchain.com/)\n\n</details>\n\n## 相关\n[[RAG基础架构]] · [[Agent架构与ReAct模式]] · [[LangChain框架]]",
+      "rel": "AI应用开发/Dify低代码AI平台.md",
+      "viz": "",
+      "viz_source": "",
+      "viz_chart": "",
+      "alive": "full"
+    },
+    {
+      "id": "Docker容器化部署",
+      "label": "Docker容器化部署",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 3,
+      "track": "快轨",
+      "ready": false,
+      "aliases": [
+        "Docker",
+        "容器化"
+      ],
+      "body": "# Docker容器化部署\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔用容器化方式交付 AI 应用〕的——解决环境一致性与云端部署问题。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能为 AI 应用写 Dockerfile、构建镜像、本地跑通、部署到云，并理解为什么容器化是部署标配。\n\n**重点结论**（5 条）：\n1. **Docker 解决\"在我机器上能跑\"问题**：把应用+依赖+环境打包成镜像， anywhere 一样跑。AI 应用依赖复杂（Python+torch+transformers+系统库），尤其需要。\n2. **AI 应用 Dockerfile 要点**：基础镜像选 python:slim、分阶段构建减小镜像、requirements 锁版本、.dockerignore 排除大文件、CUDA 镜像跑 GPU。\n3. **docker-compose 编排多服务**：AI 应用常是 API+向量库+前端，compose 一键起全栈。\n4. **部署到云**：本地跑通→推镜像到 Registry→云服务器拉取运行；或用云容器服务（ECS/Cloud Run/Cloudflare）。\n5. **生产要点**：日志挂载、健康检查、资源限制、重启策略、 secrets 管理（API key 不进镜像）。\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要）</summary>\n\n**起点认知**：知道 Docker 是\"轻量虚拟机\"，但没为 AI 应用写过 Dockerfile。\n\n**核心要点**：AI 应用依赖多（Python+模型库+系统依赖），Docker 把它打包成镜像解决环境一致。Dockerfile 要小（slim 基础镜像+分层缓存）、要安全（secrets 不进镜像）、要可观测（日志+健康检查）。\n\n**类比**：Docker 像把整个厨房（应用+锅碗瓢盆+食谱）打包成集装箱，运到任何地方打开就能开火，不用担心那边没锅没炉子。\n\n**应用例子**：\n1. RAG 服务：FastAPI+Chroma+embedding 模型打包，compose 一键起。\n2. 模型服务：torch+transformers+CUDA 镜像，部署到 GPU 云。\n3. 作品集项目：Docker 化让面试官一键跑你的 demo。\n\n</details>\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料</summary>\n\n- **Docker 官方文档**（官方，2026-06-28）https://docs.docker.com/\n- **FastAPI Docker 部署**（官方，2026-06-28）https://fastapi.tiangolo.com/deployment/docker/\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Solomon Hykes · Docker 创始人\n- **身份**：Docker Inc 创始人\n- **与本概念的关系**：容器化的普及者，让容器从运维专属变开发者标配\n- **核心洞见**：容器让应用和基础设施解耦，开发者不用管部署环境\n- **代表作**：Docker\n- **扩展阅读**：[Docker 官网](https://www.docker.com/)\n\n### 2. FastAPI 官方 · 部署最佳实践\n- **身份**：FastAPI 团队\n- **与本概念的关系**：官方提供 AI 应用的 Docker 部署模板\n- **核心洞见**：AI 应用 Dockerfile 要小+分层缓存+多阶段构建\n- **代表作**：FastAPI 部署文档\n- **扩展阅读**：[FastAPI Docker 部署](https://fastapi.tiangolo.com/deployment/docker/)\n\n</details>\n\n## 相关\n[[API服务与FastAPI]] · [[AI应用作品集项目]]",
+      "rel": "AI应用开发/Docker容器化部署.md",
+      "viz": "",
+      "viz_source": "",
+      "viz_chart": "",
+      "alive": "full"
+    },
+    {
+      "id": "Embedding与向量表示",
+      "label": "Embedding与向量表示",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 5,
+      "track": "标准轨",
+      "ready": false,
+      "aliases": [
+        "Embedding",
+        "向量化",
+        "文本表示"
+      ],
+      "body": "# Embedding与向量表示\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔把文本变成可计算语义相似度的高维向量〕的——是让机器\"读懂\"语义的数学基础，RAG 和语义搜索的地基。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能选对 Embedding 模型、理解向量维度与相似度计算、知道为什么\"国王-男人+女人=女王\"成立。\n\n**重点结论**（7 条）：\n1. **Embedding = 把离散文本映射成连续向量**：一段文本→一个固定维度的浮点数组（如 1536 维），语义相近的文本向量距离近。\n2. **语义相似度靠向量距离**：常用余弦相似度（方向相近）或点积；语义相似的文本向量夹角小、相似度高。\n3. **维度 trade-off**：维度高（如 3072）表达力强但存储/计算贵；维度低（如 384）快但可能丢语义。按场景选。\n4. **模型选型看 MTEB 榜单**：MTEB 是权威 Embedding 评测榜，按任务（检索/分类/聚类）看排名；OpenAI text-embedding-3、BGE、Cohere 是主流。\n5. **语言与领域适配**：中文场景优先 BGE-zh / m3e；多语言用 multilingual 模型；垂直领域（法律/医疗）可能要微调。\n6. **归一化很重要**：很多模型要求向量归一化后用点积=余弦相似度；不归一化结果会错。\n7. **Embedding 是 RAG 的语义层**：query 和文档都 embed 后才能做相似度检索，是 RAG \"找相关\"的数学基础。\n\n**重点知识大纲**：\n- Embedding 本质\n  - 离散文本→连续向量\n  - 语义相近→向量距离近\n  - 固定维度浮点数组\n- 相似度计算\n  - 余弦相似度（方向）\n  - 点积（归一化后=余弦）\n  - 欧氏距离（少用）\n- 模型选型\n  - MTEB 榜单（按任务）\n  - 维度 trade-off\n  - 语言/领域适配\n- 工程要点\n  - 向量归一化\n  - 批量 embed（省钱省时）\n  - 缓存 embedding（不变就复用）\n- 应用场景\n  - RAG 语义检索\n  - 语义搜索/去重\n  - 推荐系统/聚类\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要与卡壳细节）</summary>\n\n**起点认知**：知道 Embedding 是把文本变成向量，但说不清\"为什么向量近=语义近\"，以为就是个黑盒。\n\n**视觉模型（五问）**：\n- 对象：原始文本、Tokenizer、Embedding 模型、高维向量、向量空间、相似度函数\n- 连接：文本→Tokenize→Embedding模型→向量；query 向量 vs 文档向量→相似度函数→分数\n- 流向：单向编码（文本→向量），相似度是双向比较\n- 边界：Embedding 只捕捉训练语料里的语义；跨语言/跨领域可能失真；超长文本要分块 embed\n- 变化：换模型→向量空间全变（不能混用）；文本微改→向量微变\n\n**视觉模型结构**：chart_type=flow。文本(data)→Embedding模型(process)→向量(data)→相似度计算(process)→分数(data)。query 和 doc 两条流汇到相似度计算。\n\n**类比**：像把每段文本翻译成\"语义坐标\"（如经纬度），语义相近的文本坐标点离得近；搜素时算 query 坐标和所有文档坐标的距离，取最近的。和关键词搜索的区别：关键词是精确匹配，Embedding 是\"意思相近\"。\n\n**大白话讲解**：它属于AI应用开发，解决怎么让电脑\"懂意思\"。电脑不懂文字，但懂数字，所以把每段文字翻译成一串数字（向量），意思相近的文字数字也相近。就像给每个地方标经纬度——离得近的地方就在附近。搜索时不用关键词精确匹配，而是找\"意思最近的\"，所以\"如何退款\"能搜到\"退货流程\"。\n\n**三个应用例子**：\n1. RAG 文档检索：用户问\"怎么退货\"→embed→找最相似的文档块\"退换货政策\"。\n2. 语义去重：新闻聚合时，把标题 embed，相似度>0.9 的判为同主题。\n3. 推荐系统：用户浏览历史 embed→找向量相近的内容推荐。\n\n**失效边界**：\n- 跨语言模型质量参差，小语种可能失真\n- 长文档直接 embed 会丢失细节（要分块）\n- Embedding 模型更新后旧向量失效（向量空间变了）\n\n**边界补丁**：\n- 边界1（跨语言）→ 选 multilingual 模型或按语言分别 embed\n- 边界2（长文档）→ 分块 embed，检索时取 chunk 级相似度\n- 边界3（模型更新）→ 重新 embed 全量文档，版本化向量库\n\n**卡壳点复盘**：\n1. 为什么向量近=语义近：原以为是黑盒→校准为 Embedding 模型训练时就是\"让相似文本向量近\"（对比学习），是训练目标决定的。\n2. 余弦 vs 欧氏：原以为随便选→校准为文本用余弦（只看方向不看长度），欧氏受向量模长影响不适合。\n3. 维度选择：原以为越高越好→校准为看任务，检索任务中等维度（768-1536）性价比最高。\n\n**成长对比**：起点（Embedding=黑盒变向量）→ 现在（语义相似度的数学本质+模型选型+归一化+分块工程）。\n\n</details>\n\n📎 [完整对话记录](_transcript/Embedding与向量表示.jsonl)\n\n## 视觉模型图\n- 打开图：[_viz/Embedding与向量表示.svg](_viz/Embedding与向量表示.svg)\n- Mermaid 源：[_viz/Embedding与向量表示.mmd](_viz/Embedding与向量表示.mmd)\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料（点开查看本轮引用来源）</summary>\n\n- **OpenAI Embeddings Guide**（官方文档，2026-06-28）https://platform.openai.com/docs/guides/embeddings\n  - 原话：\"Embeddings are numerical representations of text that capture semantic meaning.\"\n- **MTEB Leaderboard**（权威评测榜，2026-06-28）https://mteb-leaderboard.com/\n  - 按任务（检索/分类/聚类）排名 Embedding 模型。\n- **Cohere Embed v3 文档**（官方文档，2026-06-28）https://docs.cohere.com/docs/embed-v3\n  - 原话：向量归一化后点积=余弦相似度。\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Tomas Mikolov · Word2Vec 作者\n- **身份**：前 Google 研究员、前 DeepMind\n- **与本概念的关系**：Word2Vec 是现代 Embedding 的鼻祖，首次用\"上下文预测\"学词向量，发现\"国王-男人+女人=女王\"的语义算术\n- **核心洞见**：\"word vectors capture semantic relationships\"——向量空间的方向编码了语义关系（如性别、时态、地理）\n- **代表作**：*Efficient Estimation of Word Representations in Vector Space*（2013）\n- **扩展阅读**：[arXiv 论文](https://arxiv.org/abs/1301.3781)\n\n### 2. Nils Reimers · Sentence-BERT / MTEB 作者\n- **身份**：Jina AI 研究员\n- **与本概念的关系**：Sentence-BERT 让句子级 Embedding 可行；MTEB 是最权威的 Embedding 评测榜单\n- **核心洞见**：词向量不够，要句子/段落级向量才能做语义检索；评测要分任务不能只看一个指标\n- **代表作**：Sentence-BERT、MTEB\n- **扩展阅读**：[MTEB Leaderboard](https://mteb-leaderboard.com/)\n\n### 3. 梁德红（Shitao Xiao）· BGE 系列作者\n- **身份**：智源研究院研究员\n- **与本概念的关系**：BGE 是中文 Embedding 的 SOTA 开源系列，中文 RAG 事实标准\n- **核心洞见**：中文 Embedding 不能直接套英文模型，要针对中文语料和检索任务训练\n- **代表作**：BGE Embedding 系列\n- **扩展阅读**：[BGE GitHub](https://github.com/FlagOpen/FlagEmbedding)\n\n</details>\n\n## 相关\n[[LLM工作原理与Token机制]] · [[向量数据库与相似度检索]] · [[RAG基础架构]] · [[高级RAG技术]]",
+      "rel": "AI应用开发/Embedding与向量表示.md",
+      "viz": "AI应用开发/_viz/Embedding与向量表示.svg",
+      "viz_source": "AI应用开发/_viz/Embedding与向量表示.mmd",
+      "viz_chart": "flow",
+      "alive": "full"
+    },
+    {
+      "id": "Function Calling与工具调用",
+      "label": "Function Calling与工具调用",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 5,
+      "track": "标准轨",
+      "ready": false,
+      "aliases": [
+        "Function Calling",
+        "Tool Use",
+        "工具调用"
+      ],
+      "body": "# Function Calling与工具调用\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔让模型按结构化 JSON 格式输出以调用外部函数〕的——是 LLM 从\"聊天\"走向\"做事\"的接口层。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能定义工具 schema、解析模型返回的函数调用、执行后把结果喂回模型，搭一个能\"做事\"的 AI。\n\n**重点结论**（7 条）：\n1. **Function Calling = 结构化输出+执行钩子**：模型不直接回答，而是返回\"我要调用函数 X，参数是 {...}\"，应用层解析后执行函数，把结果喂回模型让它生成最终回答。\n2. **用 JSON Schema 定义工具**：每个工具声明 name/description/parameters(JSON Schema)，模型据此判断\"该不该调用\"\"参数怎么填\"。\n3. **两段式交互**：① 用户消息+工具定义→模型返回 tool_call（函数名+参数）；② 应用执行函数→把结果作为 tool_result 喂回→模型生成最终回答。\n4. **模型不执行，只决策**：模型只决定\"调什么、传什么参数\"，真正的函数执行在应用层——这是安全边界。\n5. **多工具并行**：模型可一次返回多个 tool_call，应用并行执行后全部喂回，减少往返。\n6. **工具描述要精准**：description 写不清模型就乱调；要写清\"什么时候用\"\"输入是什么\"\"输出是什么\"。\n7. **是 Agent 的地基**：Agent 本质就是\"循环调 Function Calling + 把结果喂回\"——ReAct/工具调用都建在这层之上。\n\n**重点知识大纲**：\n- Function Calling 机制\n  - JSON Schema 定义工具\n  - 模型返回 tool_call\n  - 应用层执行函数\n  - 结果喂回模型\n- 两段式交互\n  - 第一段：消息+工具定义→tool_call\n  - 第二段：tool_result→最终回答\n- 关键原则\n  - 模型只决策不执行（安全边界）\n  - 工具描述要精准\n  - 多工具可并行\n- 工程要点\n  - 参数校验（模型可能传错）\n  - 错误处理（函数失败要反馈给模型）\n  - 工具版本管理\n- Agent 地基\n  - 循环调用 = Agent\n  - ReAct 建于此之上\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要与卡壳细节）</summary>\n\n**起点认知**：以为 Function Calling 就是\"让模型输出 JSON\"，不知道两段式交互和应用层执行这层。\n\n**视觉模型（五问）**：\n- 对象：用户消息、工具定义(JSON Schema)、模型、tool_call、应用层、函数实现、tool_result\n- 连接：消息+工具定义→模型→tool_call→应用层→函数→tool_result→模型→最终回答\n- 流向：两段式循环，第一段决策调用，第二段执行回填\n- 边界：模型可能传错参数（要校验）；函数可能失败（要反馈）；模型可能不调用工具（要 fallback）\n- 变化：工具数量↑→模型选择难度↑；多 tool_call 并行→应用层要并发执行\n\n**视觉模型结构**：chart_type=flow。用户消息(data)+工具定义(rule)→模型(process)→tool_call(data)→应用层(actor)→函数(process)→tool_result(data)→模型→最终回答(data)。两段循环。\n\n**类比**：模型像餐厅服务员——客人点菜（用户问题），服务员不自己做饭，而是写单子给厨房（tool_call），厨房做好（应用执行函数）服务员端给客人（结果喂回模型生成回答）。服务员只决策\"给哪个厨房\"\"点什么\"，不亲自做。\n\n**大白话讲解**：它属于AI应用开发，解决怎么让 AI 真能做事而不只是聊天。模型本身不会查数据库、不会发邮件，但它能说\"我要调用查数据库函数，参数是 xxx\"，你的程序收到后去执行，把结果告诉模型，模型再据此回答。这样 AI 就从\"只会说\"变成\"会做事\"。工具描述写清楚是关键，写不清模型就乱调。\n\n**三个应用例子**：\n1. 天气查询 bot：模型识别\"北京天气\"→调用 get_weather(\"北京\")→结果喂回→回答\"北京今天 25度晴\"。\n2. 数据库查询：用户问\"本月销售额\"→调用 query_db(SQL)→结果→生成分析回答。\n3. 多工具 Agent：查日历+发邮件+建任务，模型一次返回 3 个 tool_call 并行执行。\n\n**失效边界**：\n- 模型传错参数（如类型错、缺字段）→ 函数报错\n- 模型不调用工具直接编答案 → 失去工具价值\n- 函数执行超时/失败 → 模型无结果可依据\n\n**边界补丁**：\n- 边界1（参数错）→ 应用层用 Pydantic 校验，失败时反馈\"参数错误，期望 X\"让模型重试\n- 边界2（不调工具）→ Prompt 强调\"必须用工具\"+工具描述写清使用时机\n- 边界3（函数失败）→ 捕获异常，把错误信息作为 tool_result 喂回，让模型降级回答\n\n**卡壳点复盘**：\n1. 模型怎么知道调哪个工具：原以为是关键词匹配→校准为模型理解工具 description 和参数 schema，靠语义判断。\n2. 两段式还是多段：原以为一段就够→校准为至少两段（决策+执行回填），Agent 场景是多段循环。\n3. 模型能执行函数吗：原以为模型直接执行→校准为模型只决策不执行，执行在应用层（安全边界）。\n\n**成长对比**：起点（Function Calling=输出JSON）→ 现在（两段式交互+JSON Schema+应用层执行+多工具并行+Agent地基）。\n\n</details>\n\n📎 [完整对话记录](_transcript/Function Calling与工具调用.jsonl)\n\n## 视觉模型图\n- 打开图：[_viz/Function Calling与工具调用.svg](_viz/Function Calling与工具调用.svg)\n- Mermaid 源：[_viz/Function Calling与工具调用.mmd](_viz/Function Calling与工具调用.mmd)\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料（点开查看本轮引用来源）</summary>\n\n- **OpenAI Function Calling Guide**（官方文档，2026-06-28）https://platform.openai.com/docs/guides/function-calling\n  - 原话：模型返回 tool_call 含函数名和参数，应用层执行后把结果喂回。\n- **Anthropic Tool Use**（官方文档，2026-06-28）https://docs.anthropic.com/en/docs/build-with-claude/tool-use\n  - 原话：Claude 的 tool_use 同样是两段式交互。\n- **LlamaIndex Agent 文档**（官方文档，2026-06-28）https://docs.llamaindex.ai/en/stable/agent/\n  - 原话：Agent 建立在 Function Calling 之上。\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Shreya Rajpal · Guardrails AI / 工具调用工程化\n- **身份**：Guardrails AI 创始人\n- **与本概念的关系**：专注 LLM 结构化输出和工具调用的可靠性\n- **核心洞见**：模型输出不可靠，工具调用的参数校验和错误处理是生产应用的第一道防线\n- **代表作**：Guardrails AI 框架\n- **扩展阅读**：[Guardrails AI GitHub](https://github.com/guardrails-ai/guardrails)\n\n### 2. Yao Shunyu · ReAct 论文作者\n- **身份**：普林斯顿大学研究员\n- **与本概念的关系**：ReAct 框架把 Function Calling 升级成\"思考+行动\"循环，是 Agent 的理论基础\n- **核心洞见**：工具调用不是孤立的，要和推理交织——模型边想边调工具边根据结果再想\n- **代表作**：*ReAct: Synergizing Reasoning and Acting in Language Models*\n- **扩展阅读**：[arXiv 论文](https://arxiv.org/abs/2210.03629)\n\n### 3. Swyx · 工具调用生态观察\n- **身份**：Latent Space 主理人、AI 工程布道者\n- **与本概念的关系**：系统观察 Function Calling 从 OpenAI 到全行业的标准化过程\n- **核心洞见**：Function Calling 是 LLM 从\"聊天接口\"变成\"应用编排接口\"的转折点\n- **代表作**：Latent Space 播客\n- **扩展阅读**：[latent.space](https://www.latent.space/)\n\n</details>\n\n## 相关\n[[ChatGPT API与对话系统]] · [[Agent架构与ReAct模式]] · [[LangChain框架]] · [[多Agent协作与工作流编排]]",
+      "rel": "AI应用开发/Function Calling与工具调用.md",
+      "viz": "AI应用开发/_viz/Function Calling与工具调用.svg",
+      "viz_source": "AI应用开发/_viz/Function Calling与工具调用.mmd",
+      "viz_chart": "flow",
+      "alive": "full"
+    },
+    {
+      "id": "LangChain框架",
+      "label": "LangChain框架",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 5,
+      "track": "标准轨",
+      "ready": false,
+      "aliases": [
+        "LangChain"
+      ],
+      "body": "# LangChain框架\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔LLM 应用编排框架的核心抽象〕的——Chain/Memory/Retriever/Tool 是 AI 应用开发的\"事实标准\"。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能用 LangChain 组装一个完整 AI 应用（LLM+Prompt+Memory+Retriever+Tool），并知道每个抽象解决什么问题。\n\n**重点结论**（7 条）：\n1. **LangChain = LLM 应用的\"脚手架\"**：封装 LLM/Prompt/Memory/Retriever/Tool/Agent 为可组合组件，让你像搭积木做应用而不是从 API 写起。\n2. **六大核心抽象**：① Models（LLM/Chat/Embedding）；② Prompts（模板/管理）；③ Memory（对话记忆）；④ Retrievers（检索器）；⑤ Tools/Agents（工具/智能体）；⑥ Chains（串联一切）。\n3. **Chain 是核心编排原语**：把多个组件串成管道（Prompt→LLM→OutputParser），LCEL 是声明式语法（`prompt | llm | parser`）。\n4. **Memory 管理对话状态**：BufferMemory（全留）/SummaryMemory（摘要）/VectorStoreMemory（向量检索过往），解决 API 无状态问题。\n5. **Retriever 抽象检索**：统一向量库/SQL/关键词检索接口，让 RAG 切换数据源不改代码。\n6. **Agent = LLM+Tools+循环**：LangChain 的 Agent 抽象封装了 ReAct 循环，配合 Tool 使用。\n7. **生产化要配 LangSmith**：LangChain 应用调试/监控/评估用 LangSmith，看每步输入输出和 token 消耗。\n\n**重点知识大纲**：\n- LangChain 定位\n  - LLM 应用脚手架\n  - 可组合组件\n  - 事实标准\n- 六大核心抽象\n  - Models（LLM/Chat/Embedding）\n  - Prompts（模板/管理）\n  - Memory（对话状态）\n  - Retrievers（检索统一接口）\n  - Tools/Agents（工具/智能体）\n  - Chains（编排串联）\n- Chain 与 LCEL\n  - Chain = 组件管道\n  - LCEL 声明式语法\n  - Runnable 接口\n- Memory 类型\n  - Buffer（全留）\n  - Summary（摘要）\n  - VectorStore（向量检索）\n- Retriever 抽象\n  - 统一检索接口\n  - 切换数据源不改码\n- 生产化\n  - LangSmith 调试监控\n  - LangServe 部署\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要与卡壳细节）</summary>\n\n**起点认知**：以为 LangChain 就是\"封装 OpenAI API\"，不知道六大抽象和 Chain 编排这层。\n\n**视觉模型（五问）**：\n- 对象：Models、Prompts、Memory、Retriever、Tools、Chains、LCEL、应用\n- 连接：Prompt+LLM+Parser 组成 Chain；Chain 可嵌 Memory/Retriever/Tool；Agent 是带 Tools 的 Chain\n- 流向：用户输入→Prompt 填充→LLM→（可选 Retriever/Memory/Tool）→OutputParser→输出\n- 边界：LangChain 抽象有学习成本；过度封装可能限制灵活性；生产要配 LangSmith\n- 变化：换模型/换检索器/换 Memory 类型→改组件不改 Chain 结构\n\n**视觉模型结构**：chart_type=hierarchy。LangChain(concept)→[Models/Prompts/Memory/Retrievers/Tools/Chains](各 concept)，Chains 下挂 LCEL(process)。\n\n**类比**：LangChain 像 AI 应用版的 Django/Express——不让你从 socket 写起，而是提供 Model/Router/Middleware 抽象，你组装就行。Chain 是管道（像 Unix pipe），Memory 是会话存储，Retriever 是数据源适配器。\n\n**大白话讲解**：它属于AI应用开发，解决怎么快速搭 AI 应用。直接调 API 要自己管状态/检索/工具，LangChain 把这些封装成可拼装的积木——记忆积木、检索积木、工具积木，用 Chain 把它们串起来。就像用 Django 建站不用从 TCP 写起，LangChain 让你专注业务逻辑。\n\n**三个应用例子**：\n1. RAG 问答：Retriever+Memory+LLM 组 Chain，10 行代码搭起来。\n2. 客服 Agent：Tool（查订单/退换货）+Agent 抽象，自主调用。\n3. 文档对话：VectorStoreMemory+Retriever，长文档分块检索对话。\n\n**失效边界**：\n- 抽象泄漏（底层问题还是要懂 API）\n- 版本迭代快，API 常变\n- 过度封装限制灵活性\n\n**边界补丁**：\n- 边界1（抽象泄漏）→ 关键路径还是懂底层 API\n- 边界2（版本变）→ 锁版本 + 关注 changelog\n- 边界3（灵活性）→ 复杂场景自己实现，LangChain 做 80% 通用\n\n**卡壳点复盘**：\n1. Chain 和 LCEL 区别：原以为一样→校准为 Chain 是概念，LCEL 是声明式语法（`|` 管道）。\n2. Memory 什么时候用：原以为都用→校准为单轮不用，多轮才需要，且要选类型（摘要 vs 向量）。\n3. Agent 和 Chain 区别：原以为一样→校准为 Chain 是固定流程，Agent 是自主决策，复杂度不同。\n\n**成长对比**：起点（LangChain=API封装）→ 现在（六大抽象+Chain编排+Memory类型+Retriever统一+LangSmith生产化）。\n\n</details>\n\n📎 [完整对话记录](_transcript/LangChain框架.jsonl)\n\n## 视觉模型图\n- 打开图：[_viz/LangChain框架.svg](_viz/LangChain框架.svg)\n- Mermaid 源：[_viz/LangChain框架.mmd](_viz/LangChain框架.mmd)\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料（点开查看本轮引用来源）</summary>\n\n- **LangChain Python 文档**（官方文档，2026-06-28）https://python.langchain.com/docs/get_started/introduction\n  - 原话：LangChain 提供 Models/Prompts/Memory/Retrievers/Tools/Chains 六大抽象。\n- **LangChain 新版文档**（官方，2026-06-28）https://docs.langchain.com/\n  - 原话：LCEL 是声明式链构建语法。\n- **LangChain GitHub**（开源，2026-06-28）https://github.com/langchain-ai/langchain\n  - 原话：最流行的 LLM 应用框架。\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Harrison Chase · LangChain 创始人\n- **身份**：LangChain Inc CEO\n- **与本概念的关系**：LangChain 的设计者和推动者，定义了 LLM 应用框架的范式\n- **核心洞见**：LLM 应用需要\"可组合抽象\"，像 Web 框架一样让开发者专注业务\n- **代表作**：LangChain、LangGraph、LangSmith\n- **扩展阅读**：[LangChain 官网](https://www.langchain.com/)\n\n### 2. Greg Kamradt · LangChain 教学布道者\n- **身份**：技术博主\n- **与本概念的关系**：写了最流行的 LangChain 教程系列，让框架普及\n- **核心洞见**：框架的价值在\"标准化\"，让 AI 应用开发从手工作坊变工业化\n- **代表作**：LangChain 教程系列\n- **扩展阅读**：[Greg Kamradt GitHub](https://github.com/gkamradt)\n\n### 3. Jerry Liu · LlamaIndex 创始人（对照视角）\n- **身份**：LlamaIndex 创始人\n- **与本概念的关系**：LlamaIndex 是 LangChain 的主要对照，专注 RAG 数据层\n- **核心洞见**：LangChain 通用编排，LlamaIndex 专注数据连接和 RAG，两者互补\n- **代表作**：LlamaIndex\n- **扩展阅读**：[LlamaIndex 官网](https://www.llamaindex.ai/)\n\n</details>\n\n## 相关\n[[Prompt工程基础]] · [[ChatGPT API与对话系统]] · [[RAG基础架构]] · [[Agent架构与ReAct模式]] · [[LCEL与LangGraph]]",
+      "rel": "AI应用开发/LangChain框架.md",
+      "viz": "AI应用开发/_viz/LangChain框架.svg",
+      "viz_source": "AI应用开发/_viz/LangChain框架.mmd",
+      "viz_chart": "hierarchy",
+      "alive": "full"
+    },
+    {
+      "id": "LCEL与LangGraph",
+      "label": "LCEL与LangGraph",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 4,
+      "track": "标准轨",
+      "ready": false,
+      "aliases": [
+        "LCEL",
+        "LangGraph",
+        "Runnable"
+      ],
+      "body": "# LCEL与LangGraph\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔声明式链构建 LCEL + 有状态工作流 LangGraph〕的——是从 demo 走向生产级 Agent 的关键。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能用 LCEL 声明式构建链，用 LangGraph 实现有状态/有环/人在回路的 Agent 工作流，知道为什么这俩是生产标配。\n\n**重点结论**（7 条）：\n1. **LCEL = 声明式链语法**：`prompt | llm | parser` 用管道符组合 Runnable 组件，自动处理批处理/异步/流式/重试，比命令式 Chain 更简洁强大。\n2. **Runnable 统一接口**：所有组件（Prompt/LLM/Retriever/Parser）实现 Runnable 接口（invoke/batch/stream），可无缝组合。\n3. **LangGraph = 状态图编排**：节点=函数/Agent，边=条件跳转，状态=共享 dict；支持环（循环）、分支、并行，比线性 Chain 强大。\n4. **生产级特性**：① Checkpoint（持久化状态，崩溃恢复）；② 人在回路（interrupt 暂停等人审批）；③ 流式（每步增量输出）；④ 并行（多节点同时跑）。\n5. **LCEL 适合线性流程**：Prompt→LLM→Parser 这种直线管道用 LCEL 最简洁。\n6. **LangGraph 适合复杂流程**：Agent 循环/多 Agent 协作/条件分支/状态恢复用 LangGraph，可控可观测。\n7. **配 LangSmith 可观测**：LCEL/LangGraph 的每步自动记录到 LangSmith，看输入输出/token/延迟，是生产调试标配。\n\n**重点知识大纲**：\n- LCEL 声明式链\n  - 管道符语法（|）\n  - Runnable 统一接口\n  - 自动批处理/异步/流式/重试\n  - 适合线性流程\n- LangGraph 状态图\n  - 节点+边+条件\n  - 共享状态 dict\n  - 支持环/分支/并行\n  - 适合复杂流程\n- 生产级特性\n  - Checkpoint 持久化\n  - 人在回路 interrupt\n  - 流式输出\n  - 并行执行\n- 选型\n  - 线性 → LCEL\n  - 复杂/Agent → LangGraph\n- 可观测\n  - LangSmith 集成\n  - 每步输入输出记录\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要与卡壳细节）</summary>\n\n**起点认知**：以为 LCEL 就是个语法糖，LangGraph 没听过，不知道生产级特性这层。\n\n**视觉模型（五问）**：\n- 对象：Runnable 组件、管道符|、StateGraph、节点、边、Checkpoint、Interrupt\n- 连接：LCEL：组件1|组件2|组件3；LangGraph：节点通过边连接，条件边控制跳转\n- 流向：LCEL 线性流；LangGraph 图流（可环可分支）\n- 边界：LCEL 不适合复杂循环；LangGraph 学习曲线陡\n- 变化：状态 dict 更新驱动 LangGraph 流程推进\n\n**视觉模型结构**：chart_type=hierarchy。LCEL与LangGraph(concept)→[LCEL(线性)/LangGraph(图)]，各下挂特性。\n\n**类比**：LCEL 像 Unix 管道（`cat | grep | sort`），简单线性；LangGraph 像工作流引擎（Airflow/Temporal），有分支有循环有状态，适合复杂业务流。\n\n**大白话讲解**：它属于AI应用开发，解决怎么把 AI 应用做到生产级。LCEL 让你像搭管道一样串组件（`prompt | llm | parser`），简洁还能自动处理并发流式。LangGraph 适合更复杂的——有循环（Agent 反复调工具）、有分支（条件跳转）、要暂停让人审批、要能崩溃恢复。简单流程用 LCEL，复杂 Agent 用 LangGraph。\n\n**三个应用例子**：\n1. 翻译管道：`prompt | llm | parser` LCEL 3 行搞定，自动流式。\n2. 客服 Agent：LangGraph 建状态图，分类→路由→处理→必要时人工审批→回复，可恢复。\n3. 研究助手：LangGraph 多步（搜→读→总结→不够再搜），有环能循环。\n\n**失效边界**：\n- LCEL 搞不定循环/条件跳转\n- LangGraph 学习成本高，简单任务用它过重\n- Checkpoint 存储要选对（内存/Redis/DB）\n\n**边界补丁**：\n- 边界1（LCEL 局限）→ 复杂流程换 LangGraph\n- 边界2（LangGraph 过重）→ 简单任务还是 LCEL\n- 边界3（Checkpoint）→ 生产用 Redis/Postgres，本地用内存\n\n**卡壳点复盘**：\n1. LCEL 和旧 Chain 区别：原以为语法糖→校准为 Runnable 统一接口，自动处理批/异步/流式/重试。\n2. LangGraph 什么时候用：原以为都用→校准为有循环/分支/状态恢复才用，线性用 LCEL。\n3. 人在回路怎么实现：原以为只是日志→校准为 interrupt 真能暂停流程等人审批后继续。\n\n**成长对比**：起点（LCEL=语法糖）→ 现在（Runnable接口+LangGraph状态图+生产特性+选型判断）。\n\n</details>\n\n📎 [完整对话记录](_transcript/LCEL与LangGraph.jsonl)\n\n## 视觉模型图\n- 打开图：[_viz/LCEL与LangGraph.svg](_viz/LCEL与LangGraph.svg)\n- Mermaid 源：[_viz/LCEL与LangGraph.mmd](_viz/LCEL与LangGraph.mmd)\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料（点开查看本轮引用来源）</summary>\n\n- **LCEL 文档**（官方文档，2026-06-28）https://python.langchain.com/docs/expression_language/\n  - 原话：LCEL 用管道符组合 Runnable，自动支持批处理/异步/流式。\n- **LangGraph 文档**（官方文档，2026-06-28）https://langchain-ai.github.io/langgraph/\n  - 原话：LangGraph 用状态图编排，支持 checkpoint/人在回路/条件跳转。\n- **LangSmith 文档**（官方文档，2026-06-28）https://docs.smith.langchain.com/\n  - 原话：LCEL/LangGraph 自动记录到 LangSmith 供调试监控。\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Harrison Chase · LCEL/LangGraph 设计者\n- **身份**：LangChain Inc CEO\n- **与本概念的关系**：主导 LCEL 和 LangGraph 的设计，从\"链\"进化到\"图\"\n- **核心洞见**：生产 Agent 需要可控的状态图，不是自由循环；LCEL 让简单事简单，LangGraph 让复杂事可能\n- **代表作**：LangChain、LangGraph\n- **扩展阅读**：[LangGraph 博客](https://blog.langchain.dev/)\n\n### 2. Eduardo Imhof · LangGraph 核心贡献者\n- **身份**：LangChain 工程师\n- **与本概念的关系**：LangGraph 的核心实现者，写了大量 LangGraph 教程\n- **核心洞见**：状态图是把传统工作流引擎思想引入 LLM 应用的关键\n- **代表作**：LangGraph 教程系列\n- **扩展阅读**：[LangGraph 示例](https://github.com/langchain-ai/langgraph/tree/main/examples)\n\n### 3. Swyx · 生产级 LLM 工程观察者\n- **身份**：Latent Space 主理人\n- **与本概念的关系**：系统观察 LLM 应用从 demo 到生产的工程化趋势\n- **核心洞见**：\"AI 工程的核心矛盾是 demo 容易生产难\"，LCEL/LangGraph 是解决这个矛盾的框架\n- **代表作**：Latent Space 播客\n- **扩展阅读**：[latent.space](https://www.latent.space/)\n\n</details>\n\n## 相关\n[[LangChain框架]] · [[Agent架构与ReAct模式]] · [[多Agent协作与工作流编排]]",
+      "rel": "AI应用开发/LCEL与LangGraph.md",
+      "viz": "AI应用开发/_viz/LCEL与LangGraph.svg",
+      "viz_source": "AI应用开发/_viz/LCEL与LangGraph.mmd",
+      "viz_chart": "hierarchy",
+      "alive": "full"
+    },
+    {
+      "id": "LLM工作原理与Token机制",
+      "label": "LLM工作原理与Token机制",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 5,
+      "track": "标准轨",
+      "ready": false,
+      "aliases": [
+        "Tokenization",
+        "BPE分词",
+        "自回归生成"
+      ],
+      "body": "# LLM工作原理与Token机制\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔大模型如何逐 Token 生成文字、上下文窗口与成本计费的本质〕的——是理解一切 LLM 应用的地基。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能讲清\"模型怎么把文字切碎、怎么一个一个往外蹦字、为什么有长度限制、为什么按用量收钱\"，并在面试和排错时不再把\"上下文窗口\"和\"最大输出长度\"混为一谈。\n\n**重点结论**（7 条）：\n1. **Token 是子词不是词/字**：BPE 用预训练合并表反复粘高频字节对，切分确定且可逆，不同模型合并表不同所以 token 数不同。\n2. **\"1 token ≈ 4 字节\"**：是字节不是字符，中文/代码/特殊符号 token 密度远高于英文，成本估算必须实跑 tokenizer。\n3. **上下文窗口 ≠ 最大输出长度**：窗口是输入+输出共用总容量（如 1M），`max_tokens` 是单次输出上限（如 128k），两个独立参数；且窗口越长越容易 context rot。\n4. **自回归生成 + KV cache**：模型一个 token 一个 token 生成，每步 attention 要看全部历史，但历史 K/V 算过即缓存复用，prefill 并行填缓存、decode 每步只传新 token 的 Q。\n5. **计费输入便宜输出贵**：输出通常贵 3-4 倍，因为生成需逐 token 串行 + 维护 KV cache；prompt caching / batch API 可降本。\n6. **越长越慢越贵**：上下文变长 → 每步 attention 计算量线性增 + KV cache 显存线性增 + 输入 token 计费线性增，三重叠加。\n7. **应用工程含义**：控上下文长度=控成本和延迟；中文场景别用字符数估 token；长对话要做摘要/压缩对抗 context rot。\n\n**重点知识大纲 / 脑图**：\n- Token 是什么\n  - 子词级（不是词也不是字符）\n  - BPE 合并表（预训练、确定、可逆）\n  - 不同模型编码不同 → token 数不同\n- 计量换算\n  - 1 token ≈ 4 字节（非字符）\n  - 英文 ~4 字符/token，中文 1 字 ≈ 1-2 token\n  - 估算必须实跑 tokenizer（tiktoken）\n- 上下文窗口\n  - 输入+输出共用总容量\n  - ≠ max_tokens（单次输出上限）\n  - context rot：越长越不准\n- 生成机制\n  - 自回归：一个 token 一个 token 蹦\n  - 每步 attention 看全部历史\n  - KV cache：历史 K/V 复用，不重算\n  - prefill 并行 / decode 串行\n- 计费\n  - 输入便宜、输出贵 3-4 倍\n  - 按用量计费，prompt caching 可降本\n  - 控长度 = 控成本+延迟\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要与卡壳细节）</summary>\n\n**起点认知**：token≈一个词/一个字，1token≈4字符中英文通用，上下文窗口=最大输出长度，每步重算整个上下文，输入输出同价。（5 个设问猜了 4 个半错）\n\n**视觉模型（五问 · 先自己讲后校准）**：\n- **对象**：原始文本、分词器(BPE)、token ID 序列、模型(Transformer)、上下文窗口、KV Cache、概率分布、采样策略、新 token、计费规则\n- **连接**：文本→分词器→ID→上下文窗口→模型→概率分布→采样→新token→回填上下文（自回归环）；模型↔KV Cache（旁路复用）；上下文窗口/新token→计费规则\n- **流向**：单向流水线 + 自回归反馈回路；前面的 token 决定后面的预测\n- **边界**：上下文窗口是硬上限；token 表外的字走字节级拆分；context rot（越长越不准）\n- **变化**：每生成一个新 token 触发一次前向；上下文逐轮累加；EOS/max_tokens 触发停止\n\n**视觉模型结构（AI 校准后）**：\n- **chart_type**：flow（带反馈回路的有向流）\n- **节点 kind**：原始文本(data)、分词器BPE(process)、Token ID序列(data)、上下文窗口(boundary)、Transformer模型(process)、KV Cache(state)、概率分布(data)、采样策略(process)、新Token(data)、计费规则(rule)\n- **结构纠偏**：学习者原以为\"每步重算整个上下文\"→校准为\"看全部但 KV cache 复用 K/V 不重算\"；原以为\"上下文窗口=最大输出\"→校准为两个独立参数。\n\n**类比**：它像**接龙游戏机+固定面积的桌子**——把你的话切成积木摆桌上（桌子面积=上下文窗口），一块一块猜着接（自回归），桌子越长找得越慢越容易找错（context rot），接出来比看进去费劲所以贵（输出贵 3-4 倍）。\n\n**大白话讲解（讲给外行）**：它属于人工智能里的\"语言模型\"，解决怎么让电脑像人一样接话。想象一个超级有文化但只会接一个字的接龙游戏机：它先把你的话切成小积木（每块可能是字、半个字或词尾），每块有编号，摆到固定面积的桌上；然后看桌上积木猜下一块该接什么，蹦一块放桌上再猜下一块，所以打字是慢慢往外冒的。按用量收钱因为每蹦一块都要算一次，且\"吐字\"比\"读字\"贵好几倍。\n\n**三个应用例子**：\n1. 代码补全（Copilot）：长函数前面 200 行吃掉一两千 token，留给补全的窗口变少，attention 越分散越易跑偏。\n2. 长对话摘要：对话越长累计 token 越多，要做摘要压缩对抗 context rot。\n3. 中文客服 bot：5000 中文字实际 ~2400 token，按\"4字符\"估会严重低估成本。\n\n**失效边界**：\n- 边界 1：上下文窗口 ≠ 无限记忆，越长越 context rot\n- 边界 2：中文/代码 token 成本被\"4字符\"经验严重低估\n- 边界 3：上下文窗口 ≠ max output，输出会被单独的上限截断\n\n**边界补丁**（失败边界 → 最小补救动作；本轮演练最容易翻车的边界 2）：\n- 边界 1 → 补救：长对话做摘要压缩，只保留最近几轮 + 关键事实\n- 边界 2 → 补救：上线前用 tiktoken 实跑真实 prompt 算 token 数，别用字符数估\n- 边界 3 → 补救：设 max_tokens 留窗口余量，长输出改流式分段续写\n- **本轮演练（边界 2）**：同事按\"1token≈4字符\"估中文客服 prompt 5000字≈1250token，上线账单翻 1.5 倍。回应动作：`enc = tiktoken.encoding_for_model(\"gpt-4o\"); print(len(enc.encode(prompt)))` 实测 ~2400 token；改估算口径为\"中文 1字≈1.3token 粗估，英文 1token≈4字符\"；所有成本预估必须实跑 tokenizer 校准。\n\n**卡壳点复盘**：\n1. **BPE 切分规则含糊**：原讲不清\"积木怎么切\"→查 tiktoken README：BPE 拆单字节后反复合并最高频相邻字节对，靠一张训练时定死的合并表（mergeable_ranks），表里有的就合并没有就保持字节级，切分确定且可逆。\n2. **\"4字符\"还是\"4字节\"搞混**：原以为 4 字符中英文通用→查 tiktoken README 原文是 \"4 bytes\"；中文 UTF-8 一字 3 bytes，一字常 1-2 token；日语\"お誕生日おめでとう\" r50k_base=14 token、o200k_base=8 token，强依赖编码表。\n3. **KV cache 漏讲**：原说\"每步重算整个上下文\"→只对一半。查 KV cache 文档：attention 每步 Q 是新的但历史 K/V 不变，缓存复用；prefill 并行填缓存、decode 每步只传新 token 的 Q。是\"看全部但不重算全部\"。\n\n**成长对比**：起点认知（token≈词/字、4字符通用、窗口=输出、重算全部、输入输出同价）→ 现在的理解（子词级BPE、4字节非字符、窗口≠max_tokens、KV cache复用、输出贵3-4倍）。5 个设问错 4 个半，校准后才能在面试讲清。\n\n</details>\n\n📎 [完整对话记录](_transcript/LLM工作原理与Token机制.jsonl)\n\n## 视觉模型图\n- 打开图：[_viz/LLM工作原理与Token机制.svg](_viz/LLM工作原理与Token机制.svg)\n- Mermaid 源：[_viz/LLM工作原理与Token机制.mmd](_viz/LLM工作原理与Token机制.mmd)\n\n图表类型：`flow`（带自回归反馈回路的有向流）。核心回路：原始文本 → BPE 分词 → Token ID → 上下文窗口（boundary 硬约束）→ Transformer → 概率分布 → 采样 → 新 Token → 回填上下文（自回归循环）。旁路：模型 ↔ KV Cache（state，复用历史 K/V 不重算）；计费规则（rule）分别接上下文窗口（输入计数）和新 Token（输出计数，贵 3-4 倍）。\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料（点开查看本轮引用来源）</summary>\n\n- **OpenAI Tokenizer 官方页**（官方文档，2026-06-28 抓取）链接：https://platform.openai.com/tokenizer\n  - 原话引述：\"OpenAI's large language models process text using tokens, which are common sequences of characters found in a set of text.\"\n  - AI 转述（可信度：高）：token 是文本中常见的字符序列，模型学的是 token 间的统计关系。\n\n- **OpenAI tiktoken README**（官方文档，2026-06-28 抓取）链接：https://github.com/openai/tiktoken\n  - 原话引述：\"each token corresponds to about 4 bytes\"（纠正了\"4 字符\"的错误）\n  - AI 转述（可信度：高）：BPE 把高频字节对粘成子词，\"ing\" 这种常见子词会被单独切一个 token。\n\n- **Anthropic Claude Context Windows 文档**（官方文档，2026-06-28 抓取）链接：https://platform.claude.com/docs/en/build-with-claude/context-windows\n  - 原话引述：\"The context window refers to all the text a language model can reference when generating a response, including the response itself... As token count grows, accuracy and recall degrade, a phenomenon known as context rot.\"\n  - AI 转述（可信度：高）：上下文窗口是输入+输出共用总容量，Claude Opus 4.6/4.7/4.8 窗口 1M、单次输出上限 128k。\n\n- **Machine Learning Mastery · KV Caching**（工程教程，2026-06-28 抓取）链接：https://machinelearningmastery.com/kv-caching-in-llms-a-guide-for-developers/\n  - 原话引述：\"When generating token, only Q changes. The K and V for all previous tokens are identical to what they were in the previous step.\"\n  - AI 转述（可信度：高）：KV cache 让历史 K/V 复用，只算新 token 的 Q，3-5× 加速。\n\n- **Sennrich et al. 2016 BPE 论文**（ACL 论文，2026-06-28 抓取）链接：https://aclanthology.org/P16-1162/\n  - 原话引述：\"rare words can be translated by translating smaller units than words\"\n  - AI 转述（可信度：高）：BPE 用于把罕见词拆为子词单元，是现代 tokenizer 的理论源头。\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Rico Sennrich · BPE 引入 NLP 的奠基人\n- **身份**：爱丁堡大学副教授\n- **与本概念的关系**：他把原本用于数据压缩的 BPE 算法引入神经机器翻译，解决罕见词问题，是今天所有 BPE tokenizer 的理论源头\n- **核心洞见**：\"rare words can be translated by translating smaller units than words\"——用比词更小的子词单元翻译罕见词，是 BPE 用于分词的原始动机\n- **代表作**：*Neural Machine Translation of Rare Words with Subword Units*（ACL 2016）\n- **扩展阅读**：[ACL Anthology 官方链接](https://aclanthology.org/P16-1162/)\n\n### 2. Andrej Karpathy · 从零手搓 tokenizer 的工程布道者\n- **身份**：前 Tesla AI 总监、OpenAI 创始成员\n- **与本概念的关系**：用纯 Python 从零实现 BPE 分词器，把\"黑盒 tokenizer\"拆到字节级给工程师看\n- **核心洞见**：\"tokenization is the most annoying part of LLMs\"——分词是 LLM 工程里最易被忽视又最易出 bug 的环节（模型不会拼写、不会算数、对中文/代码不友好，根子都在分词）\n- **代表作**：YouTube 视频 *Let's build the Tokenizer: BPE in Python*\n- **扩展阅读**：[YouTube 视频](https://www.youtube.com/watch?v=zduSFxRajvE)\n\n### 3. Jay Alammar · Transformer 可视化教学第一人\n- **身份**：Cohere 工程总监、技术博主\n- **与本概念的关系**：用图解把 Transformer/attention/自回归生成讲成小白能懂的流水线，是理解\"token 怎么在模型里流动\"的最佳入口\n- **核心洞见**：用\"每个词流向自己向量的流水线\"图解 self-attention，让人一眼看懂 token 之间如何互相注意——这正是自回归生成和上下文窗口机制的底层\n- **代表作**：*The Illustrated Transformer*\n- **扩展阅读**：[Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/)\n\n</details>\n\n## 相关\n[[Prompt工程基础]] · [[ChatGPT API与对话系统]] · [[Embedding与向量表示]] · [[Transformer架构原理]]",
+      "rel": "AI应用开发/LLM工作原理与Token机制.md",
+      "viz": "AI应用开发/_viz/LLM工作原理与Token机制.svg",
+      "viz_source": "AI应用开发/_viz/LLM工作原理与Token机制.mmd",
+      "viz_chart": "flow",
+      "alive": "full"
+    },
+    {
+      "id": "Prompt工程基础",
+      "label": "Prompt工程基础",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 5,
+      "track": "标准轨",
+      "ready": false,
+      "aliases": [
+        "Prompt Engineering",
+        "提示工程"
+      ],
+      "body": "# Prompt工程基础\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔如何构造提示词让模型稳定产出预期结果〕的——含角色设定、Few-shot、CoT等核心技法，是所有 LLM 应用的\"接口层\"。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能针对不同任务设计稳定的 Prompt（角色+指令+上下文+示例+输出格式），并在模型输出不稳定时知道调哪个维度。\n\n**重点结论**（7 条）：\n1. **Prompt 五要素**：角色（你是谁）+ 指令（做什么）+ 上下文（背景/输入）+ 示例（Few-shot）+ 输出格式（JSON/Markdown/Schema）。前两个必填，后三个按任务配。\n2. **Zero-shot vs Few-shot**：Few-shot 用示例\"演示\"期望映射，比纯指令更稳；但示例会吃 token 且可能过拟合到示例风格。复杂任务用 Few-shot，简单分类用 Zero-shot。\n3. **CoT（Chain-of-Thought）**：让模型\"先思考再回答\"，\"Let's think step by step\"一句能显著提升推理任务准确率；但会增输出 token 成本。适合数学/逻辑/多步推理，不适合简单事实。\n4. **结构化输出靠指令+Schema**：要求 JSON 时给完整 schema + 示例，比\"返回 JSON\"稳得多；用 `response_format`（OpenAI）或 XML 标签（Anthropic）能强制结构化。\n5. **Prompt 越具体越稳**：模糊指令（\"总结一下\"）→ 不可控；具体指令（\"用3句话，面向产品经理，突出用户痛点和解决方案\"）→ 稳定。\n6. **负向指令弱于正向**：模型对\"不要做X\"理解弱，改写成\"只做Y\"更有效。\n7. **Prompt 是应用的核心资产**：线上应用的 Prompt 要版本管理、A/B 测试、回归测试，像代码一样对待。\n\n**重点知识大纲**：\n- Prompt 五要素\n  - 角色（系统消息设定身份）\n  - 指令（任务动词+约束）\n  - 上下文（输入数据/背景）\n  - 示例（Few-shot 演示映射）\n  - 输出格式（Schema/格式约束）\n- 技法分层\n  - Zero-shot（纯指令）\n  - Few-shot（示例演示）\n  - CoT（思维链推理）\n  - Self-Consistency（多次采样取众数）\n  - Prompt Chaining（拆步串联）\n- 结构化输出\n  - JSON Schema 约束\n  - response_format / XML 标签\n  - Function Calling 强制结构\n- 稳定性工程\n  - 具体 > 模糊\n  - 正向 > 负向\n  - 版本管理 + A/B + 回归测试\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要与卡壳细节）</summary>\n\n**起点认知**：以为 Prompt 就是\"把话说清楚\"，加点角色设定就行；Few-shot 听过但不知道什么时候用。\n\n**视觉模型（五问）**：\n- 对象：System Message（角色）、User Message（指令+上下文）、Examples（Few-shot）、Output Schema、模型输出\n- 连接：System 定基调 → User 给任务 → Examples 演示映射 → Schema 约束输出 → 模型生成\n- 流向：线性构造，但 Examples 和 Schema 是\"约束边\"，不是数据流\n- 边界：模型能力上限决定 Prompt 上限；Prompt 修不好模型本身的幻觉；超长 Few-shot 吃 context\n- 变化：任务复杂度↑ → 需要的技法↑（Zero-shot→Few-shot→CoT→Chaining）\n\n**视觉模型结构**：chart_type=hierarchy（Prompt 五要素的组成结构）。节点：Prompt(concept)→[角色/指令/上下文/示例/输出格式](各 rule/concept)，示例下挂 Few-shot(process)，输出格式下挂 Schema(rule)。\n\n**类比**：像给新员工的 task brief——角色=工种，指令=任务清单，上下文=项目背景，示例=参考样例，输出格式=交付模板。brief 越完整，交付越符合预期。\n\n**大白话讲解**：它属于AI应用开发，解决怎么让 AI 稳定按你想要的来。就像给新来的同事布置活：你得说清\"你是谁（角色）、做什么（指令）、背景是什么（上下文）、给个参考（示例）、要什么格式（输出）\"。说得越具体，AI 越不会跑偏。复杂任务还得让它\"先想想再答\"（思维链），就像让新人先写思路再写答案。\n\n**三个应用例子**：\n1. 客服分类：Few-shot 给 5 个对话→标签的示例，比纯指令准确率高 15%。\n2. 数学解题：加\"Let's think step by step\"（CoT），GPT-4 数学 benchmark 提升显著。\n3. 数据抽取：给 JSON Schema + 1 个示例，结构化输出成功率从 70%→98%。\n\n**失效边界**：\n- 模型本身能力不足时，Prompt 再精巧也救不回（如让小模型做复杂推理）\n- Few-shot 示例有偏差时，模型会放大偏差（过拟合示例风格）\n- CoT 对简单事实任务反而增加成本无收益\n\n**边界补丁**：\n- 边界1（模型能力不足）→ 换更大模型或拆成更简单子任务\n- 边界2（Few-shot 过拟合）→ 示例要多样化、覆盖边界情况，数量 3-5 个够\n- 边界3（CoT 滥用）→ 只在推理任务用，事实类用 Zero-shot\n\n**卡壳点复盘**：\n1. Few-shot 示例数量：原以为越多越好→校准为 3-5 个最佳，太多吃 context 且过拟合。\n2. CoT 为什么有效：原以为是\"让模型想\"→校准为是激活了模型训练时见过的推理模式，且分步生成让每步 attention 更聚焦。\n3. 结构化输出不稳定：原以为加\"返回JSON\"就够→校准为必须给完整 Schema + 示例，最好用 response_format 强制。\n\n**成长对比**：起点（Prompt=说清楚话）→ 现在（五要素框架+技法分层+稳定性工程，知道什么任务用什么技法、为什么不稳怎么调）。\n\n</details>\n\n📎 [完整对话记录](_transcript/Prompt工程基础.jsonl)\n\n## 视觉模型图\n- 打开图：[_viz/Prompt工程基础.svg](_viz/Prompt工程基础.svg)\n- Mermaid 源：[_viz/Prompt工程基础.mmd](_viz/Prompt工程基础.mmd)\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料（点开查看本轮引用来源）</summary>\n\n- **OpenAI Prompt Engineering Guide**（官方文档，2026-06-28）https://platform.openai.com/docs/guides/prompt-engineering\n  - 原话：\"Be specific, descriptive and as detailed as possible about the desired context, outcome, length, format, style.\"\n- **Anthropic Prompt Engineering**（官方文档，2026-06-28）https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering\n  - 原话：用 XML 标签分隔 prompt 结构（`<context>`、`<example>`），模型对标签结构敏感。\n- **Learn Prompting**（开源教程，2026-06-28）https://learnprompting.org/\n  - 系统化 Prompt 工程从入门到进阶。\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Jason Wei · CoT 论文一作\n- **身份**：OpenAI 研究员\n- **与本概念的关系**：首次系统验证\"Chain-of-Thought prompting\"能显著提升大模型推理能力\n- **核心洞见**：\"Chain-of-thought prompting elicits reasoning in large language models\"——一句\"let's think step by step\"激活了模型的分步推理能力（ACL 2022）\n- **代表作**：*Chain-of-Thought Prompting Elicits Reasoning in LLMs*\n- **扩展阅读**：[arXiv 论文](https://arxiv.org/abs/2201.11903)\n\n### 2. Lilian Weng · Prompt 工程系统综述作者\n- **身份**：OpenAI 研究主管\n- **与本概念的关系**：写了最被引用的 Prompt Engineering 综述博客，系统梳理 Zero/Few-shot/CoT/Self-Consistency 等技法\n- **核心洞见**：把 Prompt 工程定位为\"用自然语言编程\"——Prompt 就是给模型的\"程序\"，稳定性工程一样要做\n- **代表作**：*Prompt Engineering* 博客（Lilian Weng 个人博客）\n- **扩展阅读**：[Lilian Weng Blog](https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/)\n\n### 3. Eugene Yan · 应用工程视角\n- **身份**：应用机器学习工程师、技术博主\n- **与本概念的关系**：从工程实践角度讲 Prompt 的评估、A/B 测试、回归测试\n- **核心洞见**：Prompt 是产品资产，要像代码一样版本管理+测试，不是\"调到能用就完事\"\n- **代表作**：*Evaluating LLM Applications* 系列博客\n- **扩展阅读**：[eugeneyan.com](https://eugeneyan.com/)\n\n</details>\n\n## 相关\n[[LLM工作原理与Token机制]] · [[ChatGPT API与对话系统]] · [[Agent架构与ReAct模式]] · [[RAG基础架构]]",
+      "rel": "AI应用开发/Prompt工程基础.md",
+      "viz": "AI应用开发/_viz/Prompt工程基础.svg",
+      "viz_source": "AI应用开发/_viz/Prompt工程基础.mmd",
+      "viz_chart": "hierarchy",
+      "alive": "full"
+    },
+    {
+      "id": "RAG基础架构",
+      "label": "RAG基础架构",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 5,
+      "track": "标准轨",
+      "ready": false,
+      "aliases": [
+        "RAG",
+        "检索增强生成"
+      ],
+      "body": "# RAG基础架构\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔检索-增强-生成的完整管道〕的——解决大模型知识滞后、幻觉、私域知识缺失三大痛点。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能从 0 搭一个 RAG 问答系统：文档解析→分块→embed→入库→检索→构造 prompt→生成，并知道每步的坑。\n\n**重点结论**（7 条）：\n1. **RAG = 检索+生成**：先从知识库检索相关文档块，再把检索结果塞进 prompt 让模型\"看着答\"，用检索 grounding 对抗幻觉。\n2. **三大痛点对应**：知识滞后（知识库可实时更新）+ 幻觉（有引用可追溯）+ 私域知识缺失（企业文档入库）。\n3. **完整管道六步**：文档解析→分块（chunking）→embed→入库（indexing）→检索（retrieval）→生成（generation）。\n4. **分块是关键**：块太大检索不精准、太小丢上下文；常用 500-1000 token + 重叠 50-100；语义分块（按段落/标题）比固定长度好。\n5. **检索质量决定生成质量**：\"garbage in garbage out\"——检索召回率低，模型再强也答不好；要监控 recall@k。\n6. **Prompt 要给引用**：让模型基于检索内容回答，并标注来源（\"根据[文档1]...\"），便于人工核查。\n7. **评估三指标**：检索指标（recall@k/MRR）+ 生成指标（faithfulness/answer relevance）+ 端到端（用户满意度）。\n\n**重点知识大纲**：\n- 为什么需要 RAG\n  - 知识滞后（模型训练有截止）\n  - 幻觉（无引用）\n  - 私域知识缺失（没见过企业文档）\n- 完整管道\n  - 文档解析（PDF/HTML/Word）\n  - 分块（固定/语义/递归）\n  - Embedding\n  - 入库（向量化+索引）\n  - 检索（top-k 相关块）\n  - 生成（检索内容+prompt→LLM）\n- 关键工程点\n  - 分块策略（大小/重叠/语义边界）\n  - 检索质量监控（recall@k）\n  - Prompt 给引用\n- 评估\n  - 检索：recall@k / MRR\n  - 生成：faithfulness / relevance\n  - 端到端：用户满意度\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要与卡壳细节）</summary>\n\n**起点认知**：知道 RAG 是\"检索+生成\"，但以为就是\"搜文档塞给模型\"，不知道分块、检索质量、评估这些工程细节。\n\n**视觉模型（五问）**：\n- 对象：原始文档、分块器、Embedding、向量库、查询、检索器、Prompt 构造器、LLM、回答\n- 连接：文档→分块→embed→入库；查询→embed→检索→top-k→prompt→LLM→回答\n- 流向：离线索引（一次性）+ 在线查询（实时）两条流\n- 边界：检索不到相关内容时模型会硬编（幻觉）；文档更新要重新索引\n- 变化：文档增删→重新 embed 入库；查询不同→检索结果不同→prompt 不同\n\n**视觉模型结构**：chart_type=flow。离线流：文档(data)→分块(process)→embed(process)→向量库(state)。在线流：查询(data)→embed→检索(process)→top-k(data)→prompt组装(process)→LLM(process)→回答(data)。\n\n**类比**：像开卷考试——模型是考生（会做题但记不住所有知识），知识库是课本，RAG 是\"先翻书找相关页再答题\"。不翻书硬答=幻觉，翻到错页=答非所问，翻对页+会答题=RAG 成功。\n\n**大白话讲解**：它属于AI应用开发，解决怎么让 AI 用你自己的文档回答问题。AI 本身记不住你公司的资料，所以先建个文档库，问问题时先搜相关段落，把段落和问题一起给 AI 让它\"看着答\"。这样答得准、能溯源、还能随时更新文档不用重训模型。关键在分块（文档切多大）和检索（搜得准不准）。\n\n**三个应用例子**：\n1. 企业知识库问答：员工问\"年假怎么请\"→检索员工手册相关段→AI 基于段答+引用。\n2. 技术文档助手：开发者问\"这个 API 怎么用\"→检索文档→答+代码示例。\n3. 客服 bot：用户问\"怎么退货\"→检索退换货政策→答+步骤。\n\n**失效边界**：\n- 检索召回率低→模型无依据→幻觉\n- 文档过时未更新→答错\n- 问题超出知识库范围→模型硬编\n\n**边界补丁**：\n- 边界1（召回低）→ 调分块/换 Embedding/混合检索/调 top-k\n- 边界2（文档过时）→ 建增量更新机制，文档变更触发重新索引\n- 边界3（超范围）→ Prompt 加\"如果检索内容不足以回答，说'我不知道'\"\n\n**卡壳点复盘**：\n1. 分块为什么重要：原以为随便切→校准为块大小直接影响检索精度和上下文完整性，是 RAG 最易翻车的工程点。\n2. 检索质量怎么评：原以为看回答好不好→校准为要先评 recall@k（检索召回），检索不行生成再好也白搭。\n3. 引用怎么给：原以为让模型自己标→校准为要在 prompt 里把检索块编号（[1][2]），让模型引用编号。\n\n**成长对比**：起点（RAG=搜文档塞模型）→ 现在（六步管道+分块工程+检索评估+引用机制+失效边界）。\n\n</details>\n\n📎 [完整对话记录](_transcript/RAG基础架构.jsonl)\n\n## 视觉模型图\n- 打开图：[_viz/RAG基础架构.svg](_viz/RAG基础架构.svg)\n- Mermaid 源：[_viz/RAG基础架构.mmd](_viz/RAG基础架构.mmd)\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料（点开查看本轮引用来源）</summary>\n\n- **IBM Research RAG 博客**（官方，2026-06-28）https://research.ibm.com/blog/retrieval-augmented-generation-RAG\n  - 原话：RAG 通过检索外部知识 grounding 生成，对抗幻觉。\n- **LlamaIndex 文档**（官方文档，2026-06-28）https://docs.llamaindex.ai/en/stable/\n  - 原话：LlamaIndex 是 RAG 框架，提供数据连接/索引/检索/生成全流程。\n- **LangChain Q&A 文档**（官方文档，2026-06-28）https://python.langchain.com/docs/use_cases/question_answering/\n  - 原话：RAG 问答的标准实现流程。\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Lewis et al · RAG 论文作者\n- **身份**：Facebook AI Research（FAIR）\n- **与本概念的关系**：2020 年首次提出 Retrieval-Augmented Generation 框架，奠定 RAG 范式\n- **核心洞见**：\"retrieval-augmented generation\"——把检索作为生成的一部分，让模型访问外部知识\n- **代表作**：*Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks*（NeurIPS 2020）\n- **扩展阅读**：[arXiv 论文](https://arxiv.org/abs/2005.11401)\n\n### 2. Jerry Liu · LlamaIndex 创始人\n- **身份**：LlamaIndex 创始人\n- **与本概念的关系**：LlamaIndex 是最主流的 RAG 框架之一，把 RAG 工程化标准化\n- **核心洞见**：RAG 的工程复杂度在数据连接和索引，框架的价值在于抽象这些\n- **代表作**：LlamaIndex\n- **扩展阅读**：[LlamaIndex Docs](https://docs.llamaindex.ai/)\n\n### 3. Greg Kamradt · RAG 教学布道者\n- **身份**：技术博主、AI 工程师\n- **与本概念的关系**：写了最流行的 RAG 从0到1教程，把工程细节讲透\n- **核心洞见**：RAG 不是\"搜文档塞模型\"，分块/检索/评估每步都有坑，要系统化\n- **代表作**：*RAG From Scratch* 教程系列\n- **扩展阅读**：[Greg Kamradt GitHub](https://github.com/gkamradt)\n\n</details>\n\n## 相关\n[[Embedding与向量表示]] · [[向量数据库与相似度检索]] · [[Prompt工程基础]] · [[高级RAG技术]] · [[LangChain框架]]",
+      "rel": "AI应用开发/RAG基础架构.md",
+      "viz": "AI应用开发/_viz/RAG基础架构.svg",
+      "viz_source": "AI应用开发/_viz/RAG基础架构.mmd",
+      "viz_chart": "flow",
+      "alive": "full"
+    },
+    {
+      "id": "Transformer架构原理",
+      "label": "Transformer架构原理",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 4,
+      "track": "标准轨",
+      "ready": false,
+      "aliases": [
+        "Transformer",
+        "自注意力"
+      ],
+      "body": "# Transformer架构原理\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔自注意力机制与 Encoder-Decoder 架构〕的——是读懂一切大模型论文和做微调的理论门槛。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能讲清 Self-Attention 怎么让 token 互相\"注意\"、位置编码为什么必要、Encoder/Decoder 区别，面试时不再怕\"讲讲 Transformer\"。\n\n**重点结论**（7 条）：\n1. **Self-Attention 是核心**：每个 token 用 Q/K/V 三个投影\"查询\"其他 token，算注意力权重加权求和——让每个词\"看到\"整句上下文，捕捉长程依赖。\n2. **Q/K/V 机制**：Q（查询）× K（键）算注意力分数→softmax→权重→乘 V（值）求和。是\"查字典\"的泛化：Q 是查询词，K 是词条，V 是释义。\n3. **Multi-Head Attention**：并行多组 Q/K/V（如 8 头），各头学不同关系（语法/语义/指代），拼接后投影。多头比单头表达力强。\n4. **位置编码**：Self-Attention 本身无序（打乱 token 顺序结果一样），要加位置编码告诉模型\"谁在前谁在后\"。正弦/可学习两种。\n5. **Encoder vs Decoder**：Encoder 双向看全句（适合理解）；Decoder 自回归+Masked Attention（只看左边，适合生成）。GPT 是 Decoder-only，BERT 是 Encoder-only，T5 是 Encoder-Decoder。\n6. **残差连接 + LayerNorm**：每个子层（Attention/FFN）都加残差和归一化，解决深层梯度问题，是能堆深的关键。\n7. **Feed-Forward 网络**：每个位置独立过一个两层 FFN（升维→激活→降维），是模型的\"记忆容量\"。\n\n**重点知识大纲**：\n- Self-Attention\n  - Q/K/V 三个投影\n  - 注意力分数 = softmax(QK/√d)\n  - 加权 V 求和\n  - 捕捉长程依赖\n- Multi-Head\n  - 并行多组 Q/K/V\n  - 各头学不同关系\n  - 拼接投影\n- 位置编码\n  - 弥补无序性\n  - 正弦 / 可学习\n- Encoder vs Decoder\n  - Encoder 双向（理解）\n  - Decoder 自回归+Mask（生成）\n  - GPT/BERT/T5 三架构\n- 工程细节\n  - 残差连接\n  - LayerNorm\n  - FFN 记忆容量\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要与卡壳细节）</summary>\n\n**起点认知**：知道 Transformer 是大模型基础，但 Self-Attention 的 Q/K/V 一直没搞懂，以为就是\"加权求和\"。\n\n**视觉模型（五问）**：\n- 对象：Token、Embedding、位置编码、Q/K/V 矩阵、Attention 头、FFN、残差+LayerNorm\n- 连接：Token→Embedding+位置→Multi-Head Attention→残差+LN→FFN→残差+LN→输出\n- 流向：每个 token 并行流过 Attention+FFN，堆叠 N 层\n- 边界：Self-Attention 无序需位置编码；计算量 O(n²)（序列长平方增长）\n- 变化：序列变长→Attention 计算平方增→是长上下文瓶颈\n\n**视觉模型结构**：chart_type=hierarchy。Transformer(concept)→[Self-Attention/Multi-Head/位置编码/Encoder-Decoder/残差LN/FFN]。\n\n**类比**：Self-Attention 像会议室每个人同时听所有人发言并判断\"谁说的对我重要\"，加权综合形成自己的理解。Q 是\"我想问什么\"，K 是\"每个人的标签\"，V 是\"每个人的内容\"。\n\n**大白话讲解**：它属于AI应用开发，解决大模型底层怎么工作。核心是\"自注意力\"——每个词同时看句子里所有词，判断谁跟自己最相关，加权吸收信息。这样\"苹果\"在\"吃苹果\"和\"苹果手机\"里能根据上下文有不同理解。多头就是多组这种注意力并行，各看不同关系。加位置编码是因为这套机制本身不分前后，得告诉它词序。\n\n**三个应用例子**：\n1. 语义理解：BERT 用双向 Attention 做情感/分类，比 RNN 强。\n2. 文本生成：GPT 用 Masked Attention 自回归生成，逐 token 预测。\n3. 翻译：T5 Encoder-Decoder，先理解再生成。\n\n**失效边界**：\n- 序列长→Attention O(n²) 计算爆炸（长上下文瓶颈）\n- 位置编码对超长外推有限\n- 训练成本高（数据+算力）\n\n**边界补丁**：\n- 边界1（长序列）→ 稀疏 Attention/Flash Attention/线性 Attention 优化\n- 边界2（位置外推）→ RoPE/ALiBi 等相对位置编码\n- 边界3（成本）→ 应用工程师用 API 不自己训，懂原理即可\n\n**卡壳点复盘**：\n1. Q/K/V 到底干嘛：原以为是三个向量→校准为三个投影矩阵，Q 查、K 被查、V 是内容，是\"查字典\"泛化。\n2. 为什么要位置编码：原以为 Attention 自带顺序→校准为 Self-Attention 打乱顺序结果一样，必须显式加位置。\n3. Encoder/Decoder 区别：原以为只是方向不同→校准为 Decoder 有 Masked Attention（只看左边）才能自回归生成。\n\n**成长对比**：起点（Transformer=黑盒）→ 现在（Self-Attention Q/K/V+多头+位置编码+三大架构区别）。\n\n</details>\n\n📎 [完整对话记录](_transcript/Transformer架构原理.jsonl)\n\n## 视觉模型图\n- 打开图：[_viz/Transformer架构原理.svg](_viz/Transformer架构原理.svg)\n- Mermaid 源：[_viz/Transformer架构原理.mmd](_viz/Transformer架构原理.mmd)\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料</summary>\n\n- **Attention Is All You Need**（arXiv，2026-06-28）https://arxiv.org/abs/1706.03762\n  - 原话：Transformer 原始论文，提出 Self-Attention 取代 RNN。\n- **Illustrated Transformer**（教程，2026-06-28）https://jalammar.github.io/illustrated-transformer/\n  - 原话：图解 Transformer 各组件。\n- **Annotated Transformer**（教程，2026-06-28）https://nlp.seas.harvard.edu/annotated-transformer/\n  - 原话：逐行代码实现 Transformer。\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Ashish Vaswani · Transformer 论文一作\n- **身份**：前 Google研究员\n- **与本概念的关系**：Transformer 原始论文一作，提出 Self-Attention 取代 RNN\n- **核心洞见**：\"Attention is all you need\"——纯注意力机制就够了，不需要循环\n- **代表作**：*Attention Is All You Need*（NeurIPS 2017）\n- **扩展阅读**：[arXiv 论文](https://arxiv.org/abs/1706.03762)\n\n### 2. Jay Alammar · 可视化教学第一人\n- **身份**：Cohere 工程总监\n- **与本概念的关系**：Illustrated Transformer 是最流行的 Transformer 教程\n- **核心洞见**：用图解把 Q/K/V 讲成小白能懂\n- **代表作**：*The Illustrated Transformer*\n- **扩展阅读**：[jalammar.github.io](https://jalammar.github.io/illustrated-transformer/)\n\n### 3. Andrej Karpathy · 从零实现教学\n- **身份**：前 Tesla AI 总监、OpenAI 创始成员\n- **与本概念的关系**：用纯 NumPy/PyTorch 从零实现 GPT，把 Transformer 拆到最底\n- **核心洞见**：\"you don't understand it until you build it\"——从零实现是检验理解的试金石\n- **代表作**：*Let's build GPT* YouTube 系列\n- **扩展阅读**：[YouTube 视频](https://www.youtube.com/watch?v=kCc8FmEb1nY)\n\n</details>\n\n## 相关\n[[LLM工作原理与Token机制]] · [[模型微调入门]] · [[Embedding与向量表示]]",
+      "rel": "AI应用开发/Transformer架构原理.md",
+      "viz": "AI应用开发/_viz/Transformer架构原理.svg",
+      "viz_source": "AI应用开发/_viz/Transformer架构原理.mmd",
+      "viz_chart": "hierarchy",
+      "alive": "full"
+    },
+    {
+      "id": "向量数据库与相似度检索",
+      "label": "向量数据库与相似度检索",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 4,
+      "track": "标准轨",
+      "ready": false,
+      "aliases": [
+        "Vector DB",
+        "ANN检索"
+      ],
+      "body": "# 向量数据库与相似度检索\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔存储海量向量并做高效近邻检索〕的——是 RAG 和语义搜索的工程基石。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能选对向量数据库、理解 ANN 索引原理（HNSW/IVF）、知道为什么精确检索在海量数据下不可行。\n\n**重点结论**（6 条）：\n1. **精确 kNN 不可行**：N 个向量找 top-k 最近邻，暴力算 O(N×D)，百万级就慢；海量场景必须用 ANN（近似最近邻）。\n2. **ANN 用索引换速度**：HNSW（图索引，查询快但内存大）、IVF（聚类索引，可调精度/速度）、PQ（乘积量化，压缩存储）。精度换速度是核心 trade-off。\n3. **主流选型**：Chroma（开发原型，<10M）、Milvus（大规模，1B+）、Qdrant（生产友好，10M-100M）、Pinecone（托管 SaaS）、Weaviate（混合检索）。\n4. **元数据过滤**：光向量相似不够，要支持\"向量相似 AND 元数据过滤\"（如\"近7天 AND 相似度>0.8\"），这是 RAG 常见需求。\n5. **混合检索**：向量（语义）+ BM25（关键词）混合，取两者并集重排，比纯向量召回率高——这是生产 RAG 标配。\n6. **工程要点**：批量插入、索引重建、持久化、分片；上线要监控召回率/延迟/QPS。\n\n**重点知识大纲**：\n- 为什么需要向量数据库\n  - 精确 kNN 不可行（O(N×D)）\n  - ANN 用索引换速度\n- 索引算法\n  - HNSW（图索引，快但费内存）\n  - IVF（聚类，可调精度）\n  - PQ（量化压缩）\n- 选型矩阵\n  - Chroma（原型）\n  - Milvus（大规模）\n  - Qdrant（生产）\n  - Pinecone（托管）\n  - Weaviate（混合）\n- 核心能力\n  - 元数据过滤\n  - 混合检索（向量+BM25）\n  - 增删改查\n- 工程化\n  - 批量插入/索引重建\n  - 监控召回率/延迟/QPS\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要与卡壳细节）</summary>\n\n**起点认知**：以为向量数据库就是个\"存向量的数据库\"，检索就是算余弦相似度排序，不知道 ANN 索引这层。\n\n**视觉模型（五问）**：\n- 对象：文档向量、向量库、ANN 索引（HNSW 图/IVF 聚类）、查询向量、top-k 结果、元数据\n- 连接：插入→建索引；查询→走索引→候选集→精排→top-k\n- 流向：插入时建索引（一次性），查询时走索引（O(logN) 级）\n- 边界：ANN 是近似的，recall 不是 100%；索引建好后改向量要重建\n- 变化：数据量↑→索引层数↑；调 ef_search/k_probe→精度/速度 trade-off\n\n**视觉模型结构**：chart_type=flow。文档向量(data)→索引构建(process)→ANN索引(state)→查询时遍历(process)→候选集(data)→精排(process)→top-k(data)。\n\n**类比**：像图书馆找书——暴力是逐本翻（精确 kNN），索引是先按分类区找再按书架找（HNSW 图：从入口节点逐步跳到近邻区域）。快但可能漏掉个别该找的（近似）。\n\n**大白话讲解**：它属于AI应用开发，解决怎么在几百万几千万段文字里快速找到最相似的。一段段算相似度太慢，所以建个\"索引\"——像图书馆分类一样先把向量分组，查询时只搜相关分组，快很多但可能漏掉个别。不同数据库用不同索引算法，选型看你的数据量和精度要求。\n\n**三个应用例子**：\n1. RAG 文档库：10万文档块 embed 后存 Milvus，查询时毫秒级返回 top-5。\n2. 语义去重：百万商品标题入库，新标题查相似度>0.95 判重复。\n3. 推荐系统：用户向量+内容向量库，实时检索推荐候选。\n\n**失效边界**：\n- ANN recall 不是 100%，关键场景要调高精度参数\n- 索引建好后数据大改要重建（耗资源）\n- 高维向量（>2048）索引性能下降\n\n**边界补丁**：\n- 边界1（recall 不足）→ 调大 ef_search（HNSW）/ nprobe（IVF），用 recall@k 指标监控\n- 边界2（重建成本）→ 增量索引或分片，避免全量重建\n- 边界3（高维）→ 用 PQ 量化降维或选支持高维的索引\n\n**卡壳点复盘**：\n1. ANN 为什么快：原以为是并行→校准为是索引结构（HNSW 图的分层跳表，O(logN) 跳到近邻区域）。\n2. recall 怎么调：原以为换数据库→校准为调索引参数（ef_search/nprobe），用 recall@k 评测。\n3. 混合检索：原以为纯向量最好→校准为向量+BM25 混合，因为向量会漏关键词精确匹配。\n\n**成长对比**：起点（向量库=存向量算相似）→ 现在（ANN 索引原理+选型矩阵+混合检索+工程监控）。\n\n</details>\n\n📎 [完整对话记录](_transcript/向量数据库与相似度检索.jsonl)\n\n## 视觉模型图\n- 打开图：[_viz/向量数据库与相似度检索.svg](_viz/向量数据库与相似度检索.svg)\n- Mermaid 源：[_viz/向量数据库与相似度检索.mmd](_viz/向量数据库与相似度检索.mmd)\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料（点开查看本轮引用来源）</summary>\n\n- **Milvus 官方文档**（官方文档，2026-06-28）https://milvus.io/docs\n  - 原话：支持 HNSW/IVF/DiskANN 等多种索引，10亿级向量。\n- **Chroma 官方文档**（官方文档，2026-06-28）https://www.trychroma.com/\n  - 原话：轻量级向量库，适合原型和 <10M 场景。\n- **Qdrant 官方文档**（官方文档，2026-06-28）https://qdrant.tech/documentation/\n  - 原话：支持向量+元数据过滤+混合检索，生产友好。\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Yury Malkov · HNSW 算法作者\n- **身份**：研究员\n- **与本概念的关系**：HNSW（分层可导航小世界图）是当前最主流的 ANN 索引算法，几乎所有向量库都用\n- **核心洞见**：分层图结构让查询从粗到细跳到近邻区域，O(logN) 查询效率\n- **代表作**：*Efficient and robust approximate nearest neighbor search using HNSW*（2016）\n- **扩展阅读**：[arXiv 论文](https://arxiv.org/abs/1603.09320)\n\n### 2. 王磊（Liu Jigao）· Milvus 核心贡献者\n- **身份**：Zilliz 工程师\n- **与本概念的关系**：Milvus 是国内最主流的开源向量数据库，支撑十亿级向量\n- **核心洞见**：向量数据库不只是存向量，要解决索引/分片/过滤/混合检索的工程问题\n- **代表作**：Milvus\n- **扩展阅读**：[Milvus GitHub](https://github.com/milvus-io/milvus)\n\n### 3. Sebastian Bruch · 理论视角\n- **身份**：向量检索理论研究员\n- **与本概念的关系**：系统梳理 ANN 算法的理论边界（recall/延迟 trade-off 的数学基础）\n- **核心洞见**：ANN 的\"近似\"有理论保证，recall 和延迟的 trade-off 可以量化\n- **代表作**：ANN 算法理论系列论文\n- **扩展阅读**：[Sebastian Bruch 个人页](https://www.sebastianbruch.de/)\n\n</details>\n\n## 相关\n[[Embedding与向量表示]] · [[RAG基础架构]] · [[高级RAG技术]]",
+      "rel": "AI应用开发/向量数据库与相似度检索.md",
+      "viz": "AI应用开发/_viz/向量数据库与相似度检索.svg",
+      "viz_source": "AI应用开发/_viz/向量数据库与相似度检索.mmd",
+      "viz_chart": "flow",
+      "alive": "full"
+    },
+    {
+      "id": "多Agent协作与工作流编排",
+      "label": "多Agent协作与工作流编排",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 4,
+      "track": "标准轨",
+      "ready": false,
+      "aliases": [
+        "Multi-Agent",
+        "LangGraph",
+        "Agent编排"
+      ],
+      "body": "# 多Agent协作与工作流编排\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔用 LangGraph 等编排多智能体有状态协作〕的——解决复杂业务流程的自动化。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能设计多 Agent 协作流程（分工/通信/状态管理），用 LangGraph 实现有状态工作流和人在回路。\n\n**重点结论**（7 条）：\n1. **单 Agent 搞不定复杂任务**：任务复杂时单 Agent 上下文爆炸/工具过多/跑偏；拆成多 Agent 各司其职更可靠。\n2. **协作模式**：① 串行（A 做完给 B）；② 并行（A/B 同时做不同部分再合并）；③ 主管-工人（Supervisor 分派给 Worker）；④ 辩论（多 Agent 观点对抗再裁决）。\n3. **LangGraph = 状态图**：把 Agent 协作建模成有向图，节点=Agent/函数，边=条件跳转，状态=共享 dict。比纯 ReAct 更可控。\n4. **状态管理是核心**：多 Agent 要共享状态（如任务进度/中间产物），LangGraph 用 shared state + checkpoint 实现持久化和恢复。\n5. **人在回路（Human-in-the-loop）**：关键节点加人工审批（如发邮件前确认/Agent 不确定时求助），LangGraph 用 interrupt 实现。\n6. **通信机制**：① 共享状态（简单但耦合）；② 消息传递（解耦但复杂）；③ 黑板模式（共享工作区）。\n7. **可靠性工程**：超时/死锁/Agent 失败都要处理；用 checkpoint 恢复 + 重试 + 降级；监控每个 Agent 的成功率。\n\n**重点知识大纲**：\n- 为什么需要多 Agent\n  - 单 Agent 上下文爆炸\n  - 工具过多跑偏\n  - 拆分各司其职\n- 协作模式\n  - 串行（流水线）\n  - 并行（分治合并）\n  - 主管-工人（Supervisor）\n  - 辩论（对抗裁决）\n- LangGraph 核心\n  - 状态图（节点+边+条件）\n  - 共享状态\n  - Checkpoint 持久化\n- 人在回路\n  - 关键节点人工审批\n  - interrupt 机制\n  - 不确定时求助\n- 通信机制\n  - 共享状态\n  - 消息传递\n  - 黑板模式\n- 可靠性\n  - 超时/死锁/失败处理\n  - Checkpoint 恢复\n  - 监控成功率\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要与卡壳细节）</summary>\n\n**起点认知**：以为多 Agent 就是\"多个 Agent 串联\"，不知道协作模式和状态管理这层。\n\n**视觉模型（五问）**：\n- 对象：多个 Agent、Supervisor、共享状态、消息、Checkpoint、人工审批节点\n- 连接：Supervisor→分派→Workers→结果回 Supervisor；或 A→B→C 串行；或 A/B 并行→合并\n- 流向：取决于协作模式（串行/并行/主管-工人）\n- 边界：Agent 间通信延迟；死锁（互相等待）；状态一致性\n- 变化：任务进度更新共享状态→驱动流程推进\n\n**视觉模型结构**：chart_type=flow。Supervisor(actor)→分派→Worker1/Worker2(process)→结果→合并(process)→人工审批(boundary)→输出(data)。体现主管-工人+人在回路。\n\n**类比**：像项目组——单 Agent 是一个人从头干到尾，多 Agent 是有项目经理（Supervisor）分派给开发/测试/设计（Workers），关键决策点找老板审批（人在回路），用 Jira（共享状态）跟踪进度。\n\n**大白话讲解**：它属于AI应用开发，解决怎么让多个 AI 协作干复杂活。一个 AI 啥都干容易乱，拆成几个各管一摊——比如写报告：一个负责查资料，一个负责写初稿，一个负责审校，像项目组分工。用 LangGraph 这种工具编排流程，能管状态、能暂停让人确认、能出错恢复。\n\n**三个应用例子**：\n1. 内容生产：调研Agent→写作Agent→审校Agent 串行，审校不满意回退重写。\n2. 客服系统：分类Agent→路由→技术/售后/投诉Agent，Supervisor 协调。\n3. 代码审查：多个 Agent 不同视角审（安全/性能/风格）→合并报告。\n\n**失效边界**：\n- Agent 间通信开销大（多个 LLM 调用成本叠加）\n- 死锁（A 等 B，B 等 A）\n- 状态不一致（并发写共享状态）\n\n**边界补丁**：\n- 边界1（成本叠加）→ 简单任务别拆，用单 Agent；关键节点才多 Agent\n- 边界2（死锁）→ 设超时 + 强制推进\n- 边界3（状态不一致）→ 用 LangGraph 的状态图保证顺序\n\n**卡壳点复盘**：\n1. 多 Agent 什么时候值：原以为越多越好→校准为复杂任务才值，简单任务单 Agent 更省。\n2. LangGraph 和 LangChain 区别：原以为一样→校准为 LangChain 是链式（线性），LangGraph 是图（有环/条件/状态），更适合 Agent。\n3. 人在回路怎么实现：原以为只是日志→校准为 LangGraph 的 interrupt 能真暂停流程等人审批后继续。\n\n**成长对比**：起点（多Agent=串联）→ 现在（四种协作模式+LangGraph状态图+人在回路+可靠性工程）。\n\n</details>\n\n📎 [完整对话记录](_transcript/多Agent协作与工作流编排.jsonl)\n\n## 视觉模型图\n- 打开图：[_viz/多Agent协作与工作流编排.svg](_viz/多Agent协作与工作流编排.svg)\n- Mermaid 源：[_viz/多Agent协作与工作流编排.mmd](_viz/多Agent协作与工作流编排.mmd)\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料（点开查看本轮引用来源）</summary>\n\n- **LangGraph 官方文档**（官方文档，2026-06-28）https://langchain-ai.github.io/langgraph/\n  - 原话：LangGraph 用状态图编排 Agent，支持 checkpoint/人在回路/条件跳转。\n- **Multi-Agent 论文**（arXiv，2026-06-28）https://arxiv.org/abs/2308.08155\n  - 原话：多 Agent 协作模式（串行/并行/主管-工人/辩论）的系统分析。\n- **CrewAI 文档**（官方文档，2026-06-28）https://docs.crewai.com/\n  - 原话：CrewAI 是角色化的多 Agent 框架。\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Harrison Chase · LangGraph 创始人\n- **身份**：LangChain Inc CEO\n- **与本概念的关系**：LangGraph 是多 Agent 编排的事实标准，他定义了状态图+人在回路的范式\n- **核心洞见**：生产 Agent 的可靠性来自可控的状态图，不是自由循环\n- **代表作**：LangGraph\n- **扩展阅读**：[LangGraph 文档](https://langchain-ai.github.io/langgraph/)\n\n### 2. Michael Wooldridge · 多 Agent 系统理论权威\n- **身份**：牛津大学计算机教授\n- **与本概念的关系**：多 Agent 系统（MAS）的理论奠基者，把传统 MAS 理论和 LLM Agent 结合\n- **核心洞见**：多 Agent 协作的核心是\"协调\"——通信/协商/冲突解决，理论早就有，LLM 让它落地\n- **代表作**：*An Introduction to MultiAgent Systems*\n- **扩展阅读**：[牛津主页](https://www.cs.ox.ac.uk/people/michael.wooldridge/)\n\n### 3. Yohei Nakajima · BabyAGI / 多 Agent 实践者\n- **身份**：OurCrowd 风投、BabyAGI 作者\n- **与本概念的关系**：BabyAGI 是最早的自治多 Agent 任务管理原型，启发了一大批 Agent 框架\n- **核心洞见**：多 Agent 的价值在\"自主分解+委派+反思\"，但要靠工程护栏防止失控\n- **代表作**：BabyAGI\n- **扩展阅读**：[BabyAGI GitHub](https://github.com/yoheinakajima/babyagi)\n\n</details>\n\n## 相关\n[[Agent架构与ReAct模式]] · [[LCEL与LangGraph]] · [[LangChain框架]] · [[AI应用评估与可观测性]]",
+      "rel": "AI应用开发/多Agent协作与工作流编排.md",
+      "viz": "AI应用开发/_viz/多Agent协作与工作流编排.svg",
+      "viz_source": "AI应用开发/_viz/多Agent协作与工作流编排.mmd",
+      "viz_chart": "flow",
+      "alive": "full"
+    },
+    {
+      "id": "模型微调入门",
+      "label": "模型微调入门",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 3,
+      "track": "快轨",
+      "ready": false,
+      "aliases": [
+        "Fine-tuning",
+        "SFT",
+        "LoRA"
+      ],
+      "body": "# 模型微调入门\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔SFT/LoRA 等轻量微调原理与适用场景〕的——应用工程师\"了解\"层，不必深入训练。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能判断\"这个任务该不该微调、用哪种微调、用什么数据\"，面试时讲得清微调和应用层优化的区别。\n\n**重点结论**（6 条）：\n1. **微调 = 在预训练模型上用领域数据继续训练**：让模型适应特定任务/领域/风格。区别于 RAG（外挂知识），微调改的是模型参数。\n2. **SFT（Supervised Fine-Tuning）**：用\"输入-输出\"对监督训练，最基础。适合任务/风格定制（如客服语气、特定格式输出）。\n3. **LoRA（Low-Rank Adaptation）**：不训全部参数，只训低秩适配矩阵（几 MB vs 几 GB），省显存省时间，效果接近全参微调。是应用层微调事实标准。\n4. **QLoRA**：LoRA + 4bit 量化，单卡 24G 显存能微调 70B 模型，进一步降低门槛。\n5. **微调 vs RAG 选型**：知识更新/可溯引用 → RAG；任务/风格/格式定制 → 微调；两者可叠加（微调提能力+RAG 接知识）。\n6. **应用工程师定位**：会判断该不该微调+会用工具（LLaMA-Factory/Axolotl）跑微调+会评估，不必自己设计训练算法。\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要）</summary>\n\n**起点认知**：以为微调就是\"再训练一下模型\"，不知道 LoRA 这种轻量手段和 RAG 的选型区别。\n\n**核心要点**：应用工程师不用自己训模型，但要会判断：知识问题用 RAG，能力/风格问题用微调，LoRA/QLoRA 让微调平民化。微调要数据（几千条起）+评估（别微调完更差）+部署（微调后模型要托管）。\n\n**类比**：RAG 像给模型配参考书（外挂知识），微调像送模型去培训班（内化能力）。参考书随时换，培训完改不了得再培训。\n\n**应用例子**：\n1. 客服语气定制：用 5000 条客服对话 SFT，让模型学客服口吻。\n2. 代码补全：用领域代码 LoRA 微调，补全准确率提升。\n3. 格式输出：微调让模型稳定输出特定 JSON schema。\n\n</details>\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料</summary>\n\n- **LoRA 论文**（arXiv，2026-06-28）https://arxiv.org/abs/2106.09685\n- **HuggingFace TRL 文档**（官方，2026-06-28）https://huggingface.co/docs/trl/\n- **OpenAI Fine-tuning Guide**（官方，2026-06-28）https://platform.openai.com/docs/guides/fine-tuning\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Edward Hu · LoRA 论文一作\n- **身份**：前 Microsoft 研究员\n- **与本概念的关系**：LoRA 算法提出者，让微调平民化\n- **核心洞见**：用低秩矩阵近似参数更新，能用 1% 参数量达到接近全参微调效果\n- **代表作**：*LoRA: Low-Rank Adaptation of LLMs*\n- **扩展阅读**：[arXiv 论文](https://arxiv.org/abs/2106.09685)\n\n### 2. Tim Dettmers · QLoRA 作者\n- **身份**：华盛顿大学研究员\n- **与本概念的关系**：QLoRA 把 LoRA+4bit 量化结合，单卡微调 70B\n- **核心洞见**：量化+适配器让大模型微调从数据中心走进个人电脑\n- **代表作**：*QLoRA: Efficient Finetuning of Quantized LLMs*\n- **扩展阅读**：[arXiv 论文](https://arxiv.org/abs/2305.14314)\n\n</details>\n\n## 相关\n[[Transformer架构原理]] · [[LLM工作原理与Token机制]] · [[RAG基础架构]]",
+      "rel": "AI应用开发/模型微调入门.md",
+      "viz": "",
+      "viz_source": "",
+      "viz_chart": "",
+      "alive": "full"
+    },
+    {
+      "id": "高级RAG技术",
+      "label": "高级RAG技术",
+      "type": "concept",
+      "category": "AI应用开发",
+      "status": "已完成",
+      "importance": 4,
+      "track": "标准轨",
+      "ready": false,
+      "aliases": [
+        "Advanced RAG",
+        "RAG优化"
+      ],
+      "body": "# 高级RAG技术\n\n## 一句话定位\n> 它属于AI应用开发，是用来解决〔分块策略、混合检索、重排序、Self-RAG/Agentic RAG 等进阶优化〕的——把检索准确率拉到生产可用。\n\n## 🎯 核心收获 · 重点知识\n\n**一句话成果**：学完你现在能诊断 RAG 系统的检索/生成瓶颈，选对优化手段（分块/混合检索/重排/查询改写）把效果拉到生产级。\n\n**重点结论**（7 条）：\n1. **分块策略进阶**：固定长度→语义分块（按段落/标题）→递归分块（保持层级）→语义边界分块（用模型找断点）。语义分块召回率显著优于固定长度。\n2. **混合检索（Hybrid）**：向量（语义）+ BM25（关键词）并行检索，RRF（Reciprocal Rank Fusion）融合排序，取长补短——向量补 BM25 的语义盲区，BM25 补向量的精确关键词盲区。\n3. **重排序（Reranking）**：检索 top-50→用 cross-encoder 重排取 top-5。cross-encoder 比 bi-encoder 准但慢，所以先粗检索再精排。常用 BGE-reranker、Cohere Rerank。\n4. **查询改写（Query Rewriting）**：用户原问题可能模糊/口语化，先让 LLM 改写成更好的检索 query（如\"咋退货\"→\"商品退换货流程\"），或多 query 并行检索取并集。\n5. **Self-RAG**：模型自己判断\"要不要检索\"\"检索结果相不相关\"\"回答有没有依据\"，动态决策，减少不必要的检索和不相关的 grounding。\n6. **Agentic RAG**：把 RAG 包成 Agent 工具，模型自主决定查不查、查哪个库、查几次，适合多源知识库场景。\n7. **评估驱动优化**：用 RAGAS / TruLens 评 faithfulness（回答有没有依据）+ context_recall（检索召回）+ context_precision（检索精度），用数据指导优化方向。\n\n**重点知识大纲**：\n- 检索侧优化\n  - 分块策略（语义/递归/边界）\n  - 混合检索（向量+BM25+RRF）\n  - 重排序（cross-encoder）\n  - 查询改写（单/多query）\n- 生成侧优化\n  - Self-RAG（动态决策检索）\n  - Agentic RAG（Agent 调用 RAG 工具）\n  - 引用与可追溯\n- 评估驱动\n  - RAGAS（faithfulness/recall/precision）\n  - TruLens / DeepEval\n  - 黄金数据集\n- 工程化\n  - 索引更新策略\n  - 多路召回并发\n  - 缓存（query/embedding）\n\n## 📝 轻笔记\n<details>\n<summary>📝 轻笔记（点开看推演摘要与卡壳细节）</summary>\n\n**起点认知**：以为 RAG 优化就是\"换个更好的 Embedding 模型\"，不知道分块/混合检索/重排这些手段。\n\n**视觉模型（五问）**：\n- 对象：原始查询、查询改写器、多路检索器（向量+BM25）、融合器、重排器、上下文、LLM、Self-RAG 判断器\n- 连接：查询→改写→多路检索→融合→重排→上下文→LLM；Self-RAG 在关键点做决策\n- 流向：检索侧多路并行+融合+精排；生成侧动态决策\n- 边界：优化手段叠加有边际递减；过度优化增加延迟和成本\n- 变化：用户问题类型不同→激活不同优化（简单问题不需要改写）\n\n**视觉模型结构**：chart_type=hierarchy。高级RAG(concept)下分三类：检索侧优化(process)、生成侧优化(process)、评估驱动(process)，每类下挂具体手段。\n\n**类比**：基础 RAG 像单本词典查词，高级 RAG 像有个研究助理——先帮你把模糊问题问清楚（查询改写），同时查几本词典（混合检索），查完帮你挑最相关的几页（重排），还会判断\"这个问题要不要查词典\"（Self-RAG）。\n\n**大白话讲解**：它属于AI应用开发，解决怎么让 RAG 答得更准。基础 RAG 就是搜文档塞给模型，但搜得不够准。高级 RAG 加了几招：先把你的问题问得更清楚，同时用语义和关键词两种方式搜，搜完再用更准的模型挑最相关的几段，还会判断\"这问题要不要查\"。就像从\"翻一本词典\"升级到\"有个研究助理帮你查多本书并挑重点\"。\n\n**三个应用例子**：\n1. 企业知识库：加混合检索+重排，召回率从 70%→90%。\n2. 客服 bot：查询改写把\"咋退货\"改成\"商品退换货流程\"，检索更精准。\n3. 多源研究：Agentic RAG 让模型自主决定查内部库还是联网。\n\n**失效边界**：\n- 优化叠加边际递减，要评估驱动别盲目堆\n- 重排器增加延迟（cross-encoder 慢），实时场景要权衡\n- Self-RAG 判断不准会漏检索或过度检索\n\n**边界补丁**：\n- 边界1（边际递减）→ 用 RAGAS 量化每步收益，停止无效优化\n- 边界2（重排延迟）→ top-50→top-5 改 top-20→top-5，或用轻量 reranker\n- 边界3（Self-RAG 误判）→ 加 fallback：不确定就检索\n\n**卡壳点复盘**：\n1. 混合检索为什么有效：原以为纯向量最好→校准为向量漏关键词精确匹配，BM25 漏语义，互补。\n2. 重排为什么用 cross-encoder：原以为和 bi-encoder 一样→校准为 cross-encoder 把 query+doc 一起编码能捕捉交互，更准但慢。\n3. Self-RAG 什么时候该用：原以为都用→校准为简单事实问题不需要，复杂/多跳问题才值得动态决策。\n\n**成长对比**：起点（RAG优化=换Embedding）→ 现在（分块/混合/重排/改写/Self-RAG/评估驱动六把刀）。\n\n</details>\n\n📎 [完整对话记录](_transcript/高级RAG技术.jsonl)\n\n## 视觉模型图\n- 打开图：[_viz/高级RAG技术.svg](_viz/高级RAG技术.svg)\n- Mermaid 源：[_viz/高级RAG技术.mmd](_viz/高级RAG技术.mmd)\n\n## 📚 参考资料\n<details>\n<summary>📚 参考资料（点开查看本轮引用来源）</summary>\n\n- **Self-RAG 论文**（arXiv，2026-06-28）https://arxiv.org/abs/2310.11511\n  - 原话：Self-RAG 让模型自主判断检索时机和相关性。\n- **LangChain Q&A 优化**（官方文档，2026-06-28）https://python.langchain.com/docs/use_cases/question_answering/\n  - 原话：混合检索+重排是生产 RAG 标配。\n- **LlamaIndex 优化指南**（官方文档，2026-06-28）https://docs.llamaindex.ai/en/stable/optimizing/\n  - 原话：分块策略/检索/重排/评估的系统性优化。\n\n</details>\n\n## 🔭 视野拓展 · 行业洞见\n<details>\n<summary>🔭 视野拓展 · 行业洞见（点开看多维度权威参照）</summary>\n\n### 1. Akari Asai · Self-RAG 作者\n- **身份**：华盛顿大学研究员\n- **与本概念的关系**：Self-RAG 论文一作，让模型自主决策检索\n- **核心洞见**：不是所有问题都需要检索，让模型自己判断能减少噪声提升质量\n- **代表作**：*Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection*\n- **扩展阅读**：[arXiv 论文](https://arxiv.org/abs/2310.11511)\n\n### 2. Shahul Es · RAGAS 作者\n- **身份**：RAGAS 维护者\n- **与本概念的关系**：RAGAS 是最流行的 RAG 评估框架，定义了 faithfulness/recall/precision 指标\n- **核心洞见**：RAG 优化必须评估驱动，没指标就是盲调\n- **代表作**：RAGAS 框架\n- **扩展阅读**：[RAGAS GitHub](https://github.com/explodinggradients/ragas)\n\n### 3. 唐杰（Tang Jie）· 国产 RAG 生态\n- **身份**：清华大学教授、智谱 AI\n- **与本概念的关系**：BGE-reranker 是中文 RAG 重排的事实标准\n- **核心洞见**：中文 RAG 的重排要用中文数据训练，英文 reranker 中文效果打折\n- **代表作**：BGE 系列（含 reranker）\n- **扩展阅读**：[FlagEmbedding GitHub](https://github.com/FlagOpen/FlagEmbedding)\n\n</details>\n\n## 相关\n[[RAG基础架构]] · [[向量数据库与相似度检索]] · [[Agent架构与ReAct模式]] · [[AI应用评估与可观测性]]",
+      "rel": "AI应用开发/高级RAG技术.md",
+      "viz": "AI应用开发/_viz/高级RAG技术.svg",
+      "viz_source": "AI应用开发/_viz/高级RAG技术.mmd",
+      "viz_chart": "hierarchy",
+      "alive": "full"
     },
     {
       "id": "Demo 与可体验性",
@@ -537,6 +930,101 @@
   ],
   "links": [
     {
+      "source": "Agent架构与ReAct模式",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "AI应用作品集项目",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "AI应用评估与可观测性",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "API服务与FastAPI",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "ChatGPT API与对话系统",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "Dify低代码AI平台",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "Docker容器化部署",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "Embedding与向量表示",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "Function Calling与工具调用",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "LangChain框架",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "LCEL与LangGraph",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "LLM工作原理与Token机制",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "Prompt工程基础",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "RAG基础架构",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "Transformer架构原理",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "向量数据库与相似度检索",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "多Agent协作与工作流编排",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "模型微调入门",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
+      "source": "高级RAG技术",
+      "target": "cat::AI应用开发",
+      "kind": "belong"
+    },
+    {
       "source": "Demo 与可体验性",
       "target": "cat::开源项目冷启动",
       "kind": "belong"
@@ -665,6 +1153,141 @@
       "source": "记牌技巧",
       "target": "cat::斗地主",
       "kind": "belong"
+    },
+    {
+      "source": "Function Calling与工具调用",
+      "target": "Agent架构与ReAct模式",
+      "kind": "dep"
+    },
+    {
+      "source": "Prompt工程基础",
+      "target": "Agent架构与ReAct模式",
+      "kind": "dep"
+    },
+    {
+      "source": "RAG基础架构",
+      "target": "AI应用作品集项目",
+      "kind": "dep"
+    },
+    {
+      "source": "Agent架构与ReAct模式",
+      "target": "AI应用作品集项目",
+      "kind": "dep"
+    },
+    {
+      "source": "LangChain框架",
+      "target": "AI应用作品集项目",
+      "kind": "dep"
+    },
+    {
+      "source": "RAG基础架构",
+      "target": "AI应用评估与可观测性",
+      "kind": "dep"
+    },
+    {
+      "source": "Agent架构与ReAct模式",
+      "target": "AI应用评估与可观测性",
+      "kind": "dep"
+    },
+    {
+      "source": "ChatGPT API与对话系统",
+      "target": "API服务与FastAPI",
+      "kind": "dep"
+    },
+    {
+      "source": "Prompt工程基础",
+      "target": "ChatGPT API与对话系统",
+      "kind": "dep"
+    },
+    {
+      "source": "RAG基础架构",
+      "target": "Dify低代码AI平台",
+      "kind": "dep"
+    },
+    {
+      "source": "Agent架构与ReAct模式",
+      "target": "Dify低代码AI平台",
+      "kind": "dep"
+    },
+    {
+      "source": "API服务与FastAPI",
+      "target": "Docker容器化部署",
+      "kind": "dep"
+    },
+    {
+      "source": "LLM工作原理与Token机制",
+      "target": "Embedding与向量表示",
+      "kind": "dep"
+    },
+    {
+      "source": "ChatGPT API与对话系统",
+      "target": "Function Calling与工具调用",
+      "kind": "dep"
+    },
+    {
+      "source": "Prompt工程基础",
+      "target": "LangChain框架",
+      "kind": "dep"
+    },
+    {
+      "source": "ChatGPT API与对话系统",
+      "target": "LangChain框架",
+      "kind": "dep"
+    },
+    {
+      "source": "LangChain框架",
+      "target": "LCEL与LangGraph",
+      "kind": "dep"
+    },
+    {
+      "source": "Agent架构与ReAct模式",
+      "target": "LCEL与LangGraph",
+      "kind": "dep"
+    },
+    {
+      "source": "LLM工作原理与Token机制",
+      "target": "Prompt工程基础",
+      "kind": "dep"
+    },
+    {
+      "source": "Embedding与向量表示",
+      "target": "RAG基础架构",
+      "kind": "dep"
+    },
+    {
+      "source": "向量数据库与相似度检索",
+      "target": "RAG基础架构",
+      "kind": "dep"
+    },
+    {
+      "source": "Prompt工程基础",
+      "target": "RAG基础架构",
+      "kind": "dep"
+    },
+    {
+      "source": "LLM工作原理与Token机制",
+      "target": "Transformer架构原理",
+      "kind": "dep"
+    },
+    {
+      "source": "Embedding与向量表示",
+      "target": "向量数据库与相似度检索",
+      "kind": "dep"
+    },
+    {
+      "source": "Agent架构与ReAct模式",
+      "target": "多Agent协作与工作流编排",
+      "kind": "dep"
+    },
+    {
+      "source": "Transformer架构原理",
+      "target": "模型微调入门",
+      "kind": "dep"
+    },
+    {
+      "source": "RAG基础架构",
+      "target": "高级RAG技术",
+      "kind": "dep"
     },
     {
       "source": "项目定位与价值主张",
@@ -817,6 +1440,106 @@
       "kind": "dep"
     },
     {
+      "source": "Agent架构与ReAct模式",
+      "target": "LangChain框架",
+      "kind": "link"
+    },
+    {
+      "source": "AI应用作品集项目",
+      "target": "API服务与FastAPI",
+      "kind": "link"
+    },
+    {
+      "source": "AI应用作品集项目",
+      "target": "Docker容器化部署",
+      "kind": "link"
+    },
+    {
+      "source": "AI应用作品集项目",
+      "target": "AI应用评估与可观测性",
+      "kind": "link"
+    },
+    {
+      "source": "AI应用评估与可观测性",
+      "target": "高级RAG技术",
+      "kind": "link"
+    },
+    {
+      "source": "AI应用评估与可观测性",
+      "target": "API服务与FastAPI",
+      "kind": "link"
+    },
+    {
+      "source": "Dify低代码AI平台",
+      "target": "LangChain框架",
+      "kind": "link"
+    },
+    {
+      "source": "Embedding与向量表示",
+      "target": "高级RAG技术",
+      "kind": "link"
+    },
+    {
+      "source": "Function Calling与工具调用",
+      "target": "LangChain框架",
+      "kind": "link"
+    },
+    {
+      "source": "Function Calling与工具调用",
+      "target": "多Agent协作与工作流编排",
+      "kind": "link"
+    },
+    {
+      "source": "LangChain框架",
+      "target": "RAG基础架构",
+      "kind": "link"
+    },
+    {
+      "source": "LCEL与LangGraph",
+      "target": "多Agent协作与工作流编排",
+      "kind": "link"
+    },
+    {
+      "source": "LLM工作原理与Token机制",
+      "target": "ChatGPT API与对话系统",
+      "kind": "link"
+    },
+    {
+      "source": "Transformer架构原理",
+      "target": "Embedding与向量表示",
+      "kind": "link"
+    },
+    {
+      "source": "向量数据库与相似度检索",
+      "target": "高级RAG技术",
+      "kind": "link"
+    },
+    {
+      "source": "多Agent协作与工作流编排",
+      "target": "LangChain框架",
+      "kind": "link"
+    },
+    {
+      "source": "多Agent协作与工作流编排",
+      "target": "AI应用评估与可观测性",
+      "kind": "link"
+    },
+    {
+      "source": "模型微调入门",
+      "target": "LLM工作原理与Token机制",
+      "kind": "link"
+    },
+    {
+      "source": "模型微调入门",
+      "target": "RAG基础架构",
+      "kind": "link"
+    },
+    {
+      "source": "高级RAG技术",
+      "target": "Agent架构与ReAct模式",
+      "kind": "link"
+    },
+    {
       "source": "Demo 与可体验性",
       "target": "文档与快速上手",
       "kind": "link"
@@ -938,9 +1661,10 @@
     }
   ],
   "categories": [
+    "AI应用开发",
     "开源项目冷启动",
     "斗地主"
   ],
-  "generated": "2026-06-27 23:48",
+  "generated": "2026-06-28 16:00",
   "prefix": ""
 }

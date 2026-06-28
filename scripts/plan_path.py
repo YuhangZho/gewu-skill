@@ -373,23 +373,38 @@ def collect_reference_entries(items):
             })
     return refs
 
-def _vision_key(block):
-    text = '\n'.join(block)
-    us = [_norm_url(u) for u in _urls(text)]
-    us = [u for u in us if u]
-    if us:
-        return ['url:' + u for u in us]
+def _vision_dupkey(block):
+    """同一 section 内判重：标题 + URL 同时相等才算重复。返回 (title, urls)。
+    参考资料(源) 与 视野拓展(人/视角) 引同一篇 paper 是预期行为，
+    故不再跨 section 按 URL 去重；跨概念同名也允许(不同视角)，故 seen 只在单概念内有效。"""
+    title = ''
     for line in block:
         m = re.match(r'^###\s+(.*)$', line.strip())
         if m:
             t = re.sub(r'^\d+[.、]\s*', '', m.group(1)).strip().lower()
-            t = re.sub(r'\s+', ' ', t)
-            if t:
-                return ['title:' + t]
-    text = re.sub(r'\s+', ' ', text).strip().lower()
-    return ['text:' + text[:80]] if text else []
+            title = re.sub(r'\s+', ' ', t)
+            break
+    urls = tuple(sorted({u for u in (_norm_url(x) for x in _urls('\n'.join(block))) if u}))
+    return (title, urls)
 
-def _dedupe_vision_section(body, reference_keys, seen_vision):
+def _renumber_vision_blocks(blocks):
+    """去重后重编号：把每块 `### N. 姓名` 的序号改回连续 1,2,3…（无序号的标题不动）。"""
+    n = 0
+    out = []
+    for block in blocks:
+        nb = list(block)
+        for i, line in enumerate(nb):
+            m = re.match(r'^(\s*)###\s+\d+[.、]\s*(.*)$', line)
+            if m:
+                n += 1
+                nb[i] = '%s### %d. %s' % (m.group(1), n, m.group(2))
+                break
+            if re.match(r'^\s*###\s+', line):
+                break
+        out.append(nb)
+    return out
+
+def _dedupe_vision_section(body):
     lines = body.split('\n')
     b = _h2_bounds(lines, '视野拓展')
     if not b:
@@ -409,17 +424,20 @@ def _dedupe_vision_section(body, reference_keys, seen_vision):
         last = blocks[-1]
         while last and (not last[-1].strip() or last[-1].strip() == '</details>'):
             suffix.insert(0, last.pop())
-    kept = []
+    seen = set()
+    kept_blocks = []
     for block in blocks:
-        keys = _vision_key(block)
-        url_keys = {k[4:] for k in keys if k.startswith('url:')}
-        if url_keys & reference_keys:
+        key = _vision_dupkey(block)
+        # 仅当「标题且 URL」同时相等才判为重复；空键(无标题且无 URL)不参与判重
+        if key != ('', ()) and key in seen:
             continue
-        if any(k in seen_vision for k in keys):
-            continue
+        if key != ('', ()):
+            seen.add(key)
+        kept_blocks.append(block)
+    kept_blocks = _renumber_vision_blocks(kept_blocks)
+    kept = []
+    for block in kept_blocks:
         kept.extend(block)
-        for k in keys:
-            seen_vision.add(k)
     if not kept:
         return '\n'.join(lines[:start] + lines[end:]).strip()
     return '\n'.join(lines[:start] + prefix + kept + suffix + lines[end:]).strip()
@@ -543,13 +561,11 @@ def build_docs(cat, items, plan, vault):
     _BADGE = {DONE_STATUS: ('ok', '✓ 已完成'), IN_PROGRESS_STATUS: ('light', '◌ 学习中')}
     docs = {}
     refs = collect_reference_entries(items)
-    reference_keys = {r['key'] for r in refs}
-    seen_vision = set()
     for o in studied:
         t = o['title']; note = items[t]; st = (note.get('status') or '').strip()
         viz_html = _viz_block(cat, note, vault)
         clean_body = _remove_h2_section(note['body'], '参考资料')
-        clean_body = _dedupe_vision_section(clean_body, reference_keys, seen_vision)
+        clean_body = _dedupe_vision_section(clean_body)
         body, viz_in_body = _inject_viz_block(clean_body, viz_html)
         body_html, toc = md_render(body, linkset, {_VIZ_MARKER: viz_html} if viz_in_body else None)
         _bc, _bt = _BADGE.get(st, ('ok', st))

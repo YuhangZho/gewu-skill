@@ -1,0 +1,22 @@
+{
+  "concept": "API服务与FastAPI",
+  "chart_type": "flow",
+  "nodes": [
+    {"id": "client", "label": "客户端", "kind": "actor"},
+    {"id": "auth", "label": "鉴权中间件", "kind": "rule"},
+    {"id": "rate_limit", "label": "限流器", "kind": "rule"},
+    {"id": "fastapi", "label": "FastAPI", "kind": "process"},
+    {"id": "llm_api", "label": "LLM API", "kind": "process"},
+    {"id": "stream", "label": "流式响应", "kind": "data"},
+    {"id": "fallback", "label": "降级缓存", "kind": "state"}
+  ],
+  "edges": [
+    {"from": "client", "to": "auth", "label": "请求"},
+    {"from": "auth", "to": "rate_limit", "label": "通过"},
+    {"from": "rate_limit", "to": "fastapi", "label": "放行"},
+    {"from": "fastapi", "to": "llm_api", "label": "异步调用"},
+    {"from": "llm_api", "to": "stream", "label": "SSE流式"},
+    {"from": "stream", "to": "client", "label": "返回"},
+    {"from": "llm_api", "to": "fallback", "label": "失败降级", "style": "dashed"}
+  ]
+}

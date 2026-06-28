@@ -1,0 +1,18 @@
+flowchart TD
+  langchain["◉ LangChain"]
+  models["◉ Models"]
+  prompts["◉ Prompts"]
+  memory["◉ Memory"]
+  retrievers["◉ Retrievers"]
+  tools["◉ Tools/Agents"]
+  chains["◉ Chains"]
+  lcel["⚙ LCEL语法"]
+  app["▣ AI应用"]
+  langchain -->|包含| models
+  langchain -->|包含| prompts
+  langchain -->|包含| memory
+  langchain -->|包含| retrievers
+  langchain -->|包含| tools
+  langchain -->|核心| chains
+  chains -->|声明式| lcel
+  chains -->|编排产出| app

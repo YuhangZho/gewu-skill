@@ -1,0 +1,21 @@
+flowchart TD
+  docs["▣ 原始文档"]
+  chunk["⚙ 分块"]
+  embed_offline["⚙ Embedding"]
+  vecdb["◇ 向量库"]
+  query["▣ 用户查询"]
+  retrieve["⚙ 检索"]
+  topk["▣ top-k文档块"]
+  prompt["⚙ Prompt组装"]
+  llm["⚙ LLM生成"]
+  answer["▣ 带引用回答"]
+  docs -->|离线索引| chunk
+  chunk -->|切块| embed_offline
+  embed_offline -->|入库| vecdb
+  query -->|在线查询| retrieve
+  vecdb -->|搜索| retrieve
+  retrieve -->|top-k| topk
+  topk -->|组装| prompt
+  query -->|问题| prompt
+  prompt -->|生成| llm
+  llm -->|回答+引用| answer
