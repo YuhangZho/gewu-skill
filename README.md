@@ -112,7 +112,7 @@ npx skills add YuhangZho/gewu-skill
 | Agent                  | skills 目录                                                  |
 | ---------------------- | ------------------------------------------------------------ |
 | Claude Code            | `~/.claude/skills/`                                          |
-| Claude 桌面端 / Cowork | 设置 → Capabilities，添加 `gewu` 文件夹                      |
+| Claude 桌面端 / Cowork | 设置 → Capabilities，添加 `gewu` 文件夹 (<30MB && <200 files) |
 | Codex                  | `~/.codex/skills/`                                           |
 | Cursor                 | `~/.cursor/skills/`                                          |
 | WorkBuddy              | `~/.workbuddy/skills/`                                       |
